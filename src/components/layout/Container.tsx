@@ -1,17 +1,18 @@
 import type { ReactNode } from "react";
-import { cn } from "@/utils/cn";
-
-interface ContainerProps {
-  children: ReactNode;
-  className?: string;
-}
+import { cn } from "@/lib/utils";
 
 /**
- * Centered, max-width page container with consistent horizontal padding.
+ * Centered, max-width content container with generous horizontal padding.
  */
-export function Container({ children, className }: ContainerProps) {
+export function Container({
+  children,
+  className,
+}: {
+  children: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className={cn("mx-auto w-full max-w-6xl px-4 py-12", className)}>
+    <div className={cn("mx-auto w-full max-w-5xl px-6", className)}>
       {children}
     </div>
   );

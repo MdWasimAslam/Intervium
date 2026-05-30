@@ -1,37 +1,61 @@
-import { NextResponse, type NextRequest } from "next/server";
-import { SESSION_COOKIE } from "@/constants";
-import { verifyToken } from "@/lib/jwt";
+import NextAuth from "next-auth";
+import { NextResponse } from "next/server";
+import { authConfig } from "@/auth.config";
 
 /**
- * Route protection middleware.
+ * Route protection middleware (Edge runtime).
  *
- * - Unauthenticated users hitting a protected route are redirected to /login.
- * - Authenticated users hitting /login are redirected to /dashboard.
+ * Uses an Auth.js instance built from the edge-safe `authConfig` only — it
+ * reads the JWT session but never touches the database or bcrypt.
  *
- * Runs on the Edge runtime, so it only uses the edge-safe `verifyToken`.
+ * Rules:
+ *  - Public routes: "/" , "/login", "/register".
+ *  - Logged-in users on /login or /register → /dashboard.
+ *  - Unauthenticated users on any other route → /login.
+ *  - Non-admins on /admin/* → /dashboard.
  */
-export async function middleware(request: NextRequest) {
-  const token = request.cookies.get(SESSION_COOKIE)?.value;
-  const session = await verifyToken(token);
-  const { pathname } = request.nextUrl;
+const { auth } = NextAuth(authConfig);
 
-  const isProtected = pathname.startsWith("/dashboard");
-  const isLoginPage = pathname === "/login";
+const PUBLIC_ROUTES = new Set(["/"]);
+const AUTH_ROUTES = new Set(["/login", "/register"]);
 
-  if (isProtected && !session) {
-    const loginUrl = new URL("/login", request.url);
-    loginUrl.searchParams.set("redirect", pathname);
+export default auth((req) => {
+  const { nextUrl } = req;
+  const path = nextUrl.pathname;
+  const isLoggedIn = Boolean(req.auth);
+  const role = req.auth?.user?.role;
+
+  // Already authenticated → keep users out of the auth pages.
+  if (AUTH_ROUTES.has(path)) {
+    if (isLoggedIn) {
+      return NextResponse.redirect(new URL("/dashboard", nextUrl));
+    }
+    return NextResponse.next();
+  }
+
+  // Public routes are always allowed.
+  if (PUBLIC_ROUTES.has(path)) {
+    return NextResponse.next();
+  }
+
+  // Everything else requires authentication.
+  if (!isLoggedIn) {
+    const loginUrl = new URL("/login", nextUrl);
+    loginUrl.searchParams.set("callbackUrl", path);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (isLoginPage && session) {
-    return NextResponse.redirect(new URL("/dashboard", request.url));
+  // Admin area requires the admin role.
+  if (path.startsWith("/admin") && role !== "admin") {
+    return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
   return NextResponse.next();
-}
+});
 
-/** Only run middleware on the routes that need it. */
 export const config = {
-  matcher: ["/dashboard/:path*", "/login"],
+  // Run on everything except Next internals, the auth API, and static files.
+  matcher: [
+    "/((?!api|_next/static|_next/image|favicon.ico|icon.svg|opengraph-image|.*\\.).*)",
+  ],
 };

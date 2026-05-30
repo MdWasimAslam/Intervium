@@ -1,67 +1,54 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
-import { cn } from "@/utils/cn";
-
-type ButtonVariant = "primary" | "secondary" | "outline" | "danger" | "ghost";
-type ButtonSize = "sm" | "md" | "lg";
-
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: ButtonVariant;
-  size?: ButtonSize;
-  /** Shows a spinner and disables the button while true. */
-  isLoading?: boolean;
-  children: ReactNode;
-}
-
-const VARIANT_STYLES: Record<ButtonVariant, string> = {
-  primary:
-    "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500",
-  secondary:
-    "bg-gray-800 text-white hover:bg-gray-900 focus-visible:ring-gray-600",
-  outline:
-    "border border-gray-300 bg-transparent text-gray-800 hover:bg-gray-100 focus-visible:ring-gray-400 dark:border-gray-700 dark:text-gray-100 dark:hover:bg-gray-800",
-  danger: "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-500",
-  ghost:
-    "bg-transparent text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-300 dark:text-gray-200 dark:hover:bg-gray-800",
-};
-
-const SIZE_STYLES: Record<ButtonSize, string> = {
-  sm: "h-8 px-3 text-sm",
-  md: "h-10 px-4 text-sm",
-  lg: "h-12 px-6 text-base",
-};
+import * as React from "react";
+import { cva, type VariantProps } from "class-variance-authority";
+import { cn } from "@/lib/utils";
 
 /**
- * Reusable button with variants, sizes and a built-in loading state.
+ * Button variants (shadcn/ui-style, powered by class-variance-authority).
+ * Colors come from the design tokens, so buttons follow the brand
+ * automatically in both light and dark themes.
  */
-export function Button({
-  variant = "primary",
-  size = "md",
-  isLoading = false,
-  disabled,
-  className,
-  children,
-  ...props
-}: ButtonProps) {
-  return (
+const buttonVariants = cva(
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)] disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0",
+  {
+    variants: {
+      variant: {
+        primary:
+          "bg-[var(--primary)] text-[var(--primary-foreground)] shadow-sm hover:opacity-90",
+        secondary:
+          "bg-[var(--secondary)] text-[var(--secondary-foreground)] hover:opacity-80",
+        outline:
+          "border border-[var(--border)] bg-transparent text-[var(--foreground)] hover:bg-[var(--muted)]",
+        ghost:
+          "bg-transparent text-[var(--foreground)] hover:bg-[var(--muted)]",
+      },
+      size: {
+        sm: "h-9 px-4",
+        md: "h-11 px-6",
+        lg: "h-13 px-8 text-base",
+        icon: "h-10 w-10",
+      },
+    },
+    defaultVariants: {
+      variant: "primary",
+      size: "md",
+    },
+  },
+);
+
+export interface ButtonProps
+  extends
+    React.ButtonHTMLAttributes<HTMLButtonElement>,
+    VariantProps<typeof buttonVariants> {}
+
+const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, variant, size, ...props }, ref) => (
     <button
-      className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors",
-        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
-        "disabled:cursor-not-allowed disabled:opacity-60",
-        VARIANT_STYLES[variant],
-        SIZE_STYLES[size],
-        className,
-      )}
-      disabled={disabled || isLoading}
+      ref={ref}
+      className={cn(buttonVariants({ variant, size }), className)}
       {...props}
-    >
-      {isLoading && (
-        <span
-          className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"
-          aria-hidden="true"
-        />
-      )}
-      {children}
-    </button>
-  );
-}
+    />
+  ),
+);
+Button.displayName = "Button";
+
+export { Button, buttonVariants };

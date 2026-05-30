@@ -1,42 +1,49 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Navbar } from "@/components/layout/Navbar";
-import { Footer } from "@/components/layout/Footer";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { ToastProvider } from "@/components/providers/ToastProvider";
-import { getSession } from "@/lib/session";
+import { Header } from "@/components/layout/Header";
 import { APP_DESCRIPTION, APP_NAME } from "@/constants";
 
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
-    default: APP_NAME,
+    default: `${APP_NAME} — AI-powered mock interviews`,
     template: `%s | ${APP_NAME}`,
   },
   description: APP_DESCRIPTION,
+  applicationName: APP_NAME,
+  openGraph: {
+    type: "website",
+    siteName: APP_NAME,
+    title: `${APP_NAME} — AI-powered mock interviews`,
+    description: APP_DESCRIPTION,
+    url: siteUrl,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: `${APP_NAME} — AI-powered mock interviews`,
+    description: APP_DESCRIPTION,
+  },
 };
 
 /**
- * Root layout.
- * Reads the session on the server so the navbar can render the correct
- * auth state, and wraps the app with theme + toast providers.
+ * Root layout: the app shell.
+ *
+ * `suppressHydrationWarning` on <html> is required by next-themes, which sets
+ * the theme class before React hydrates. A small inline script prevents a
+ * flash of the wrong theme on first paint.
  */
-export default async function RootLayout({
+export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
-  const session = await getSession();
-
+}: Readonly<{ children: React.ReactNode }>) {
   return (
-    // suppressHydrationWarning is required by next-themes (it sets the
-    // `class`/`style` on <html> before React hydrates).
     <html lang="en" suppressHydrationWarning>
       <body className="flex min-h-screen flex-col">
         <ThemeProvider>
-          <Navbar username={session?.username ?? null} />
+          <Header />
           <main className="flex-1">{children}</main>
-          <Footer />
-          <ToastProvider />
         </ThemeProvider>
       </body>
     </html>

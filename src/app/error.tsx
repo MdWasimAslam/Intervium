@@ -1,12 +1,11 @@
 "use client";
 
 import { useEffect } from "react";
-import { ErrorState } from "@/components/ui/ErrorState";
+import { Button } from "@/components/ui/button";
+import { Container } from "@/components/layout/Container";
 
 /**
- * Route-level error boundary.
- * Must be a Client Component. Receives the thrown error and a `reset`
- * callback that re-renders the segment.
+ * Route-level error boundary (must be a Client Component).
  */
 export default function Error({
   error,
@@ -16,14 +15,18 @@ export default function Error({
   reset: () => void;
 }) {
   useEffect(() => {
-    // Log to an error reporting service in a real app.
     console.error(error);
   }, [error]);
 
   return (
-    <ErrorState
-      message={error.message || "An unexpected error occurred."}
-      onRetry={reset}
-    />
+    <Container className="flex flex-col items-center gap-4 py-24 text-center">
+      <h1 className="text-2xl font-semibold">Something went wrong</h1>
+      <p className="max-w-md text-[var(--muted-foreground)]">
+        {error.message || "An unexpected error occurred."}
+      </p>
+      <Button variant="outline" onClick={reset}>
+        Try again
+      </Button>
+    </Container>
   );
 }

@@ -1,0 +1,32 @@
+[
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Frontend",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "Explain the difference between useMemo and useCallback, and when each is actually worth using.",
+        "idealAnswer": "useMemo memoizes a computed value; useCallback memoizes a function reference. Both take a dependency array and only recompute when deps change. They matter when an expensive computation runs on every render, or when a stable reference is needed to keep memoized children (React.memo) or effect dependencies from re-firing. They are NOT free — each adds bookkeeping — so a senior should reach for them only after profiling shows a real cost, not by default."
+      },
+      {
+        "questionText": "How would you diagnose and fix unnecessary re-renders in a large React tree?",
+        "idealAnswer": "Start by measuring with the React Profiler / why-did-you-render to find which components re-render and why. Common causes: new object/array/function props each render, context value changes, or state lifted too high. Fixes include memoizing props, splitting context, colocating state, using React.memo on hot leaf components, and stabilizing callbacks. The senior answer stresses measuring first and avoiding premature memoization."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Backend",
+    "difficulty": "Mid",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you had to make a backend change under significant time pressure. How did you balance speed and quality?",
+        "idealAnswer": "A strong answer uses a concrete situation (STAR): the deadline and stakes, the specific tradeoffs made (e.g. shipping behind a flag, deferring non-critical refactors, adding targeted tests on the risky path), how they communicated risk to stakeholders, and the outcome plus what they'd do differently. Look for ownership, pragmatic prioritization, and not cutting corners on the parts that mattered (data integrity, rollback plan)."
+      }
+    ]
+  }
+]

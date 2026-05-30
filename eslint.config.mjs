@@ -11,7 +11,7 @@ const eslintConfig = [
   ...next,
   prettier,
   {
-    ignores: [".next/**", "node_modules/**"],
+    ignores: [".next/**", "node_modules/**", "drizzle/**"],
   },
 ];
 

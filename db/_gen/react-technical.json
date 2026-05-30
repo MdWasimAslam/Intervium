@@ -1,0 +1,494 @@
+[
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "General",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "What is JSX and how does it relate to JavaScript?",
+        "idealAnswer": "JSX is a syntax extension for JavaScript that lets you write markup-like code inside JavaScript files. It is not understood by browsers directly; a transpiler like Babel converts each JSX element into a React.createElement (or the automatic jsx runtime) call that returns a plain JavaScript object describing the UI. So JSX is syntactic sugar, not HTML, which is why attributes use camelCase (className, htmlFor) and you can embed any JavaScript expression inside curly braces. Understanding that JSX compiles to function calls explains why expressions work but statements like if do not."
+      },
+      {
+        "questionText": "What is the difference between props and state in React?",
+        "idealAnswer": "Props are inputs passed from a parent to a child component; they are read-only from the child's perspective and the child must never mutate them. State is data owned and managed internally by a component that can change over time, typically via a setter such as the updater from useState. When state or props change, React re-renders the component. The key distinction is ownership and mutability: props flow down and are controlled by the parent, while state is local and controlled by the component itself."
+      },
+      {
+        "questionText": "Why does React require a unique key prop when rendering a list of elements?",
+        "idealAnswer": "Keys give React a stable identity for each item so it can match elements between renders during reconciliation and only update, add, or remove what changed. Without good keys React falls back to index-based matching, which can cause incorrect DOM reuse, lost input state, and subtle bugs when items are reordered or removed. Keys should be stable, unique, and tied to the data identity (like an id), not the array index, especially for lists that can change order. Using the array index as a key is a common pitfall that breaks when the list is mutated."
+      },
+      {
+        "questionText": "What does it mean that React uses a virtual DOM?",
+        "idealAnswer": "The virtual DOM is an in-memory tree of lightweight JavaScript objects representing the UI. When state changes, React builds a new virtual tree and compares (diffs) it against the previous one to compute the minimal set of real DOM mutations needed. This batching and diffing avoids expensive, frequent direct DOM manipulation and lets developers write declarative code describing what the UI should look like rather than imperative update steps. The trade-off is some memory and computation overhead, which React optimizes through its reconciliation algorithm."
+      },
+      {
+        "questionText": "What are controlled and uncontrolled components in React forms?",
+        "idealAnswer": "A controlled component has its form value driven by React state, with value and an onChange handler keeping the input synchronized to state, making React the single source of truth. An uncontrolled component lets the DOM hold the value, and you read it when needed using a ref, often with defaultValue for the initial value. Controlled inputs are preferred when you need validation, conditional disabling, or instant formatting, while uncontrolled can be simpler for basic forms. The common pitfall is mixing both, such as providing value without onChange, which makes the field read-only and triggers a warning."
+      },
+      {
+        "questionText": "What is the purpose of the useState hook and what does it return?",
+        "idealAnswer": "useState lets a function component hold local state that persists across re-renders. It returns an array with two elements: the current state value and a setter function to update it, conventionally destructured like const [count, setCount] = useState(0). Calling the setter schedules a re-render with the new value rather than mutating the variable directly. A common pitfall is mutating state objects in place instead of passing a new value, which can prevent re-renders since React compares by reference."
+      },
+      {
+        "questionText": "What is the difference between a function component and a class component in modern React?",
+        "idealAnswer": "Both define components, but function components are plain JavaScript functions that return JSX and use Hooks (useState, useEffect) for state and lifecycle, while class components extend React.Component and use this.state, setState, and lifecycle methods like componentDidMount. Function components with Hooks are the modern standard because they are more concise, avoid this binding confusion, and make logic reusable via custom hooks. Class components are still supported for legacy code but are no longer recommended for new development. The main pitfall historically with classes was forgetting to bind event handlers to this."
+      },
+      {
+        "questionText": "How do you handle a button click event in React, and how does it differ from plain HTML?",
+        "idealAnswer": "In React you attach a handler with a camelCase prop like onClick={handleClick}, passing a function reference rather than a string of code as in HTML's onclick attribute. React uses a synthetic event system that wraps native events for cross-browser consistency and delegates listeners at the root for performance. A common mistake is writing onClick={handleClick()} which calls the function immediately during render instead of on click; you should pass handleClick or an arrow function () => handleClick(arg). You can call event.preventDefault() to stop default behavior such as form submission."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "General",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "When and why would you use the useEffect dependency array, and what bugs arise from getting it wrong?",
+        "idealAnswer": "The dependency array tells React when to re-run an effect: an empty array runs it once after mount, no array runs it after every render, and listed values run it whenever any of them change. Omitting a dependency that the effect reads causes stale closures where the effect uses outdated values, while including unstable references (new objects/functions each render) causes the effect to run too often, sometimes creating infinite loops. The fix is to include all reactive values used inside, and stabilize functions/objects with useCallback/useMemo or move them inside the effect. The exhaustive-deps lint rule helps catch these mistakes."
+      },
+      {
+        "questionText": "How does React's reconciliation decide whether to update or recreate a component?",
+        "idealAnswer": "React compares the element type at each position in the tree. If the type is the same (same component or DOM tag), it keeps the existing instance and updates props; if the type differs, it unmounts the old subtree and mounts a new one, discarding state. Within lists, keys determine identity so reordering preserves the right instances. A practical pitfall is conditionally rendering two different component types in the same slot or changing a component's key unexpectedly, which destroys and recreates state when you did not intend to."
+      },
+      {
+        "questionText": "What is the difference between useMemo and useCallback, and when does memoizing actually help?",
+        "idealAnswer": "useMemo memoizes a computed value, recomputing only when dependencies change, while useCallback memoizes a function reference, which is essentially useMemo for a function. They help when an expensive computation would otherwise run every render, or when a stable reference is needed to avoid breaking memoized children (React.memo) or effect dependency arrays. They do not help and can hurt when applied indiscriminately, since memoization itself has overhead and adds complexity. The key is to memoize only proven hot paths or references that feed into memoization boundaries."
+      },
+      {
+        "questionText": "How would you debug a component that re-renders too often?",
+        "idealAnswer": "I would first confirm the re-renders using React DevTools Profiler or a why-did-you-render style check to see what triggered them. Common causes are new object/array/function props created inline each render, parent state changes propagating down, context value changes, or unstable keys. Fixes include lifting or colocating state, wrapping pure children in React.memo, memoizing props with useMemo/useCallback, and splitting context so unrelated consumers do not re-render. The pitfall is optimizing prematurely; I measure first, then target the actual cause rather than memoizing everything."
+      },
+      {
+        "questionText": "What problems does the Context API solve, and what are its performance trade-offs?",
+        "idealAnswer": "Context solves prop drilling by letting deeply nested components read shared values (theme, auth, locale) without passing props through every level. Its trade-off is that every consumer re-renders whenever the context value's reference changes, even if they only use part of it, which can cause broad re-renders. Mitigations include splitting one large context into smaller focused contexts, memoizing the provider value, or moving high-frequency state into a dedicated store. Context is best for low-frequency, broadly-needed values rather than rapidly changing state."
+      },
+      {
+        "questionText": "Explain the difference between client-side rendering, server-side rendering, and static generation in React-based apps.",
+        "idealAnswer": "Client-side rendering ships a mostly empty HTML shell and renders in the browser via JavaScript, which is simple but hurts initial load and SEO. Server-side rendering generates HTML per request on the server then hydrates on the client, improving first paint and SEO at the cost of server load and time-to-interactive complexity. Static generation pre-renders pages at build time for fast, cacheable delivery, ideal for content that changes infrequently. The trade-off is between freshness, server cost, and performance; many apps mix these (e.g., SSG with incremental revalidation) per route."
+      },
+      {
+        "questionText": "How do you fetch data in a React component while avoiding race conditions and state updates after unmount?",
+        "idealAnswer": "I trigger the fetch in a useEffect keyed on the relevant inputs and guard against stale or unmounted updates. Using an AbortController to cancel the request on cleanup, or a boolean ignore flag set in the effect's cleanup function, prevents applying a response from a superseded request or after unmount. Race conditions occur when a slower earlier request resolves after a newer one, so cancellation or ignoring stale results is essential. In practice a data library like React Query or SWR handles caching, deduping, and cancellation more robustly than hand-rolled effects."
+      },
+      {
+        "questionText": "What is a custom hook, and what rules must it follow?",
+        "idealAnswer": "A custom hook is a function whose name starts with use that composes built-in hooks to extract and reuse stateful logic across components, such as useFetch or useDebounce. It must obey the Rules of Hooks: only call hooks at the top level (not in loops, conditions, or nested functions) and only from React functions, so React can reliably associate hook state by call order. Custom hooks share logic, not state; each component using the hook gets its own isolated state. The pitfall is conditionally calling the hook, which breaks the consistent call order React relies on."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "General",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How does React's concurrent rendering change the mental model compared to synchronous rendering?",
+        "idealAnswer": "Concurrent rendering lets React interrupt, pause, and resume or abandon a render in progress so high-priority updates (like typing) preempt lower-priority work (like a large list re-render). This means rendering is no longer guaranteed to run to completion once started, so render functions must stay pure and side-effect free, since React may invoke them speculatively or discard the result. APIs like useTransition and useDeferredValue let you mark non-urgent updates so the UI stays responsive. The pitfall is relying on side effects during render or assuming a render will commit, which concurrent features can break."
+      },
+      {
+        "questionText": "Explain how useSyncExternalStore works and why it was introduced.",
+        "idealAnswer": "useSyncExternalStore subscribes a component to an external mutable store by taking a subscribe function and a getSnapshot function, returning the current snapshot and forcing a synchronous re-read when the store changes. It was introduced because concurrent rendering can read state at different times during an interruptible render, and naive external-store subscriptions could produce tearing, where different parts of the UI show inconsistent values from the same store. The hook guarantees a consistent snapshot across the committed tree and supports server rendering via a getServerSnapshot argument. It is the recommended primitive for library authors integrating Redux-like stores with concurrent React."
+      },
+      {
+        "questionText": "What strategies would you use to prevent and diagnose memory leaks in a long-lived React application?",
+        "idealAnswer": "Leaks usually come from subscriptions, timers, event listeners, or observers not cleaned up in effect cleanup functions, as well as retained closures holding large objects or caches that grow unbounded. I diagnose with the browser's heap snapshots and allocation timeline, comparing snapshots across navigations to find detached DOM nodes and growing retained sizes. Fixes include returning cleanup from every useEffect, bounding caches with eviction, avoiding capturing large objects in long-lived closures, and ensuring abort controllers cancel in-flight work. The subtle pitfall is stale closures in callbacks registered once but referencing changing state, which both leak and behave incorrectly."
+      },
+      {
+        "questionText": "How do error boundaries work, and what failures do they not catch?",
+        "idealAnswer": "An error boundary is a class component implementing getDerivedStateFromError and/or componentDidCatch that catches errors thrown during rendering, in lifecycle methods, and in constructors of its descendants, letting it render a fallback UI. It does not catch errors in event handlers, asynchronous code (setTimeout, promises), server-side rendering, or errors thrown in the boundary itself; those must be handled with try/catch or other mechanisms. A robust app places boundaries at meaningful UI segments so one failing widget does not crash the whole tree, often paired with logging in componentDidCatch. The pitfall is expecting boundaries to catch async/event errors, which they silently miss."
+      },
+      {
+        "questionText": "How would you architect state management in a large app, and how do you decide between local state, context, and an external store?",
+        "idealAnswer": "I categorize state by scope and update frequency: ephemeral UI state stays local with useState/useReducer; cross-cutting low-frequency values like theme or auth fit context; server data belongs in a caching layer like React Query; and complex, frequently updated global client state suits a store like Redux Toolkit or Zustand. The decision hinges on how widely the state is shared, how often it changes, and whether re-render scope matters, since context re-renders all consumers while selector-based stores re-render only subscribers. I avoid putting server cache into global stores and avoid overusing context for hot state. The goal is colocation by default, promoting state upward only when genuinely shared."
+      },
+      {
+        "questionText": "What is the difference between useLayoutEffect and useEffect, and when does the distinction matter?",
+        "idealAnswer": "useEffect runs asynchronously after the browser has painted, while useLayoutEffect runs synchronously after DOM mutations but before paint, blocking the browser from painting until it completes. You need useLayoutEffect when you must read layout (measure DOM) and synchronously re-mutate to avoid a visible flicker, such as positioning a tooltip. Overusing useLayoutEffect hurts performance because it blocks paint, and it also warns during server-side rendering since there is no layout phase. The rule is to default to useEffect and reach for useLayoutEffect only for synchronous layout reads/writes that would otherwise flash."
+      },
+      {
+        "questionText": "How does React batch state updates, and how did batching behavior change in React 18?",
+        "idealAnswer": "Batching groups multiple state updates into a single re-render for efficiency. Before React 18, batching happened only inside React event handlers, so updates in promises, setTimeout, or native event callbacks each triggered separate renders. React 18 introduced automatic batching across all these contexts via createRoot, so updates in async code are also batched. You can opt out for a synchronous flush using flushSync when you must read the DOM between updates, but it should be rare since it sacrifices the performance benefit and can cause layout thrashing."
+      },
+      {
+        "questionText": "Describe how Suspense for data fetching works and what guarantees and pitfalls it introduces.",
+        "idealAnswer": "Suspense lets a component suspend rendering by throwing a promise while data or code loads, and the nearest Suspense boundary shows a fallback until the promise resolves, enabling declarative loading states and coordinated reveals. With concurrent features and transitions, React can keep showing stale content while new content loads instead of immediately flashing the fallback. The pitfalls include needing a Suspense-compatible data source (frameworks or libraries that integrate with it), avoiding waterfalls by initiating fetches early, and understanding that arbitrary promise-throwing without proper caching causes refetch loops. It pairs with error boundaries to handle rejected requests."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "General",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design a shared component library and design system used by multiple teams, and what governance keeps it healthy?",
+        "idealAnswer": "I would build a versioned package with a clear public API, design tokens for theming, accessibility baked in, and strong documentation plus a living catalog like Storybook for discoverability. Governance includes semantic versioning with deprecation policies, automated visual regression and accessibility tests in CI, and a contribution model with code owners to balance team autonomy against consistency. The key trade-off is flexibility versus consistency: too rigid and teams fork or work around it, too loose and the system fragments. Success metrics are adoption rate, reduced duplicate components, and how quickly a token or accessibility fix propagates everywhere."
+      },
+      {
+        "questionText": "What architectural approach would you take to migrate a large legacy React class-component codebase to modern Hooks and concurrent features without halting feature delivery?",
+        "idealAnswer": "I would migrate incrementally rather than rewrite, since both can coexist: enable createRoot first, then convert components opportunistically as they are touched, and extract shared logic into custom hooks. I would establish guardrails like lint rules, codemods for mechanical conversions, and a strangler-pattern boundary so new work uses the modern stack while legacy remains functional. Risk management means prioritizing high-churn or high-bug areas, adding tests before refactoring, and watching for behavioral differences such as effect timing and automatic batching. The trade-off is slower short-term velocity versus compounding maintainability, which I justify with metrics on defect rates and onboarding time."
+      },
+      {
+        "questionText": "How do you approach measuring, budgeting, and enforcing front-end performance across many teams shipping to one React app?",
+        "idealAnswer": "I define performance budgets tied to user-centric metrics like Core Web Vitals (LCP, INP, CLS) and bundle-size limits per route, then enforce them in CI so regressions fail the build. Real-user monitoring captures field data across devices and networks, while lab tools like Lighthouse catch issues pre-merge; combining both avoids optimizing for lab conditions that do not match users. Cross-team enforcement needs shared ownership: code splitting by route, a shared performance dashboard, and per-team budgets so no single team can blow the global budget unnoticed. The trade-off is governance friction versus sustained performance, which I mitigate with automation and clear escalation paths."
+      },
+      {
+        "questionText": "When would you choose a micro-frontend architecture for a React platform, and what are the major costs?",
+        "idealAnswer": "Micro-frontends make sense when many independent teams need autonomous deploy cadences, separate ownership boundaries, and possibly heterogeneous release cycles for a large product. The costs are significant: duplicated dependencies and larger total bundle size, complex shared-state and routing coordination, version skew of shared libraries like React itself, and harder end-to-end testing and consistent UX. Approaches like Module Federation help share dependencies, but governance of contracts, design tokens, and a shared shell is essential. I would only adopt it when organizational scaling pain outweighs the monolith's simplicity, otherwise a well-modularized monorepo is usually preferable."
+      },
+      {
+        "questionText": "How would you design rendering strategy (CSR/SSR/SSG/streaming) selection for a large product with diverse page types?",
+        "idealAnswer": "I would classify pages by freshness needs, personalization, SEO importance, and traffic, then map each class to a strategy: marketing/content pages to static generation with incremental revalidation, SEO-critical dynamic pages to SSR or streaming SSR, and highly interactive authenticated dashboards to client rendering or partial prerendering. Streaming SSR with Suspense improves perceived performance by sending the shell early and filling in slower data, balancing time-to-first-byte against time-to-interactive. The trade-offs are infrastructure complexity, caching strategy, and hydration cost, so I would standardize a small set of patterns rather than per-page bespoke choices. Decisions are validated with field metrics, not assumptions."
+      },
+      {
+        "questionText": "How do you establish testing strategy and quality gates for a React platform spanning many teams?",
+        "idealAnswer": "I follow a testing-trophy emphasis: lots of fast integration/component tests with React Testing Library that assert behavior from the user's perspective, fewer brittle unit tests, a thin layer of end-to-end tests for critical flows, plus visual and accessibility regression checks. Quality gates in CI enforce coverage thresholds on critical paths, type checking, lint, and bundle budgets, while flaky-test quarantining keeps the pipeline trustworthy. Cross-team consistency comes from shared testing utilities, fixtures, and conventions so teams do not reinvent harnesses. The trade-off is test maintenance cost versus confidence, so I prioritize testing user-observable behavior over implementation details to reduce churn."
+      },
+      {
+        "questionText": "How would you guide an organization through evaluating and adopting a server-component model versus a traditional client-heavy React architecture?",
+        "idealAnswer": "I would frame the decision around data-fetching locality, bundle size, and where logic should run: server components can reduce client JavaScript, fetch data close to the source, and keep secrets server-side, but they introduce a new mental model, serialization boundaries, and framework lock-in. I would prototype representative pages to measure real bundle and latency wins, assess team readiness and tooling maturity, and identify which parts genuinely benefit versus interactive islands that must stay client-side. Risks include team learning curve, debugging complexity across the server/client boundary, and migration cost. I would adopt incrementally on new surfaces and let measured outcomes, not hype, drive broader rollout."
+      },
+      {
+        "questionText": "How do you balance developer experience, type safety, and runtime performance when standardizing tooling for many React teams?",
+        "idealAnswer": "I treat tooling as a product with users: standardize on TypeScript for type safety, a fast build tool, shared lint/format configs, and codegen for API contracts to eliminate whole classes of bugs while keeping iteration fast. The tension is that maximal type safety and strict configs can slow teams and that some performance optimizations add complexity, so I pick defaults that give most of the benefit with low friction and allow escape hatches. I invest in fast feedback loops (incremental builds, hot reload, fast CI) because developer velocity compounds across teams. Decisions are revisited with telemetry on build times, CI duration, and defect escape rates rather than personal preference."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Frontend",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How do you conditionally render content in React based on a boolean value?",
+        "idealAnswer": "You can render conditionally using a ternary expression like {isLoggedIn ? <Dashboard /> : <Login />} or short-circuit logic like {isLoading && <Spinner />} inside JSX. For more complex branching you compute the element in a variable before the return or use an early return. A common pitfall is using && with a value that can be 0, since {count && <X/>} renders 0 in the UI; guarding with count > 0 avoids that. The goal is to keep conditional logic readable and avoid rendering unintended falsy values."
+      },
+      {
+        "questionText": "What is the difference between inline styles, CSS classes, and CSS-in-JS in React?",
+        "idealAnswer": "Inline styles use the style prop with a JavaScript object of camelCased properties, are scoped to one element, but cannot use pseudo-classes or media queries and can hurt performance if recreated each render. CSS classes via className reference external stylesheets or CSS Modules, supporting the full power of CSS and better caching, with CSS Modules giving local scoping. CSS-in-JS libraries generate styles from JavaScript, enabling dynamic theming and colocation at some runtime or build cost. The choice depends on scoping needs, dynamic styling, and team conventions; the pitfall is heavy inline style objects recreated on every render."
+      },
+      {
+        "questionText": "Why should you not mutate state directly in React, and how do you update an array or object in state?",
+        "idealAnswer": "React decides whether to re-render by comparing references, so mutating an existing object or array in place keeps the same reference and React may skip the update. You must create a new value: for arrays use spread or methods like map/filter that return new arrays, and for objects spread the old object then override fields, for example setUser({ ...user, name }). Direct mutation can also cause subtle bugs where the UI does not reflect the data. The principle is to treat state as immutable and always produce a new object/array when updating."
+      },
+      {
+        "questionText": "How do you pass data from a child component back up to its parent?",
+        "idealAnswer": "Since data flows down via props, you pass a callback function from the parent to the child as a prop, and the child invokes it with the data when an event occurs. For example the parent passes onSelect and the child calls onSelect(item) on click, letting the parent update its own state. This keeps the parent as the owner of the state while the child reports events, a pattern called lifting state up. The pitfall is trying to mutate props directly in the child, which is not allowed; communication must go through callbacks."
+      },
+      {
+        "questionText": "What is the children prop and how is it used?",
+        "idealAnswer": "The children prop contains whatever JSX you nest between a component's opening and closing tags, letting you build wrapper or layout components like <Card>content here</Card>. Inside the component you render it with {children}, which makes components composable and reusable for arbitrary content. It is automatically provided by React, so you do not pass it explicitly as an attribute. This pattern is fundamental for things like layouts, modals, and providers, and it keeps components flexible without hardcoding their inner content."
+      },
+      {
+        "questionText": "How do you render a list of items from an array in JSX?",
+        "idealAnswer": "You map over the array and return a JSX element for each item, providing a stable key prop, for example items.map(item => <li key={item.id}>{item.name}</li>). The map produces an array of elements that React renders in order. The key must be unique and stable per item, ideally a data id rather than the array index, to help reconciliation. A common mistake is forgetting the key, which triggers a warning and can cause incorrect updates when the list changes."
+      },
+      {
+        "questionText": "What does the className attribute do and why is it used instead of class?",
+        "idealAnswer": "className sets the CSS class on a rendered DOM element, equivalent to HTML's class attribute. React uses className because JSX compiles to JavaScript where class is a reserved keyword, so the DOM property name className is used instead. You can build dynamic class strings with template literals or helper libraries like clsx to combine conditional classes. The pitfall is writing class= in JSX, which produces a warning and is ignored in older setups."
+      },
+      {
+        "questionText": "What is the purpose of a fragment in React, and how do you write one?",
+        "idealAnswer": "A fragment lets a component return multiple sibling elements without adding an extra wrapper node to the DOM, which keeps the markup clean and avoids breaking layouts that depend on direct parent-child relationships. You write it as <React.Fragment>...</React.Fragment> or with the shorthand <>...</>. The shorthand cannot take a key, so when rendering a list of fragments you use the full React.Fragment with a key prop. Fragments solve the rule that a component must return a single root element."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Frontend",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How do you implement accessible keyboard navigation and focus management in a custom React modal?",
+        "idealAnswer": "An accessible modal traps focus inside while open, moves focus to the dialog (or first focusable element) on open, and restores focus to the trigger on close. It should use role=dialog with aria-modal=true, label it via aria-labelledby, close on Escape, and prevent background scroll and interaction. I would manage focus with refs and a useEffect, and either use a battle-tested primitive (like a headless dialog library) or carefully implement a focus trap. The common pitfalls are forgetting to return focus, allowing Tab to escape to background content, and missing the Escape handler."
+      },
+      {
+        "questionText": "What causes layout shift and jank in React UIs, and how do you prevent it?",
+        "idealAnswer": "Layout shift (CLS) comes from content loading without reserved space, such as images without dimensions, late-loading fonts, or async content pushing elements down; jank comes from long synchronous work blocking the main thread during interaction. Prevention includes setting explicit width/height or aspect ratios, using skeletons that match final size, preloading fonts, and avoiding inserting content above existing content. For jank I would offload heavy work, debounce/throttle handlers, virtualize long lists, and use transitions to keep input responsive. Measuring with the Performance panel and Web Vitals confirms the fixes rather than guessing."
+      },
+      {
+        "questionText": "How would you efficiently render a list of 10,000 rows in React?",
+        "idealAnswer": "Rendering all 10,000 DOM nodes is slow and memory-heavy, so I would virtualize the list, rendering only the visible window plus a small overscan buffer using a library like react-window or react-virtual. This keeps the DOM small and scrolling smooth regardless of dataset size. I would also ensure stable keys, memoize row components, and avoid recreating row props each render. Pitfalls include variable row heights needing measurement, and breaking accessibility or find-in-page, so I would account for those depending on requirements."
+      },
+      {
+        "questionText": "How do you handle form validation in React, and what are the trade-offs of schema-based libraries?",
+        "idealAnswer": "I usually use a form library like React Hook Form for performance (uncontrolled inputs reduce re-renders) combined with a schema validator such as Zod or Yup to declare validation rules and infer types. Schema-based validation centralizes rules, gives consistent client and server validation, and produces good error messages, at the cost of an extra dependency and a learning curve. For trivial forms, manual state and validation can be simpler. Key concerns are validating on the right events (blur vs submit), showing accessible error messages tied to inputs via aria-describedby, and not blocking the user with overly aggressive validation."
+      },
+      {
+        "questionText": "What is the difference between debouncing and throttling, and where would you apply each in a React UI?",
+        "idealAnswer": "Debouncing delays running a function until a pause in events, so it fires once after activity stops, ideal for search-as-you-type to avoid a request per keystroke. Throttling runs a function at most once per interval during continuous events, ideal for scroll or resize handlers where periodic updates are enough. In React I implement them with useRef-stored timers inside a custom hook, being careful to clean up timers on unmount and to avoid stale closures over state. The pitfall is recreating the debounced function each render, which resets its internal timer, so it must be stable via useMemo/useCallback or useRef."
+      },
+      {
+        "questionText": "How do you implement client-side routing, and how do you handle code splitting per route?",
+        "idealAnswer": "Client-side routing maps URLs to components without full page reloads, using a router like React Router or a framework's file-based routing, typically with nested routes and route params. For code splitting I lazy-load route components with React.lazy and wrap them in a Suspense boundary so each route's JavaScript loads on demand, shrinking the initial bundle. I also consider prefetching likely-next routes on hover or visibility to hide latency. Pitfalls include missing Suspense fallbacks, layout shift when chunks load, and not handling load errors with an error boundary."
+      },
+      {
+        "questionText": "How would you manage and synchronize component state with URL query parameters?",
+        "idealAnswer": "I treat the URL as a source of truth for shareable, bookmarkable state like filters, tabs, or pagination, reading params via the router and updating them with navigation that does not reload the page. I keep one direction authoritative to avoid loops: derive component behavior from the URL rather than duplicating state, or carefully sync both with effects. This makes state shareable and back-button friendly. Pitfalls include update loops between state and URL, serializing complex objects poorly, and overusing the URL for ephemeral state that should stay local."
+      },
+      {
+        "questionText": "How do you optimize image loading and rendering performance in a React app?",
+        "idealAnswer": "I serve appropriately sized, modern formats (WebP/AVIF) with responsive srcset/sizes, set explicit dimensions or aspect-ratio to prevent layout shift, and lazy-load offscreen images with loading=lazy or an IntersectionObserver. For above-the-fold hero images I prioritize/preload them to improve LCP. Frameworks often provide an image component that automates optimization, lazy loading, and placeholders. The pitfalls are shipping oversized images, missing dimensions causing CLS, and eagerly loading everything, which wastes bandwidth and slows initial paint."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Frontend",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you architect a complex form with dynamic, dependent fields and large state without performance problems?",
+        "idealAnswer": "I would minimize re-renders by using an uncontrolled-first library like React Hook Form so typing in one field does not re-render the whole form, and subscribe only the components that need a given value. Dependent fields use watch on specific fields or derived computations, and dynamic field arrays use the library's field-array APIs with stable ids. Validation is schema-driven for consistency, and expensive cross-field logic is memoized. The pitfalls are controlled-input re-render storms, unstable keys in dynamic arrays losing input state, and validation running too eagerly; I measure with the Profiler to confirm the form stays responsive."
+      },
+      {
+        "questionText": "What are the trade-offs between different styling strategies (CSS Modules, Tailwind, runtime CSS-in-JS, zero-runtime CSS-in-JS) at scale?",
+        "idealAnswer": "CSS Modules give local scoping with zero runtime cost and good caching but less dynamic theming. Tailwind offers fast iteration and small CSS via purging at the cost of verbose markup and a learning curve. Runtime CSS-in-JS enables powerful dynamic styling and colocation but adds runtime overhead and can hurt SSR/streaming and INP. Zero-runtime CSS-in-JS extracts styles at build time to recover performance while keeping ergonomics. At scale I weigh bundle size, runtime cost, theming needs, and team familiarity; the pitfall is adopting heavy runtime libraries that degrade performance as the app grows."
+      },
+      {
+        "questionText": "How do you ensure a React component is accessible, and how do you test accessibility?",
+        "idealAnswer": "I use semantic HTML first (buttons, headings, labels), add ARIA only to fill gaps, ensure keyboard operability and visible focus, manage focus for dynamic content, and provide accessible names and roles for custom widgets. Color contrast, motion preferences, and screen-reader announcements (aria-live) also matter. Testing combines automated tools like axe and jest-axe to catch common issues, keyboard-only manual testing, and real screen-reader checks, since automation catches only a fraction of problems. The pitfall is relying solely on automated scans or sprinkling ARIA on non-semantic elements, which often makes accessibility worse."
+      },
+      {
+        "questionText": "How would you design a data-fetching and caching layer for a React frontend, and what consistency concerns arise?",
+        "idealAnswer": "I would use a server-state library like React Query or RTK Query that provides caching, request deduplication, background refetching, and stale-while-revalidate semantics, keyed by query keys. Consistency concerns include cache invalidation after mutations, optimistic updates with rollback on failure, and avoiding stale data across views, which I handle with query invalidation or cache updates from mutation responses. Pagination and infinite scroll need careful cache shaping, and I must guard against over-fetching and waterfalls by prefetching. The pitfall is storing server data in a global client store and reimplementing caching by hand, which is error-prone."
+      },
+      {
+        "questionText": "What causes hydration mismatches in server-rendered React, and how do you resolve them?",
+        "idealAnswer": "Hydration mismatches occur when the server-rendered HTML differs from what the client renders on first pass, caused by non-deterministic output like Date.now(), random values, locale/timezone differences, reading window during render, or branching on client-only state. They produce warnings and can lead to incorrect UI or re-rendered subtrees. Fixes include rendering deterministic output, deferring client-only content with an effect that flips a mounted flag, using suppressHydrationWarning sparingly for inherently dynamic nodes, and ensuring data is identical on both sides. The pitfall is accessing browser APIs during the initial render instead of inside useEffect."
+      },
+      {
+        "questionText": "How do you implement optimistic UI updates correctly, and how do you handle failures?",
+        "idealAnswer": "Optimistic updates apply the expected result immediately for snappy UX, then reconcile with the server response. I capture the previous state, apply the optimistic change, fire the mutation, and on error roll back to the snapshot while surfacing a clear message; on success I confirm or replace with server-authoritative data. With a server-state library I cancel in-flight queries for the affected key, update the cache, and roll back in the onError handler. Pitfalls include not handling rollback, race conditions between concurrent mutations, and showing inconsistent UI if the server transforms data differently than the optimistic guess."
+      },
+      {
+        "questionText": "How would you reduce the JavaScript bundle size and improve startup performance of a large React app?",
+        "idealAnswer": "I would analyze the bundle (e.g., a bundle analyzer) to find heavy dependencies, then apply route- and component-level code splitting with dynamic import, tree-shake by importing only needed modules, and replace large libraries with lighter alternatives or native APIs. Deferring non-critical code, lazy-loading below-the-fold features, and ensuring proper minification and compression (gzip/brotli) further help. I also watch for duplicate dependencies and polyfills shipped to modern browsers. The pitfall is shipping entire libraries via default imports, eagerly loading rarely used features, and not measuring real-world impact on metrics like LCP and TTI."
+      },
+      {
+        "questionText": "How do you handle complex animations in React while keeping performance smooth?",
+        "idealAnswer": "I prefer animating compositor-friendly properties (transform, opacity) to avoid layout and paint, and use libraries like Framer Motion or CSS transitions/keyframes rather than animating via per-frame React state, which causes excessive re-renders. For continuous animations I use requestAnimationFrame or the Web Animations API and keep React out of the hot loop, updating refs instead of state. Reduced-motion preferences should be respected for accessibility. The pitfalls are animating layout-triggering properties (width, top), driving animations through frequent setState, and janky enter/exit transitions when unmounting; coordinating mount/unmount with an animation library avoids that."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Frontend",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design a theming and design-token system supporting multiple brands and light/dark modes across a large React product?",
+        "idealAnswer": "I would centralize design decisions as tokens (color, spacing, typography) expressed as CSS custom properties so themes can switch at runtime without rebuilding, with semantic token layers (e.g., color-surface) mapping to primitive values per brand and mode. Components consume semantic tokens only, never raw values, so rebranding changes the mapping not the components. This supports light/dark via a data attribute or class on the root and respects prefers-color-scheme. Trade-offs include token taxonomy complexity and migration of existing hardcoded styles; governance and linting prevent token drift. Runtime CSS variables avoid the flash and re-render cost of JS-driven theming."
+      },
+      {
+        "questionText": "How do you lead a front-end performance initiative across teams when Core Web Vitals are failing in production?",
+        "idealAnswer": "I start with real-user monitoring to find which metric (LCP, INP, CLS), which routes, and which cohorts are worst, prioritizing by user impact rather than lab scores. I form hypotheses (large bundles, render-blocking resources, long tasks hurting INP, layout shift) and assign owners with concrete budgets, tracking progress on a shared dashboard. Fixes span code splitting, image and font optimization, breaking up long tasks, and reducing hydration cost, validated by before/after field data. The leadership challenge is coordinating many teams and preventing regressions via CI budgets; the pitfall is chasing Lighthouse scores that do not reflect real users."
+      },
+      {
+        "questionText": "What strategy would you use to enforce consistency and prevent design/UX drift across dozens of feature teams sharing a frontend?",
+        "idealAnswer": "I would invest in a well-documented component library and design system as the paved path, with design tokens, accessibility, and behavior baked in so the easy way is also the correct way. Enforcement combines linting, code owners on shared packages, visual regression tests, and a contribution process so teams extend the system rather than fork it. I would track adoption metrics and audit for one-off components to fold back into the system. The trade-off is autonomy versus consistency; I keep escape hatches for genuine edge cases but make divergence visible and intentional rather than accidental."
+      },
+      {
+        "questionText": "How do you approach internationalization and localization architecture for a global React application?",
+        "idealAnswer": "I would externalize all user-facing strings into a translation system with keys, support pluralization, gender, and interpolation via a library like ICU MessageFormat, and lazy-load locale bundles to avoid shipping all languages. The architecture must handle right-to-left layouts, locale-aware date/number/currency formatting via Intl, and translator workflows with extraction and fallback locales. Trade-offs include bundle size per locale, SSR considerations for the correct locale, and avoiding string concatenation that breaks grammar. The pitfalls are hardcoded strings, concatenated sentences, and ignoring RTL and locale-specific formatting, which create costly retrofits later."
+      },
+      {
+        "questionText": "How would you design the frontend architecture to support feature flags, gradual rollouts, and A/B experiments safely?",
+        "idealAnswer": "I would integrate a flagging system that evaluates flags by user/segment, with flags delivered to the client without flicker (server-evaluated when possible to avoid layout shift and to keep SSR consistent). Experiment variants should be assigned consistently per user, instrumented for metrics, and isolated so a bad variant can be killed instantly via a kill switch. Architecturally I keep flag checks at clear boundaries, avoid deeply scattering them, and plan for cleanup to prevent flag debt. Trade-offs include added complexity, hydration consistency for variant rendering, and ensuring flags do not bloat bundles by shipping dead code paths."
+      },
+      {
+        "questionText": "How do you decide where rendering and data fetching should live when adopting React Server Components in a large app?",
+        "idealAnswer": "I push data fetching and non-interactive rendering to server components to reduce client JavaScript and keep data and secrets server-side, while keeping interactive, stateful pieces as client components at the leaves (islands). The boundary decision hinges on interactivity, dependence on browser APIs, and how much client JS a component would otherwise ship. Serialization limits (only serializable props cross the boundary) and avoiding large client subtrees high in the tree are key constraints. Trade-offs include a new mental model, debugging across the boundary, and framework coupling; I roll out on new surfaces first and measure bundle and latency gains before broad adoption."
+      },
+      {
+        "questionText": "How would you architect error handling, observability, and resilience for a customer-facing React application?",
+        "idealAnswer": "I would layer error boundaries at meaningful UI segments so one failing widget degrades gracefully instead of white-screening, with fallback UIs and retry affordances. Observability includes client error reporting (e.g., Sentry) with source maps, breadcrumbs, and release tagging, plus performance and user-flow telemetry to correlate errors with impact. Resilience means handling network failures with retries/backoff, offline states, and timeouts, and guarding against third-party script failures. The trade-offs are noise versus signal in error reporting and the overhead of instrumentation; I set alerting thresholds on user-impacting errors and track error budgets rather than raw counts."
+      },
+      {
+        "questionText": "How do you plan a large-scale framework or major-version migration (for example moving rendering frameworks) for a React app with minimal user and team disruption?",
+        "idealAnswer": "I would prefer an incremental strangler approach over a big-bang rewrite: stand up the new framework alongside the old, migrate routes or sections behind a routing layer, and share components where feasible to limit duplication. I would sequence by risk and value, add characterization tests before moving code, and use feature flags and canary releases to validate parity in production. Communication and a clear deprecation timeline keep teams aligned, and metrics on performance, errors, and velocity gate each phase. The pitfalls are underestimating shared-state and auth integration, dependency version skew, and stalling halfway, which leaves two systems to maintain indefinitely."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Backend",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "What is an API endpoint, and how does a React app typically communicate with one?",
+        "idealAnswer": "An API endpoint is a URL on a server that accepts requests and returns data, usually JSON, for a specific resource or action. A React app communicates with it over HTTP using fetch or a library like axios, sending the method (GET, POST, etc.), headers, and a body when needed, then parsing the response. The frontend stores the returned data in state to render it. A basic pitfall is forgetting to handle non-200 responses or to await/parse the JSON, which leads to unhandled errors or undefined data."
+      },
+      {
+        "questionText": "What are the common HTTP methods and what is each typically used for?",
+        "idealAnswer": "GET retrieves data without side effects, POST creates a new resource or submits data, PUT replaces a resource entirely, PATCH updates part of a resource, and DELETE removes one. GET should be safe and idempotent, while POST is neither; PUT and DELETE are idempotent meaning repeating them has the same effect. Choosing the right method communicates intent and lets caches and servers behave correctly. A common mistake is using GET for actions that change data, which can be cached or prefetched unexpectedly."
+      },
+      {
+        "questionText": "What does an HTTP status code tell you, and what do the 2xx, 4xx, and 5xx ranges mean?",
+        "idealAnswer": "A status code is the server's summary of how a request was handled. The 2xx range means success (200 OK, 201 Created), 4xx means a client error such as bad input or missing auth (400 Bad Request, 401 Unauthorized, 404 Not Found), and 5xx means a server-side failure (500 Internal Server Error, 503 Service Unavailable). On the frontend you branch on these to show success, validation errors, or retry/error states. The pitfall is treating any response as success without checking the status, since fetch does not throw on 4xx/5xx."
+      },
+      {
+        "questionText": "What is JSON and why is it commonly used between a React frontend and a backend?",
+        "idealAnswer": "JSON (JavaScript Object Notation) is a lightweight, text-based data format of key-value pairs and arrays that is easy for humans to read and machines to parse. It is popular because it maps naturally to JavaScript objects, is language-agnostic, and is compact compared to alternatives like XML. In React you typically receive JSON from an API and use JSON.parse (or response.json()) to turn it into objects, and JSON.stringify to send data. A pitfall is assuming JSON supports types it does not, like dates, which are sent as strings and must be parsed."
+      },
+      {
+        "questionText": "What is the difference between synchronous and asynchronous code, and why does it matter for API calls?",
+        "idealAnswer": "Synchronous code runs line by line, blocking until each step finishes, while asynchronous code starts an operation and continues without waiting, handling the result later via callbacks, promises, or async/await. API calls are asynchronous because the network takes time, so blocking would freeze the UI. In React you use async/await or .then to handle the eventual response and then update state. The pitfall is treating an async call as if its result is immediately available, which gives undefined because the data has not arrived yet."
+      },
+      {
+        "questionText": "What is an environment variable and why would a React app use one for an API URL?",
+        "idealAnswer": "An environment variable is a configuration value provided outside the code, letting the same codebase behave differently across environments like development, staging, and production. A React app uses one for the API base URL so it can point to a local server during development and the real server in production without changing code. Build tools expose certain prefixed variables to the client bundle. A key pitfall is putting secrets in client-side env variables, since anything shipped to the browser is publicly visible."
+      },
+      {
+        "questionText": "What does it mean to handle loading and error states when fetching data in React?",
+        "idealAnswer": "Because network requests take time and can fail, a good UI tracks three conditions: loading while the request is in flight, success when data arrives, and error when it fails. Typically you keep state like isLoading, data, and error, set loading before the call, then update data or error in the response handling. This lets you show a spinner, the content, or an error message appropriately. The pitfall is rendering only the success case, which leaves users staring at a blank screen during loading or after a failure."
+      },
+      {
+        "questionText": "What is the difference between authentication and authorization?",
+        "idealAnswer": "Authentication verifies who a user is, typically via credentials like a username and password or a token, while authorization determines what an authenticated user is allowed to do, such as accessing an admin page. Authentication comes first; authorization builds on the established identity. In a React app, you might store a token after login (authentication) and then conditionally show features or call protected endpoints based on the user's roles or permissions (authorization). The pitfall is enforcing authorization only on the frontend, since the backend must also verify it because client-side checks can be bypassed."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Backend",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "What is CORS, why does it block requests, and how is it correctly resolved?",
+        "idealAnswer": "CORS (Cross-Origin Resource Sharing) is a browser security mechanism that restricts requests from one origin to another unless the server explicitly allows it via response headers like Access-Control-Allow-Origin. Requests fail when the server does not return the right headers, and non-simple requests trigger a preflight OPTIONS request that must also be permitted. The correct fix is configuring the server to allow the needed origins, methods, headers, and credentials, not disabling browser security or relying on a permanent dev proxy. A common pitfall is trying to fix CORS from the frontend, which cannot set the required server response headers."
+      },
+      {
+        "questionText": "How would you implement token-based authentication in a React app, and where should the token be stored?",
+        "idealAnswer": "After login, the server issues a token (often a JWT) that the client sends on subsequent requests, typically in an Authorization: Bearer header. Storage involves a security trade-off: localStorage is convenient but vulnerable to XSS, while an httpOnly secure cookie is not readable by JavaScript (mitigating XSS) but requires CSRF protection. I generally prefer httpOnly cookies for the session/refresh token and keep access tokens short-lived. The pitfalls are storing long-lived tokens in localStorage, not handling token expiry/refresh, and trusting the client to enforce access, which the server must do."
+      },
+      {
+        "questionText": "How do you handle and retry failed network requests gracefully in a React frontend?",
+        "idealAnswer": "I distinguish error types: network/5xx errors are often transient and worth retrying with exponential backoff and a cap, while 4xx errors are client errors that should not be blindly retried. I surface clear UI states (error message, retry button) and avoid retry storms by jittering backoff and limiting attempts. Server-state libraries like React Query provide configurable retries, backoff, and stale handling out of the box. The pitfalls are retrying non-idempotent POSTs unsafely, infinite retry loops, and not giving the user feedback or a manual retry path."
+      },
+      {
+        "questionText": "What is the difference between REST and GraphQL from a frontend integration perspective?",
+        "idealAnswer": "REST exposes multiple endpoints returning fixed resource shapes, which can lead to over-fetching or under-fetching and multiple round trips, while GraphQL exposes a single endpoint where the client requests exactly the fields it needs in one query, reducing waterfalls. GraphQL adds a typed schema and tooling but introduces caching complexity (no simple URL-based caching) and potential expensive queries on the server. REST is simpler and leverages HTTP caching well. The frontend choice depends on data-shape variability and client diversity; the pitfall is assuming GraphQL is always better when REST plus a good caching layer may suffice."
+      },
+      {
+        "questionText": "How would you implement real-time updates in a React app, and what options exist?",
+        "idealAnswer": "Options include WebSockets for full-duplex low-latency communication, Server-Sent Events for one-way server-to-client streams, and polling (or long-polling) when real-time infrastructure is unavailable. WebSockets suit chat or collaborative apps, SSE suits notifications/feeds, and polling is the simplest fallback but wastes requests. In React I encapsulate the connection in a hook or context, handle reconnection with backoff, clean up on unmount, and update state or the query cache on messages. Pitfalls are leaking connections by not closing them, missing reconnection logic, and updating state on a closed/unmounted component."
+      },
+      {
+        "questionText": "How do you securely handle file uploads from a React frontend?",
+        "idealAnswer": "I send files as multipart/form-data via FormData, validate type and size on the client for UX but always enforce limits and validation on the server for security. For large files or many uploads, I prefer direct-to-storage uploads using pre-signed URLs so the file does not pass through the app server, and I show progress via upload events. Security requires server-side validation of content type, scanning if needed, and not trusting client-reported metadata. Pitfalls include relying solely on client validation, blocking the UI during large uploads, and exposing storage credentials in the frontend."
+      },
+      {
+        "questionText": "How do you prevent over-fetching and reduce redundant API calls in a React application?",
+        "idealAnswer": "I use a caching layer (React Query, SWR, or Apollo) that dedupes concurrent identical requests, caches responses by key, and serves stale-while-revalidate so repeated mounts do not refetch unnecessarily. I batch related requests, request only needed fields (especially with GraphQL), and avoid triggering fetches on every render by keying effects correctly. Pagination and prefetching reduce both over- and under-fetching. The pitfalls are fetching in poorly-keyed effects causing repeated calls, duplicating server data into multiple stores, and N+1 request patterns from rendering many components that each fetch independently."
+      },
+      {
+        "questionText": "What is pagination, and how do offset-based and cursor-based pagination differ for a React UI?",
+        "idealAnswer": "Pagination breaks a large result set into pages to limit payload size and improve performance. Offset-based uses page/limit or offset, which is simple and allows jumping to arbitrary pages but can skip or duplicate items if the underlying data changes and gets slow at large offsets. Cursor-based uses a pointer to the last item, giving stable, efficient sequential loading ideal for infinite scroll, but cannot easily jump to a specific page. In React I store the cursor or page in state/URL and append or replace results; the pitfall is using offset pagination for rapidly changing feeds, which causes visible duplicates or gaps."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Backend",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design a secure authentication flow with access and refresh tokens for a React SPA?",
+        "idealAnswer": "I would use short-lived access tokens and longer-lived refresh tokens, storing the refresh token in an httpOnly, secure, SameSite cookie to mitigate XSS and CSRF, and keeping the access token in memory rather than persistent storage. On access-token expiry the client silently refreshes via the refresh endpoint, with rotation and reuse-detection to revoke stolen tokens. I handle concurrent requests during refresh by queuing them behind a single refresh promise to avoid race conditions. Pitfalls include storing long-lived tokens in localStorage, not rotating refresh tokens, missing CSRF protection on cookie-based auth, and failing to handle the refresh race that triggers multiple parallel refreshes."
+      },
+      {
+        "questionText": "How do you handle request cancellation, deduplication, and race conditions in a data-heavy React frontend?",
+        "idealAnswer": "I cancel superseded requests with AbortController tied to effect cleanup or query keys, so a stale response cannot overwrite newer state. Deduplication is best handled by a caching layer that coalesces concurrent identical requests into one in-flight promise. For race conditions where responses arrive out of order, I either cancel the older request or tag responses and only apply the latest. Pitfalls include applying a slow earlier response after a faster later one, updating unmounted components, and re-creating fetch logic per component instead of centralizing it, which makes cancellation inconsistent."
+      },
+      {
+        "questionText": "How would you design the frontend integration for a backend-for-frontend (BFF) pattern, and what problems does it solve?",
+        "idealAnswer": "A BFF is a server layer tailored to a specific client that aggregates and reshapes data from multiple downstream services, handles auth token exchange, and hides backend complexity. It solves over-fetching, reduces client round trips, keeps secrets server-side, and lets the frontend evolve its data needs without coupling to many microservices. From the React side I treat the BFF as the single API, simplifying caching and error handling. Trade-offs include another deployable to maintain, potential duplication if multiple BFFs exist, and the risk of the BFF becoming a bottleneck or a dumping ground for logic that belongs elsewhere."
+      },
+      {
+        "questionText": "What strategies handle cache invalidation and data consistency across a React app after mutations?",
+        "idealAnswer": "After a mutation I either invalidate affected query keys to trigger refetch, or directly update the cache with the server response for instant consistency, choosing based on confidence in the returned data. Optimistic updates improve perceived speed but require snapshotting and rollback on failure. I must consider related queries (lists and detail views) that share the mutated entity, and normalize or tag entities so updates propagate. Pitfalls include stale lists after create/delete, double sources of truth, over-invalidating and causing refetch storms, and inconsistent UI when concurrent mutations race; clear invalidation boundaries and entity tagging mitigate these."
+      },
+      {
+        "questionText": "How do you protect a React frontend against common security vulnerabilities like XSS and CSRF?",
+        "idealAnswer": "React escapes rendered content by default, mitigating most XSS, but dangerouslySetInnerHTML and unsanitized URLs/HTML reopen the door, so I sanitize any HTML (e.g., DOMPurify) and validate URLs. A strict Content Security Policy limits script sources as defense in depth. For CSRF, cookie-based auth needs anti-CSRF tokens or SameSite cookies, while token-in-header schemes are inherently less CSRF-prone. I also avoid leaking secrets to the client and validate everything server-side. Pitfalls are trusting client validation, injecting unsanitized HTML, and assuming SPA auth is immune to CSRF when using cookies."
+      },
+      {
+        "questionText": "How would you architect data fetching to avoid network waterfalls in a server-rendered or nested React UI?",
+        "idealAnswer": "Waterfalls happen when each component fetches only after its parent renders, serializing requests. I avoid them by hoisting data requirements and initiating fetches in parallel early (route-level loaders, prefetching, or fetching at the boundary that knows all needs), and by using Suspense with parallel data sources rather than chained awaits. Colocating queries while still prefetching, or using GraphQL to fetch a page's data in one request, also helps. Pitfalls include fetching inside deeply nested effects, awaiting sequentially what could run in parallel, and not prefetching predictable next data, all of which inflate latency."
+      },
+      {
+        "questionText": "How do you handle API versioning and backward compatibility from the frontend's perspective?",
+        "idealAnswer": "I prefer additive, backward-compatible API changes so the frontend keeps working, and consume versioned endpoints (URL or header based) when breaking changes are unavoidable, migrating clients deliberately. I defend the client by tolerating unknown fields, not depending on field order, and validating critical response shapes (e.g., with a schema) so unexpected changes fail loudly in a controlled way. Coordinating deploys matters since clients and servers ship independently and old clients may persist. The pitfall is tight coupling to exact response shapes and assuming all clients update instantly, which causes breakage during rollouts."
+      },
+      {
+        "questionText": "How would you implement and reason about optimistic concurrency control (e.g., ETags or version fields) in a React client?",
+        "idealAnswer": "Optimistic concurrency lets clients edit without locks by sending a version identifier (an ETag via If-Match, or a version field) with updates; the server rejects the write (typically 412 Precondition Failed or a conflict) if the resource changed since the client read it. In React I store the version with the loaded data, send it on save, and on conflict I prompt the user to merge or refetch rather than silently overwriting. This prevents lost updates when multiple users edit concurrently. Pitfalls are ignoring the conflict response and clobbering others' changes, or not refreshing the version after a successful save, causing the next save to falsely conflict."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Backend",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design the API contract and integration strategy between many React frontends and a microservices backend?",
+        "idealAnswer": "I would define clear, versioned, typed contracts (OpenAPI or GraphQL schema) as the source of truth, generate client types to eliminate drift, and likely introduce a BFF or gateway/GraphQL layer to aggregate services and shield clients from microservice churn. Contract testing (consumer-driven contracts) ensures backend changes do not silently break frontends across teams. The trade-offs are the overhead of a gateway/BFF and governance of schema evolution versus the chaos of frontends calling many services directly. I would standardize error formats, pagination, and auth so every client integrates consistently."
+      },
+      {
+        "questionText": "How do you architect resilience and graceful degradation for a React app that depends on multiple potentially unreliable backend services?",
+        "idealAnswer": "I would design each dependency to fail independently: timeouts, retries with backoff and jitter, circuit breakers (often at a BFF/gateway), and fallbacks so a non-critical service outage degrades a feature rather than the whole page. The UI uses error boundaries and partial rendering so available data shows while failed sections present retry or cached/stale content. Observability ties errors to user impact and service health. The trade-offs are added complexity and the risk of masking real failures; I set explicit SLAs per dependency and decide deliberately which features are essential versus degradable."
+      },
+      {
+        "questionText": "How would you lead the design of an authentication and authorization architecture spanning multiple React apps and backend services (SSO, RBAC)?",
+        "idealAnswer": "I would centralize identity with an OAuth2/OIDC provider for single sign-on, issuing short-lived access tokens (scoped JWTs) and rotating refresh tokens, with sessions shared across apps via the IdP. Authorization is enforced server-side using roles/permissions (RBAC) or attributes (ABAC), with the frontend only using claims to tailor UI, never as the security boundary. I standardize token handling, silent refresh, and logout (including back-channel logout) across apps. Trade-offs include token size and revocation complexity for JWTs versus the latency of opaque-token introspection; the pitfall is enforcing access only in the client or duplicating inconsistent auth logic per app."
+      },
+      {
+        "questionText": "How do you design observability and end-to-end tracing across the boundary between React frontends and backend services?",
+        "idealAnswer": "I propagate a trace/correlation ID from the client through every backend hop (e.g., W3C traceparent) so a single user action can be followed across services, and I collect frontend telemetry (errors, Web Vitals, key user events) correlated with backend traces. This lets us attribute slowness or errors to a specific tier rather than guessing. I standardize structured logging, sampling to control cost, and dashboards/alerts on user-impacting SLOs. Trade-offs are telemetry volume and cost versus visibility, and privacy concerns requiring scrubbing of sensitive data; the pitfall is siloed frontend and backend monitoring that cannot be joined when incidents occur."
+      },
+      {
+        "questionText": "How would you decide between client-side data fetching, server components/SSR data loading, and an edge/gateway aggregation layer for a large product?",
+        "idealAnswer": "I weigh latency, data sensitivity, caching, and personalization: server-side or edge loading reduces client JS and round trips and keeps secrets server-side, while client fetching suits highly interactive, frequently changing, user-specific data. An aggregation layer (BFF/edge) cuts client waterfalls and centralizes auth and caching but adds a tier to operate. I would route data needs to the cheapest correct layer, use streaming SSR for above-the-fold content, and cache aggressively at the edge where data is shareable. The trade-offs are infrastructure complexity and cache-invalidation difficulty; I standardize a few patterns and validate with real latency and cost metrics rather than per-page improvisation."
+      },
+      {
+        "questionText": "How would you architect offline support and data synchronization for a React application with intermittent connectivity?",
+        "idealAnswer": "I would persist data locally (IndexedDB via a library) and queue mutations while offline, syncing when connectivity returns, using a service worker to cache assets and API responses. Conflict resolution needs a clear policy: last-write-wins is simplest but lossy, while version vectors or CRDTs preserve concurrent edits at higher complexity. The UI must reflect sync state (pending, synced, conflict) honestly so users trust it. Trade-offs include storage limits, conflict-handling complexity, and the risk of stale data; the pitfall is assuming reliable connectivity, ignoring conflicts, or silently dropping queued mutations on failure."
+      },
+      {
+        "questionText": "How do you approach rate limiting, backpressure, and protecting backend services from a high-traffic React frontend?",
+        "idealAnswer": "On the client I reduce load via request deduplication, caching, debouncing, batching, and prefetch tuning, and I honor server rate-limit signals (429 with Retry-After) using backoff rather than hammering. The authoritative enforcement is server/gateway-side rate limiting and quotas, since clients cannot be trusted. For backpressure I queue or shed non-critical requests and degrade gracefully under load. Trade-offs are user experience versus protecting infrastructure during spikes; the pitfall is relying on client throttling alone, ignoring 429 responses, or letting unbounded retries amplify an outage into a thundering-herd problem."
+      },
+      {
+        "questionText": "How would you govern API and contract evolution so independently deployed React clients and backends stay compatible at scale?",
+        "idealAnswer": "I would enforce backward-compatible (additive) changes by default, version explicitly only for unavoidable breaks, and use schema registries plus consumer-driven contract tests in CI so a breaking change fails before it ships. Deprecation requires telemetry on field/endpoint usage, a clear timeline, and client migration before removal, acknowledging that old clients persist in the wild. Generated typed clients keep frontends in sync with the schema. The trade-offs are governance overhead and slower breaking changes versus stability; the pitfall is coordinated lockstep deploys that microservices cannot guarantee, or removing fields while live clients still depend on them."
+      }
+    ]
+  }
+]

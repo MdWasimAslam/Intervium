@@ -1,0 +1,494 @@
+[
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "What is React Native and how does it differ from building a web app with React?",
+        "idealAnswer": "React Native is a framework for building native mobile apps for iOS and Android using JavaScript and React. Instead of rendering to the DOM, it renders to actual native UI components like UIView and android.view.View through a bridge or the newer JSI. So you use components like View, Text, and Image rather than div, span, and img, and styling is done via a JavaScript StyleSheet object rather than CSS files. The key benefit is sharing logic and most UI code across platforms while still producing genuinely native widgets."
+      },
+      {
+        "questionText": "What is the purpose of the View and Text components in React Native?",
+        "idealAnswer": "View is the fundamental building block for UI, analogous to a div, used as a container that supports layout via flexbox, styling, and touch handling. Text is the only component allowed to render text content, and unlike on the web, raw strings must be wrapped inside a Text element or they will throw an error. Text components can be nested for inline styling, and View cannot directly contain bare text. Both map to native views under the hood."
+      },
+      {
+        "questionText": "How does styling work in React Native and how is it different from CSS?",
+        "idealAnswer": "Styling uses JavaScript objects, typically created with StyleSheet.create, where properties are camelCased like backgroundColor instead of background-color. There is no cascade or selectors; styles are applied explicitly per component and can be combined by passing an array to the style prop. Layout uses flexbox by default with flexDirection defaulting to column rather than row, and units are unitless density-independent pixels rather than px or em. There is no inheritance except limited text-style inheritance within nested Text."
+      },
+      {
+        "questionText": "What is the difference between props and state in a React Native component?",
+        "idealAnswer": "Props are inputs passed from a parent component and are read-only within the receiving component, used to configure or pass data down. State is internal, mutable data managed by the component itself, typically via the useState hook, and changing it triggers a re-render. The key distinction is ownership: a component cannot change its own props but can update its own state. Lifting state up and passing it down as props is the standard pattern for sharing data."
+      },
+      {
+        "questionText": "How do you handle a button press or user tap in React Native?",
+        "idealAnswer": "You use touchable components such as Pressable, TouchableOpacity, or the Button component, attaching a handler to the onPress prop. Pressable is the modern recommended primitive because it gives fine-grained control over press states like pressed, hovered, and long press. The handler is a function that runs when the user taps, for example to update state or call an API. Unlike the web there is no onClick; touch interactions are the norm on mobile."
+      },
+      {
+        "questionText": "What is a FlatList and why would you use it instead of mapping over an array inside a ScrollView?",
+        "idealAnswer": "FlatList is a component for rendering long, scrollable lists of data efficiently by only rendering items currently visible on screen, a technique called virtualization or windowing. Mapping an array inside a ScrollView renders every item at once, which wastes memory and hurts performance for large datasets. FlatList takes data and a renderItem function and supports features like keyExtractor, pull-to-refresh, and onEndReached for pagination. You should provide stable keys to help reconciliation."
+      },
+      {
+        "questionText": "What is the role of the package.json and Metro bundler in a React Native project?",
+        "idealAnswer": "package.json declares the project's dependencies, scripts, and metadata, letting npm or yarn install the libraries the app needs. Metro is React Native's JavaScript bundler that takes all the JS and asset files, resolves the module graph, and produces a single bundle served to the app, with fast refresh during development. Metro also handles transformations like JSX and TypeScript via Babel. Without Metro running, the development app cannot load the JavaScript code."
+      },
+      {
+        "questionText": "How do you display an image in React Native, including one from a remote URL?",
+        "idealAnswer": "You use the Image component. For a local asset you pass require with a relative path to the source prop, and for a remote image you pass an object with a uri field, such as source={{ uri: 'https://...' }}. Remote images require an explicit width and height or a flex style because their dimensions are unknown until loaded. You can also set resizeMode like cover or contain to control scaling, and consider caching or a library like FastImage for performance."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "Explain the React Native bridge versus the new architecture with JSI, Fabric, and TurboModules.",
+        "idealAnswer": "The legacy bridge serializes messages as JSON and passes them asynchronously between the JavaScript thread and the native thread, which can become a bottleneck under heavy traffic. The new architecture replaces this with JSI, a lightweight C++ layer that lets JavaScript hold direct references to native objects and call them synchronously without serialization. Fabric is the new rendering system built on JSI that enables concurrent React features and synchronous layout, while TurboModules lazily load native modules and call them through JSI. The result is lower latency, less overhead, and better startup performance."
+      },
+      {
+        "questionText": "How would you debug a performance issue where a screen feels janky during scrolling?",
+        "idealAnswer": "I would start by enabling the performance monitor to check whether the JS thread or the UI thread is dropping frames below 60fps. Common culprits are heavy work in renderItem, large unoptimized images, inline functions and objects causing re-renders, and missing memoization. For lists I would verify FlatList is used with getItemLayout, keyExtractor, and removeClippedSubviews, and move expensive computation off the render path. Profiling with Flipper, the React DevTools profiler, or Hermes sampling profiler pinpoints the actual hot spots before optimizing."
+      },
+      {
+        "questionText": "What is the difference between useEffect, useLayoutEffect, and useCallback in a React Native context?",
+        "idealAnswer": "useEffect runs after the render is committed and the screen has painted, suitable for data fetching, subscriptions, and side effects that do not block paint. useLayoutEffect runs synchronously after layout but before paint, used when you must read or mutate layout before the user sees the frame, though overuse can hurt performance. useCallback memoizes a function reference so it stays stable across renders, which matters in React Native to avoid re-rendering memoized children or re-subscribing native event listeners. Choosing correctly avoids flicker and unnecessary work."
+      },
+      {
+        "questionText": "How do you handle navigation in a React Native app and what are the trade-offs of stack versus tab navigators?",
+        "idealAnswer": "Most apps use React Navigation, which provides native stack, tab, and drawer navigators backed by native primitives for smooth gestures and transitions. A stack navigator manages a history of screens pushed and popped, ideal for drill-down flows, while a tab navigator keeps multiple top-level sections mounted and switchable. The trade-off is memory and state: tabs may keep screens mounted for instant switching at higher memory cost, whereas stacks unmount on pop. Deep linking, param passing, and type-safe routes are key considerations."
+      },
+      {
+        "questionText": "What causes unnecessary re-renders in React Native and how do you prevent them?",
+        "idealAnswer": "Re-renders happen when state or props change, or when a parent re-renders and passes new references for objects, arrays, or inline functions even if values are equal. To prevent waste, wrap components in React.memo, stabilize callbacks with useCallback and values with useMemo, and avoid creating new style objects inline. Context consumers re-render when the context value changes, so splitting contexts or memoizing the provider value helps. The goal is referential stability so React's reconciliation can bail out early."
+      },
+      {
+        "questionText": "How do you store data locally in React Native and when would you choose AsyncStorage versus a database like SQLite or MMKV?",
+        "idealAnswer": "AsyncStorage is a simple asynchronous key-value store suited for small amounts of data like flags, tokens, or user preferences, but it is slow and unsuitable for large or relational data. MMKV is a much faster synchronous key-value store backed by memory-mapped files, ideal for frequent reads and writes. For structured, queryable, or large datasets you would use SQLite, WatermelonDB, or Realm which support indexing and relations. The choice depends on data size, query needs, and whether you need encryption or sync."
+      },
+      {
+        "questionText": "Explain how to make a network request in React Native and how you would handle loading, error, and retry states.",
+        "idealAnswer": "You use fetch or a library like axios, typically inside an effect or a data-fetching hook, often with React Query or SWR to manage caching and request lifecycle. You should track loading, success, and error states so the UI can show spinners, results, or error messages, and guard against setting state after unmount. Retries with exponential backoff, timeouts, and aborting stale requests with AbortController improve resilience on flaky mobile networks. Centralizing this in a query library reduces boilerplate and handles cache invalidation."
+      },
+      {
+        "questionText": "What is Hermes and what benefits does it bring to a React Native app?",
+        "idealAnswer": "Hermes is a lightweight JavaScript engine optimized by Meta specifically for React Native, now the default engine. It precompiles JavaScript to bytecode ahead of time, which improves app startup time, reduces memory usage, and shrinks the app binary size compared to JavaScriptCore. It also provides better tooling like a sampling profiler and improved debugging. The main trade-off historically was missing some JS features, but it now broadly supports modern ECMAScript, making it the recommended choice for most apps."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design an offline-first React Native app that syncs data when connectivity returns?",
+        "idealAnswer": "I would treat the local database as the source of truth for the UI, using something like WatermelonDB, Realm, or SQLite, and render directly from it so the app works without a network. Writes go into a local queue or outbox with a sync status, and a background sync process pushes pending changes and pulls server updates when connectivity is detected via NetInfo. Conflict resolution needs a clear strategy such as last-write-wins, server-authoritative merges, or CRDTs depending on the domain. Idempotent operations, optimistic UI, and careful handling of partial sync failures and retries are essential."
+      },
+      {
+        "questionText": "What are the main causes of memory leaks in React Native and how do you detect and fix them?",
+        "idealAnswer": "Common causes are subscriptions, timers, and event listeners not cleaned up in effect cleanup functions, retaining closures over large objects, and holding references to unmounted components when setting state. Image caches and large lists without virtualization can also balloon memory. Detection involves the Xcode Instruments allocations tool, Android Studio profiler, and watching native heap growth over navigation cycles. Fixes include returning cleanup functions from useEffect, cancelling in-flight requests, weakening references, and ensuring native modules release resources."
+      },
+      {
+        "questionText": "Explain the threading model of React Native and how work is distributed across the JS thread, UI thread, and shadow thread.",
+        "idealAnswer": "React Native runs JavaScript on a dedicated JS thread where your component logic and business code execute. The UI or main thread handles native rendering, gestures, and platform UI, and must stay free to maintain 60fps. A separate shadow thread runs Yoga to compute flexbox layout off the main thread. With the old bridge, communication was async and batched, so blocking the JS thread with heavy work caused dropped frames and unresponsive touches; the new architecture with JSI and Fabric reduces this contention. Offloading heavy work via native modules, worklets, or InteractionManager keeps the UI smooth."
+      },
+      {
+        "questionText": "How do you implement a 60fps animation in React Native and why does running it on the UI thread matter?",
+        "idealAnswer": "I would use Reanimated, which runs animation worklets directly on the UI thread so they continue smoothly even when the JS thread is busy with other work. Driving animations through the bridge from JS risks frame drops because each frame depends on cross-thread messages and JS availability. The Animated API offers useNativeDriver for transform and opacity to offload to native, but Reanimated is more flexible for gesture-driven and shared-value animations. Avoiding layout-triggering properties and keeping work on transform and opacity helps the GPU composite cheaply."
+      },
+      {
+        "questionText": "What edge cases and pitfalls arise when handling deep linking and universal links in React Native?",
+        "idealAnswer": "You must handle both cold starts where the app launches from a link and warm starts where it is already running, wiring getInitialURL and a URL event listener. State must be reconstructed so a deep link into a nested screen builds the correct navigation stack rather than dropping the user with no back button. Platform differences matter: iOS universal links and Android App Links require domain verification files and proper intent filters, and malformed or unauthenticated links must be validated to avoid security issues. Race conditions between auth state hydration and link handling are a common bug."
+      },
+      {
+        "questionText": "How would you approach reducing app startup time in a mature React Native application?",
+        "idealAnswer": "I would measure TTI first using startup traces, then attack the largest contributors. Enabling Hermes with bytecode precompilation, deferring non-critical module initialization, lazy-loading screens, and using inline requires to avoid eagerly evaluating the whole bundle all help. Reducing the JS bundle size via tree-shaking, RAM bundles or code splitting, and trimming heavy synchronous work at module load shortens time to interactive. On the native side, minimizing work in the app delegate and reducing the number of TurboModules loaded eagerly matters too."
+      },
+      {
+        "questionText": "Describe how you would architect secure storage and handling of authentication tokens in a React Native app.",
+        "idealAnswer": "Sensitive tokens should live in the platform secure storage, the iOS Keychain and Android Keystore, accessed via libraries like react-native-keychain rather than AsyncStorage which is plaintext. I would use short-lived access tokens with refresh tokens, rotate them, and store only what is necessary on device. Network calls must use TLS with certificate pinning for high-security apps, and I would avoid logging tokens and clear them on logout. Biometric gating and detecting jailbroken or rooted devices add defense in depth depending on the threat model."
+      },
+      {
+        "questionText": "How do you handle code sharing and platform-specific behavior between iOS and Android in a single codebase?",
+        "idealAnswer": "Most code is shared, but platform divergence is handled with the Platform.select API, Platform.OS checks, and platform-specific file extensions like Component.ios.tsx and Component.android.tsx that Metro resolves automatically. I keep platform branches thin and behind well-defined interfaces so business logic stays shared and testable. Native modules abstract platform APIs behind a common JS surface. The pitfall is letting platform conditionals leak everywhere, so isolating differences into dedicated modules keeps the codebase maintainable."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you architect a React Native app shared across multiple teams in a monorepo or modular structure?",
+        "idealAnswer": "I would split the app into independently owned feature modules or packages with clear public interfaces, using a monorepo tool like Nx, Turborepo, or Yarn workspaces to manage dependencies and builds. Shared concerns like design system, networking, and analytics live in versioned internal packages so teams move independently while staying consistent. Ownership boundaries, lint and type enforcement at module edges, and dependency direction rules prevent tight coupling. The trade-off is build complexity and the need for strong CI, codeowners, and contract testing between modules."
+      },
+      {
+        "questionText": "What strategy would you use to roll out over-the-air updates safely at scale, and what are the risks?",
+        "idealAnswer": "I would use a tool like CodePush or EAS Update to push JS-only changes, gated behind staged rollouts to a small percentage first with monitoring of crash and error rates before going wider. Critical risks include shipping a JS bundle incompatible with the installed native binary, so I enforce version targeting and never push native changes OTA. A reliable rollback path, mandatory versus optional update logic, and respecting app store policies are essential. I would also track adoption and have circuit breakers to halt a bad rollout automatically."
+      },
+      {
+        "questionText": "How do you decide whether to build a feature in JavaScript, a native module, or adopt a cross-platform native library?",
+        "idealAnswer": "The decision weighs performance needs, platform API access, maintenance cost, and team expertise. Pure JS is preferred for portability and velocity, but heavy computation, real-time media, Bluetooth, or tight platform integration justify a native module written in Swift, Kotlin, or C++ exposed via TurboModules. Adopting a well-maintained community library saves effort but introduces a dependency risk if it is abandoned or blocks new architecture migration. I evaluate the long-term ownership burden and whether the capability is core differentiating value before committing to native code."
+      },
+      {
+        "questionText": "How would you establish a testing and quality strategy for a large React Native codebase?",
+        "idealAnswer": "I would build a pyramid: many fast unit tests with Jest for logic and hooks, component tests with React Native Testing Library focusing on behavior, and a smaller set of end-to-end tests with Detox or Maestro on real device flows. Critical paths get the most coverage, and I gate merges on CI running tests, type checks, and lint. Visual regression and snapshot testing catch UI drift, while crash reporting and analytics close the loop in production. The strategy balances confidence against flakiness and CI time, prioritizing deterministic tests."
+      },
+      {
+        "questionText": "What considerations drive migrating a large existing app to the New Architecture (Fabric and TurboModules)?",
+        "idealAnswer": "The motivation is better performance, synchronous native access, concurrent React features, and staying on a supported path as the old architecture is deprecated. The main blockers are third-party native modules and view managers that have not been updated, so I would audit dependencies and use the interop layer for unmigrated modules during a phased rollout. I would migrate incrementally behind feature flags, validate performance with benchmarks, and ensure thorough device coverage because subtle layout and timing behaviors change. Team training and a clear rollback plan reduce risk."
+      },
+      {
+        "questionText": "How would you design a scalable state management architecture for an app with complex server and client state?",
+        "idealAnswer": "I separate server state from client state. Server state belongs in a data-fetching cache like React Query or RTK Query that handles caching, invalidation, and background refetch, while client UI state uses lightweight stores like Zustand, Jotai, or Redux Toolkit for genuinely global concerns. Most state should be local and colocated to avoid a god-store and unnecessary re-renders. I define clear boundaries, normalize shared entities, and avoid duplicating server data into global state, which is a common source of staleness and bugs at scale."
+      },
+      {
+        "questionText": "How do you set up CI/CD for React Native including builds, signing, and store releases?",
+        "idealAnswer": "I would automate builds for both platforms in CI using EAS Build, Fastlane, or Bitrise, managing code signing with secure credential storage and avoiding secrets in the repo. Pipelines run tests and static analysis on every PR, produce internal distribution builds for QA, and gate production builds behind approvals. Release automation handles versioning, changelogs, uploading to TestFlight and Play internal tracks, and phased store rollouts. Caching native build artifacts and parallelizing platforms keep pipelines fast, and reproducibility is critical for debugging release issues."
+      },
+      {
+        "questionText": "As a technical lead, how do you mentor engineers and enforce code quality without becoming a bottleneck?",
+        "idealAnswer": "I codify standards into automated tooling such as ESLint, TypeScript strict mode, Prettier, and CI checks so the machine enforces the basics rather than me. I write architecture decision records and reusable patterns, pair on complex changes, and review for design and trade-offs rather than nitpicks. Delegating ownership of modules, growing other reviewers, and running focused design reviews scales judgment across the team. The goal is to multiply the team's capability through guardrails and teaching, not gatekeeping every change."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How does flexbox layout work in React Native and what is the default flex direction?",
+        "idealAnswer": "React Native uses flexbox for layout, but unlike the web the default flexDirection is column rather than row, so children stack vertically by default. You control the main axis with justifyContent and the cross axis with alignItems, and flex on a child determines how it grows to fill available space. flex: 1 makes a view expand to fill its parent. Understanding main versus cross axis depending on flexDirection is the key to positioning elements correctly."
+      },
+      {
+        "questionText": "What is the difference between a ScrollView and a FlatList?",
+        "idealAnswer": "ScrollView renders all of its children at once, which is fine for a small, known amount of content like a form or a short page. FlatList virtualizes its content, rendering only the items currently on screen and recycling them as you scroll, which is essential for long or dynamic lists to keep memory and performance reasonable. FlatList also provides built-in features like keyExtractor, separators, pull-to-refresh, and pagination callbacks. Choosing ScrollView for large lists is a common beginner mistake."
+      },
+      {
+        "questionText": "How do you conditionally render a component in React Native?",
+        "idealAnswer": "You use JavaScript expressions inside JSX, commonly the logical AND operator like condition && <Component /> to render when true, or a ternary like condition ? <A /> : <B /> to choose between two. You can also compute the element in a variable before the return statement. A common pitfall is using a number or empty string with && since 0 will render as text; you should coerce to a boolean. Returning null renders nothing."
+      },
+      {
+        "questionText": "What is the keyExtractor prop in a FlatList and why are keys important?",
+        "idealAnswer": "keyExtractor tells FlatList how to derive a unique, stable key for each item, for example returning item.id. Keys let React's reconciliation track which items changed, were added, or removed so it can update the list efficiently instead of re-rendering everything. Using array indexes as keys is discouraged because it causes incorrect behavior and state bugs when items reorder or get removed. Stable keys improve both correctness and performance."
+      },
+      {
+        "questionText": "How do you handle text input from a user in React Native?",
+        "idealAnswer": "You use the TextInput component, typically as a controlled input by passing a value prop and an onChangeText handler that updates state. onChangeText receives the new string directly, unlike the web where you read event.target.value. You can configure keyboardType, secureTextEntry for passwords, placeholder, and autoCapitalize. Managing focus, dismissing the keyboard, and avoiding the keyboard covering the input are common concerns addressed with refs and KeyboardAvoidingView."
+      },
+      {
+        "questionText": "What is the SafeAreaView and why is it needed?",
+        "idealAnswer": "SafeAreaView, or the SafeAreaProvider and useSafeAreaInsets from react-native-safe-area-context, ensures content is not hidden behind device notches, status bars, the home indicator, or rounded corners. Without it, UI can be clipped or overlapped on devices like modern iPhones. The recommended approach is the safe-area-context library because the built-in SafeAreaView is iOS-only and less flexible. You apply insets as padding to keep interactive content visible and reachable."
+      },
+      {
+        "questionText": "How do you apply multiple styles to a single component in React Native?",
+        "idealAnswer": "You pass an array to the style prop, like style={[styles.base, styles.active]}, and styles later in the array override earlier ones for conflicting properties. This lets you compose a base style with conditional styles, for example style={[styles.button, isActive && styles.buttonActive]}. Falsy values in the array are ignored, which makes conditional styling clean. Using StyleSheet.create for the definitions is preferred for validation and minor optimization."
+      },
+      {
+        "questionText": "What does the Pressable component offer over the older Touchable components?",
+        "idealAnswer": "Pressable is a more flexible and future-proof primitive for detecting touch interactions, supporting onPress, onPressIn, onPressOut, and onLongPress. Its style and children props can be functions that receive the pressed state, allowing dynamic feedback without extra state. It also supports hitSlop and pressRetentionOffset for better touch targets. It is recommended over TouchableOpacity and TouchableHighlight, which are now considered legacy though still functional."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How do you optimize a FlatList that is rendering slowly with hundreds of items?",
+        "idealAnswer": "I would provide getItemLayout when item heights are fixed so the list can skip measurement, set a sensible initialNumToRender and windowSize, and use keyExtractor with stable keys. Memoizing the renderItem component with React.memo and stabilizing its props prevents needless re-renders, and maxToRenderPerBatch with updateCellsBatchingPeriod tunes scroll smoothness. Avoiding heavy work and large images per row, and considering removeClippedSubviews, further helps. For very large or complex lists, FlashList from Shopify offers better recycling and performance."
+      },
+      {
+        "questionText": "How do you handle the keyboard covering input fields on a form screen?",
+        "idealAnswer": "I use KeyboardAvoidingView with a behavior of padding on iOS and height or position handling on Android, wrapping the scrollable form. Often I pair it with a ScrollView using keyboardShouldPersistTaps so taps on buttons work while the keyboard is open, and dismiss the keyboard on outside taps. The react-native-keyboard-aware-scroll-view or keyboard-controller libraries handle edge cases more robustly across platforms. Testing on both platforms is important because their keyboard behavior differs significantly."
+      },
+      {
+        "questionText": "Explain how to implement responsive layouts that adapt to different screen sizes and orientations.",
+        "idealAnswer": "I rely on flexbox with relative flex values rather than fixed pixel sizes, and use the useWindowDimensions hook so the UI re-renders on rotation or split-screen changes. Percentage widths, maxWidth constraints, and Dimensions or breakpoints handle phones versus tablets. For orientation, I listen to dimension changes and adjust layout, and I use the safe-area insets to respect device chrome. Avoiding hardcoded dimensions and testing on multiple device sizes and font scales prevents layout breakage."
+      },
+      {
+        "questionText": "What is the difference between controlled and uncontrolled components for inputs in React Native, and when would you use each?",
+        "idealAnswer": "A controlled input stores its value in React state and updates via onChangeText, giving you full control for validation, formatting, and syncing with other state, at the cost of a re-render per keystroke. An uncontrolled input lets the native component manage its own value, and you read it via a ref or defaultValue, which avoids re-renders and can be smoother for high-frequency typing. Controlled is the default choice for most forms, while uncontrolled or libraries like react-hook-form help when re-render performance matters. The trade-off is control versus performance."
+      },
+      {
+        "questionText": "How would you implement and theme dark mode in a React Native app?",
+        "idealAnswer": "I would centralize colors and tokens in a theme object and provide them via context, then read the system preference with the useColorScheme hook to default to light or dark. Components consume theme values rather than hardcoded colors, and I support a user override stored in persistent storage. Animated transitions and ensuring sufficient contrast for accessibility matter. Libraries or design systems can manage this, and I avoid scattering Platform or color conditionals by funneling everything through the theme."
+      },
+      {
+        "questionText": "How do you debug why a component is re-rendering more often than expected?",
+        "idealAnswer": "I would use the React DevTools profiler to record renders and see what triggered them, and add why-did-you-render or console logging to identify changed props. Often the cause is new object, array, or function references created inline in the parent, or a context value that changes every render. Fixes include useMemo, useCallback, React.memo, and splitting or memoizing context. Verifying with the profiler after the change confirms the re-render was actually eliminated."
+      },
+      {
+        "questionText": "How do you handle images efficiently in a list-heavy UI to avoid memory and performance problems?",
+        "idealAnswer": "I serve appropriately sized images rather than full-resolution originals, use caching so they are not re-downloaded, and set explicit dimensions to avoid layout shifts. Libraries like FastImage or expo-image provide disk caching, priority control, and better memory handling than the core Image component. Lazy loading via list virtualization, placeholders or blurhash while loading, and progressive or WebP formats reduce memory pressure. Watching native memory during scrolling confirms there are no leaks from retained bitmaps."
+      },
+      {
+        "questionText": "What are common accessibility considerations in React Native and how do you implement them?",
+        "idealAnswer": "I add accessibilityLabel, accessibilityRole, and accessibilityHint so screen readers like VoiceOver and TalkBack describe elements meaningfully, and group related elements with accessible. Interactive elements need adequate touch target size and accessibilityState for things like selected or disabled. I respect the user's font scaling and reduce-motion settings, ensure color contrast, and test by actually navigating with a screen reader. Accessibility is both an inclusivity requirement and often a legal one."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you build a complex gesture-driven interaction like a swipeable, draggable card stack with smooth 60fps response?",
+        "idealAnswer": "I would use react-native-gesture-handler for the gestures and react-native-reanimated worklets so both gesture tracking and the resulting animations run on the UI thread independently of the JS thread. Shared values drive transforms and opacity, and I derive position from gesture events with useAnimatedGestureHandler or the Gesture API, snapping or flinging with withSpring or withDecay. Avoiding JS-thread round trips per frame is what keeps it at 60fps under load. Careful handling of gesture composition, simultaneous gestures, and interruption ensures a natural feel."
+      },
+      {
+        "questionText": "What are the performance trade-offs of different navigation transition and screen-mounting strategies?",
+        "idealAnswer": "Native stack navigators use native screen primitives via react-native-screens, giving smooth platform transitions and freeing memory by detaching off-screen views, whereas the JS stack offers more customization at a performance cost. Keeping screens mounted, as tabs often do, gives instant switching but holds memory and can run effects in the background. Lazy mounting reduces startup cost but adds a first-render delay. The trade-off is responsiveness versus memory, and I tune lazy, detachInactiveScreens, and freezeOnBlur based on the screen's cost and usage."
+      },
+      {
+        "questionText": "How do you architect a reusable, themeable component library for a React Native app?",
+        "idealAnswer": "I design components around a token-based theme covering colors, spacing, typography, and radii, exposed through context so consumers stay decoupled from raw values. Components are composable, accept style overrides, expose accessibility props, and have well-typed APIs with sensible defaults. I document them, ideally with a tool like Storybook for React Native, and enforce visual consistency through the design system. The key trade-offs are flexibility versus consistency, and avoiding over-abstraction that makes simple cases hard."
+      },
+      {
+        "questionText": "How would you diagnose and fix a frame-drop issue that only occurs during a specific animation on lower-end Android devices?",
+        "idealAnswer": "I would profile on the actual low-end device with the Hermes sampling profiler and the Android systrace or Perfetto to see whether the JS thread, UI thread, or GPU is the bottleneck. Common causes are animating layout properties instead of transform and opacity, JS-driven animation without the native driver, overdraw, or expensive shadows and blurs. Moving the animation to Reanimated worklets, using the native driver, simplifying the view hierarchy, and reducing overdraw usually resolve it. I verify with before-and-after traces on the same device."
+      },
+      {
+        "questionText": "What are the considerations for handling very long or infinite scrolling feeds with mixed content types?",
+        "idealAnswer": "I would use a virtualized list, often FlashList for heterogeneous content, providing item type hints so recycling reuses compatible views. Pagination uses onEndReached with a threshold, deduping and appending pages while preserving scroll position, and I cache loaded pages and prefetch ahead of the viewport. Stable keys, memoized rows, and getItemLayout or estimated sizes keep scrolling smooth. Edge cases include jumpy scroll on data insertion, retaining position after refresh, and bounding memory by limiting retained windows."
+      },
+      {
+        "questionText": "How do you manage form state and validation at scale while keeping the UI performant?",
+        "idealAnswer": "I prefer an uncontrolled approach with react-hook-form, which subscribes fields individually so typing in one field does not re-render the whole form. Validation runs via schema libraries like Zod or Yup on blur or submit, with field-level error display. For very large forms I split into steps or sections and lazily validate. The trade-off versus fully controlled state is less per-keystroke control in exchange for far fewer re-renders, which matters on lower-end devices."
+      },
+      {
+        "questionText": "How would you implement skeleton loading and optimistic UI to make the app feel fast?",
+        "idealAnswer": "Skeleton placeholders mimic the final layout while data loads, reducing perceived latency and avoiding layout shift, ideally driven by a subtle shimmer animation on the UI thread. Optimistic UI updates the interface immediately on a user action, assuming success, then reconciles or rolls back when the server responds, which React Query supports via onMutate and rollback. The pitfalls are handling failure gracefully, avoiding flicker between optimistic and real state, and keeping the cache consistent. Together they make the app feel responsive even on slow networks."
+      },
+      {
+        "questionText": "What strategies ensure consistent rendering and behavior across iOS and Android given their platform UI differences?",
+        "idealAnswer": "I normalize known divergences such as shadows, which use shadow props on iOS and elevation on Android, font rendering, ripple versus opacity feedback, and default component behaviors. I encapsulate platform branches in shared components or use Platform.select rather than scattering checks, and test on both platforms continuously. Where the platforms have strong native conventions, like date pickers or back gestures, I respect them rather than forcing uniformity. The goal is consistent intent and quality, not pixel-identical UI."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you establish and scale a cross-platform design system used by many product teams in React Native?",
+        "idealAnswer": "I would define a single source of truth for design tokens, ideally synced from the design tool, and publish a versioned component library with strict typed APIs, accessibility built in, and theming support. Governance includes contribution guidelines, documentation with Storybook, visual regression testing, and a release process with semver and changelogs. Adoption is driven by making the library the easiest path, with codemods for migrations and clear deprecation policies. The hard parts are balancing flexibility against consistency and preventing divergent one-off components across teams."
+      },
+      {
+        "questionText": "How do you set frontend performance budgets and enforce them for a React Native app across teams?",
+        "idealAnswer": "I define measurable budgets for startup time, time to interactive, JS bundle size, and frame rates on representative low-end devices, and wire automated checks into CI so regressions fail the build. Real-user monitoring captures field metrics like ANRs, frozen frames, and TTI percentiles, feeding dashboards and alerts. Ownership is distributed by attributing regressions to the responsible module. The challenge is choosing meaningful budgets, getting reliable measurements, and balancing enforcement against developer velocity so the budget guides rather than blocks."
+      },
+      {
+        "questionText": "How would you architect a micro-frontend or modular UI approach in a large React Native app, and what are the trade-offs?",
+        "idealAnswer": "I would decompose the UI into feature modules with clear contracts, each owning its screens, navigation entries, and state, composed through a shared navigation and dependency-injection layer. True runtime micro-frontends in RN are harder than on the web because of the single JS bundle and native linking, so most teams use build-time modularization with enforced boundaries rather than separately deployed bundles. Trade-offs include build complexity, bundle size, and the risk of duplicated dependencies versus the benefit of independent team ownership and faster builds. OTA-updatable feature bundles are an advanced option with significant complexity."
+      },
+      {
+        "questionText": "How do you lead a major UI architecture migration, such as adopting a new animation or navigation library, without halting feature work?",
+        "idealAnswer": "I would run it as an incremental migration behind an abstraction layer or feature flags, migrating one surface at a time while both systems coexist. I start with a proof of concept on a non-critical flow, define success metrics, write codemods and lint rules to prevent backsliding, and document patterns. Communication and a clear timeline keep teams aligned, and I prioritize high-traffic or painful areas first for early payoff. The key is avoiding a big-bang rewrite, which risks stalling delivery and introducing regressions."
+      },
+      {
+        "questionText": "How would you build an internationalization and localization strategy for a global React Native app, including RTL support?",
+        "idealAnswer": "I would use a library like i18next or FormatJS with externalized string catalogs, ICU message formatting for plurals and gender, and locale-aware number, date, and currency formatting. RTL requires enabling I18nManager, using logical layout properties like start and end instead of left and right, and mirroring icons and gestures, plus testing in Arabic or Hebrew. The pipeline must handle translator workflows, pseudo-localization to catch hardcoded strings and truncation, and dynamic font sizing for length variance. Designing layouts to flex with text length avoids overflow bugs across locales."
+      },
+      {
+        "questionText": "What is your approach to managing technical debt and component sprawl in a frontend codebase maintained by many engineers?",
+        "idealAnswer": "I make debt visible by tracking it explicitly, tagging deprecated patterns, and using lint rules and architecture tests to stop new debt from accruing. I dedicate a recurring portion of capacity to paydown, prioritizing debt that slows delivery or causes incidents, and use codemods to refactor at scale rather than manual edits. Consolidating duplicate components into the design system and enforcing boundaries reduces sprawl. The leadership challenge is justifying the investment with measurable impact and preventing rewrites from becoming endless."
+      },
+      {
+        "questionText": "How do you ensure accessibility and quality compliance across a large product with many contributors?",
+        "idealAnswer": "I bake accessibility into the design system so reusable components are accessible by default, and add automated checks and linting plus manual screen-reader audits on critical flows in CI or QA. I set clear standards, train engineers, and include accessibility in definition of done and code review. Real-device testing with VoiceOver and TalkBack, dynamic type, and contrast checks catch what automation misses. Treating accessibility as a shared requirement rather than a specialist afterthought is what scales it across many contributors."
+      },
+      {
+        "questionText": "How would you evaluate whether to adopt Expo, bare React Native, or a custom native setup for a large organization?",
+        "idealAnswer": "Expo with the development build and config plugins now supports custom native code and EAS for builds and updates, offering huge velocity, managed upgrades, and OTA, while still allowing native modules. Bare or fully custom setups make sense only when you need deep native control Expo cannot accommodate or have heavy existing native infrastructure. I weigh upgrade burden, the ability to hire and onboard, CI integration, and long-term maintenance cost. For most organizations Expo is now the default recommendation, with the trade-off being reliance on its ecosystem and occasional native module gaps."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "What is a REST API and how does a React Native app typically communicate with one?",
+        "idealAnswer": "A REST API exposes resources over HTTP using methods like GET to read, POST to create, PUT or PATCH to update, and DELETE to remove, usually exchanging JSON. A React Native app calls these endpoints with fetch or axios, sending headers like Authorization and Content-Type and parsing the JSON response. Responses include status codes such as 200 for success, 401 for unauthorized, and 500 for server errors, which the app should handle. The app never talks to the database directly; it goes through the API."
+      },
+      {
+        "questionText": "What does the async and await syntax do when making API calls?",
+        "idealAnswer": "async marks a function that returns a promise, and await pauses execution within it until a promise resolves, letting you write asynchronous code that reads sequentially. For an API call you await fetch and then await response.json to get the parsed data. You wrap the awaited calls in a try-catch to handle network or parsing errors. This avoids deeply nested then callbacks and makes error handling cleaner."
+      },
+      {
+        "questionText": "What is JSON and why is it the common format for mobile API communication?",
+        "idealAnswer": "JSON, JavaScript Object Notation, is a lightweight text format for representing structured data as objects, arrays, strings, numbers, booleans, and null. It is the common choice because it is human-readable, language-agnostic, compact, and maps directly to JavaScript objects, so parsing in a React Native app is trivial with response.json or JSON.parse. It is lighter than XML and well supported by virtually every backend. The app serializes outgoing data with JSON.stringify."
+      },
+      {
+        "questionText": "What are HTTP status codes and which common ones should a mobile app handle?",
+        "idealAnswer": "HTTP status codes signal the result of a request: 2xx means success, 3xx redirection, 4xx client errors, and 5xx server errors. A mobile app commonly handles 200 and 201 for success, 400 for bad requests, 401 for unauthenticated and 403 for forbidden, 404 for not found, 429 for rate limiting, and 500 or 503 for server problems. The app should branch its UI on these, for example prompting re-login on 401 or showing a retry on 5xx. Checking response.ok or the status before parsing avoids treating errors as data."
+      },
+      {
+        "questionText": "How do you send authentication credentials with an API request from a React Native app?",
+        "idealAnswer": "Most commonly you send a token in the Authorization header as a Bearer token, for example Authorization: Bearer <token>, after obtaining it from a login endpoint. The token is stored securely on the device and attached to each request, often through an axios interceptor or a fetch wrapper so you do not repeat it. Some APIs use cookies or API keys instead. You should always use HTTPS so credentials are not sent in plaintext."
+      },
+      {
+        "questionText": "What is the difference between GET and POST requests?",
+        "idealAnswer": "GET retrieves data and should be safe and idempotent, with no request body and parameters passed in the URL query string, and responses are cacheable. POST sends data to the server to create or trigger an action, carries a request body, is not idempotent, and is not cached by default. In a React Native app you fetch a list with GET and submit a form with POST. Using GET for state changes is incorrect and can cause bugs with caching and prefetching."
+      },
+      {
+        "questionText": "What environment-related configuration does a mobile app need to talk to different backend environments?",
+        "idealAnswer": "An app typically needs a base URL that differs between development, staging, and production, plus possibly API keys or feature flags, kept out of source code. These are managed with environment configuration such as react-native-config or Expo's app config and process.env, and selected per build variant or release channel. Secrets should not be hardcoded in the JS bundle since it can be extracted, so truly sensitive values belong on a backend. Pointing local development at a local server requires using the machine's IP rather than localhost on a physical device."
+      },
+      {
+        "questionText": "What is a webhook or push notification, and how does data reach the app when it is not actively requesting it?",
+        "idealAnswer": "Push notifications let a backend send messages to a device proactively through platform services, APNs for iOS and FCM for Android, rather than the app polling. The backend sends a payload to the push service with a device token, and the OS delivers it even if the app is backgrounded. A webhook is a server-to-server callback where one backend notifies another of an event; the mobile app does not receive webhooks directly. For real-time in-app data, apps use websockets or push to avoid constant polling."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you implement token refresh so users are not logged out when an access token expires?",
+        "idealAnswer": "I store a short-lived access token and a longer-lived refresh token securely, and use an HTTP interceptor that detects a 401, calls the refresh endpoint to obtain a new access token, then retries the original request. To avoid a stampede of refresh calls from concurrent requests, I queue in-flight requests behind a single refresh promise. If the refresh token is invalid or expired, I clear credentials and route the user to login. Rotating refresh tokens and handling clock skew make it robust."
+      },
+      {
+        "questionText": "How do you handle API caching and avoid redundant network requests in a React Native app?",
+        "idealAnswer": "I use a data-fetching library like React Query or RTK Query that caches responses by query key, dedupes simultaneous requests, and serves cached data while revalidating in the background. I configure staleTime and cacheTime to balance freshness against network usage, and invalidate or update the cache after mutations. For offline support I persist the cache. This avoids manual loading flags and the bugs of hand-rolled caching, and reduces battery and data usage on mobile."
+      },
+      {
+        "questionText": "What is the difference between REST and GraphQL, and when would you choose one for a mobile app?",
+        "idealAnswer": "REST exposes fixed endpoints per resource, often leading to over-fetching or multiple round trips, while GraphQL exposes a single endpoint where the client specifies exactly the fields it needs in one query. GraphQL is attractive for mobile because it reduces payload size and round trips on constrained networks and adapts well to varied screen data needs. REST is simpler, cacheable at the HTTP layer, and well understood. The trade-off is GraphQL's added client and server complexity, caching nuances, and the need for tooling like Apollo or urql."
+      },
+      {
+        "questionText": "How do you handle file or image uploads from a React Native app to a backend?",
+        "idealAnswer": "I build a multipart/form-data request using FormData, appending the file with its uri, name, and type, and send it via fetch or axios with the appropriate content type, which the runtime sets including the boundary. For large files or reliability I prefer requesting a pre-signed URL from the backend and uploading directly to object storage like S3, which offloads bandwidth from my server. Progress tracking, retries, compression before upload, and handling background uploads are important on mobile. I also validate size and type and handle permission to access the media."
+      },
+      {
+        "questionText": "How would you implement real-time features like a chat or live updates in React Native?",
+        "idealAnswer": "I would use a websocket connection, often via Socket.IO or a managed service, or a real-time platform like Firebase, Supabase Realtime, or Ably, to push updates without polling. The client subscribes to channels, updates local state or the query cache on incoming events, and handles reconnection with backoff when the network drops or the app backgrounds. I must manage connection lifecycle with app state, dedupe and order messages, and reconcile with REST for history. Push notifications complement this for delivery when the app is closed."
+      },
+      {
+        "questionText": "How do you handle and surface API errors gracefully across a React Native app?",
+        "idealAnswer": "I centralize error handling in a request wrapper or interceptor that normalizes errors into a consistent shape, distinguishing network failures, timeouts, validation errors, and server errors. The UI shows appropriate feedback such as inline field errors for 400s, a retry for transient 5xx, and a re-login flow for 401s, while logging unexpected errors to a monitoring tool. I avoid leaking raw error messages and provide user-friendly copy. Mapping error categories to consistent handling keeps the experience predictable."
+      },
+      {
+        "questionText": "What strategies reduce data usage and improve resilience on slow or intermittent mobile networks?",
+        "idealAnswer": "I paginate and lazy-load data, request only needed fields, compress payloads with gzip, and cache aggressively to avoid refetching. I set request timeouts, retry transient failures with exponential backoff, and use AbortController to cancel stale requests when the user navigates away. Detecting connectivity with NetInfo lets me queue writes for later and show offline states. Debouncing search queries and prefetching likely-needed data balance responsiveness against bandwidth."
+      },
+      {
+        "questionText": "How do you keep API request and response types in sync between the backend and a TypeScript React Native client?",
+        "idealAnswer": "I generate client types from a contract rather than hand-writing them, for example using OpenAPI or Swagger codegen for REST, GraphQL Code Generator for GraphQL, or sharing types from a monorepo package. This ensures the client and server stay aligned and catches breaking changes at compile time. Runtime validation with Zod or io-ts at the boundary guards against the server returning unexpected shapes. The trade-off is added build tooling, but it dramatically reduces integration bugs."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design a robust offline sync engine between a React Native client and a backend?",
+        "idealAnswer": "I would model the local store as authoritative for the UI and maintain an outbox of pending mutations with client-generated IDs and a sync state. A sync loop pushes pending changes when online and pulls deltas using cursors or updatedAt timestamps, applying idempotent operations so retries are safe. Conflict resolution needs an explicit policy, such as server-authoritative, last-write-wins with vector clocks, or CRDTs for collaborative data. Handling partial failures, tombstones for deletes, schema migrations, and backoff on errors are the hard parts, and I would design the API to support incremental sync from the start."
+      },
+      {
+        "questionText": "How do you secure communication between a mobile app and backend against interception and tampering?",
+        "idealAnswer": "I enforce TLS everywhere and add certificate or public-key pinning for high-value apps to defeat man-in-the-middle proxies, while planning for pin rotation to avoid bricking clients. Tokens live in secure storage, requests are authenticated and ideally signed, and sensitive operations are validated server-side since the client is never trusted. I add protections like attestation with Play Integrity and App Attest to verify genuine app and device, rate limiting, and replay protection with nonces or timestamps. The principle is that the backend must assume the client can be reverse-engineered."
+      },
+      {
+        "questionText": "How would you architect the API and client to handle pagination consistently for large, frequently changing datasets?",
+        "idealAnswer": "I prefer cursor-based pagination over offset-based for large or changing data because offsets cause skipped or duplicated items when records are inserted or deleted between page loads. The cursor encodes a stable sort position, and the API returns the next cursor and a hasMore flag. On the client I merge pages into a normalized cache, dedupe by ID, and preserve scroll position, refetching the first page for freshness. For real-time-ish feeds I combine pagination with a top-of-list refresh and handle the gap between cached pages and new items carefully."
+      },
+      {
+        "questionText": "How do you handle idempotency and retries for critical operations like payments initiated from a mobile client?",
+        "idealAnswer": "I generate a unique idempotency key on the client per logical operation and send it with the request, so the backend can detect and ignore duplicate submissions caused by retries, timeouts, or double taps, returning the original result. The server stores the key with the operation outcome for a window. The client retries safely on network failures because the key guarantees the action happens at most once. Combining this with clear UI state, disabling the action while in flight, and reconciling final status via a follow-up query prevents double charges."
+      },
+      {
+        "questionText": "What are the considerations for integrating push notifications end to end, including delivery reliability and token management?",
+        "idealAnswer": "I register the device for APNs or FCM, send the resulting token to my backend, and handle token refresh and invalidation so I do not send to dead tokens. The backend targets users, batches sends, respects platform payload limits and priorities, and handles delivery feedback to prune unregistered tokens. Reliability concerns include that push is best-effort, not guaranteed, so critical data is reconciled via a fetch on open, and I handle foreground, background, and killed states, deep linking from a tap, and permission prompts. Quiet hours, throttling, and per-user preferences round out a production system."
+      },
+      {
+        "questionText": "How would you implement a bridge to a native SDK that the backend integration requires, and what are the risks?",
+        "idealAnswer": "I would write a TurboModule exposing a clean, promise-based JS API over the native SDK in Swift or Kotlin, marshaling data carefully and handling threading so heavy work stays off the main thread. Risks include API surface mismatch between platforms, memory and lifecycle bugs, blocking the UI thread, and the maintenance burden of keeping the native SDK and module updated through React Native upgrades. I would add thorough error propagation to JS, type definitions, and tests, and consider whether an existing community module suffices before building custom native code."
+      },
+      {
+        "questionText": "How do you approach observability and debugging of backend-related issues that only manifest on mobile devices in the field?",
+        "idealAnswer": "I instrument the client with structured logging, breadcrumbs, and a crash and error reporter like Sentry that captures network failures, response codes, and context. I add distributed tracing so a request can be followed from the app through the backend with correlation IDs, and capture network timing and connectivity metadata. Feature flags and remote logging levels let me increase detail for affected users without a release. The challenge is balancing useful telemetry against privacy, battery, and data usage, so I sample and scrub PII."
+      },
+      {
+        "questionText": "How would you design the client-server contract to make API versioning and backward compatibility manageable for shipped mobile apps?",
+        "idealAnswer": "Because old app versions linger in the field, the backend must support multiple client versions simultaneously, so I favor additive, backward-compatible changes and avoid breaking existing fields. Versioning can be via URL or header for major breaks, with deprecation windows and telemetry on which versions are still in use before removal. The client tolerates unknown fields and degrades gracefully, and a forced-upgrade mechanism handles truly breaking changes. Contract testing and clear deprecation policy prevent breaking users who cannot or will not update."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design the backend-for-frontend layer to serve a React Native app efficiently at scale?",
+        "idealAnswer": "I would introduce a BFF tailored to the mobile client that aggregates and shapes data from multiple downstream services into mobile-optimized payloads, reducing round trips and over-fetching on constrained networks. The BFF handles auth token exchange, response composition, caching, and graceful degradation when a downstream service fails. This decouples the app from internal service churn and lets the mobile team iterate on its contract independently. Trade-offs include an extra hop and the BFF becoming a bottleneck or owner-ambiguity, so I keep it thin, well-owned, and horizontally scalable."
+      },
+      {
+        "questionText": "How do you architect authentication and authorization across mobile, multiple backend services, and third parties?",
+        "idealAnswer": "I would centralize identity with OAuth 2.0 and OpenID Connect using an identity provider, issuing short-lived access tokens, typically JWTs, validated by each service, with refresh tokens stored securely on device and using PKCE for the mobile auth flow. Authorization is enforced server-side per service via scopes, roles, or policy, never trusting the client. For third-party integrations I use delegated tokens and avoid passing long-lived secrets to the device. Key concerns are token revocation, rotation, session management across devices, and minimizing blast radius if a token leaks."
+      },
+      {
+        "questionText": "How would you lead the design of a real-time messaging backend that scales to millions of mobile connections?",
+        "idealAnswer": "I would use a horizontally scalable gateway layer for websockets behind a load balancer, with a pub/sub backbone like Kafka or Redis to fan out messages across nodes, and a presence service tracking connections. Mobile reality requires falling back to push notifications when the socket is closed, reconnection with backoff, message ordering and dedup with sequence numbers, and at-least-once delivery with client idempotency. Persistence stores history for catch-up sync, and partitioning by conversation or user keeps it scalable. Trade-offs span consistency versus latency, connection cost, and the operational complexity of stateful connections at scale."
+      },
+      {
+        "questionText": "What is your strategy for managing breaking API changes when millions of users may run old app versions for months?",
+        "idealAnswer": "I treat the mobile contract as long-lived and maintain backward compatibility through additive evolution, supporting multiple versions concurrently with clear deprecation windows informed by telemetry on active version distribution. A capability or feature-flag negotiation lets the server adapt behavior per client version, and a forced-upgrade gate handles genuinely incompatible changes or security issues. I invest in contract testing and an internal policy so teams cannot ship breaking changes unknowingly. The leadership task is aligning many service teams around these rules and the cost of supporting the long tail."
+      },
+      {
+        "questionText": "How would you design rate limiting, abuse prevention, and fair usage for APIs consumed by a public mobile app?",
+        "idealAnswer": "I would apply layered rate limits per user, per device, and per IP using token-bucket or sliding-window algorithms at the gateway, returning 429 with Retry-After so clients back off gracefully. Since the client is untrusted, I add device attestation, bot detection, and anomaly monitoring to catch credential stuffing and scraping, plus stricter limits on sensitive endpoints. The client must handle 429s with backoff and surface friendly messaging. Trade-offs include avoiding false positives that block legitimate users on shared networks and tuning limits against capacity and cost."
+      },
+      {
+        "questionText": "How do you approach cost, performance, and reliability trade-offs when choosing between polling, websockets, and push for keeping mobile data fresh?",
+        "idealAnswer": "Polling is simple and stateless but wastes battery and bandwidth and adds latency; websockets give low latency and real-time but cost persistent stateful connections and complex scaling; push is efficient for sparse, important events but is best-effort and platform-mediated. I match the mechanism to the data: push plus a fetch-on-open for infrequent updates, websockets for truly interactive features, and smart polling with backoff or long-polling where simplicity wins. At scale I weigh connection cost and infra complexity against user-perceived freshness. Often a hybrid is the right answer."
+      },
+      {
+        "questionText": "How would you establish observability and SLOs spanning the mobile client and backend to manage end-to-end reliability?",
+        "idealAnswer": "I define user-centric SLIs like successful request rate, end-to-end latency percentiles, crash-free sessions, and cold-start time, then set SLOs with error budgets that gate risky releases. Distributed tracing with correlation IDs links client requests to backend spans, while RUM captures field conditions across devices, OS versions, and networks. I build dashboards and alerting tied to the error budget and ensure mobile-specific signals like ANRs and OTA adoption are visible. The leadership challenge is aligning teams on shared SLOs and acting on the budget rather than just collecting metrics."
+      },
+      {
+        "questionText": "How would you design data privacy and compliance, such as GDPR, into the mobile-to-backend data flow?",
+        "idealAnswer": "I minimize data collected and stored on device and in transit, encrypt at rest and in transit, and tie every piece of personal data to a lawful basis and retention policy. I implement consent management, data subject access and deletion requests that propagate from the backend through caches and the device, and regional data residency where required. On the client I avoid logging PII, scrub telemetry, and gate analytics behind consent. The architecture must make deletion and export tractable, which means cataloging where personal data lives across services and the mobile cache from the start."
+      }
+    ]
+  }
+]

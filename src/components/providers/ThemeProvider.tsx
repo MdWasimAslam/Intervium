@@ -1,21 +1,27 @@
 "use client";
 
 import { ThemeProvider as NextThemesProvider } from "next-themes";
+import { MotionConfig } from "framer-motion";
 import type { ReactNode } from "react";
 
 /**
- * Wraps the app with `next-themes` so light/dark mode can be toggled and
- * persisted. Uses the `class` strategy to match the Tailwind dark variant.
+ * Wraps the app with `next-themes`.
+ *
+ * - `attribute="class"` toggles the `.dark` class on <html> (matches the
+ *   Tailwind dark variant in globals.css).
+ * - `defaultTheme="light"` → the app defaults to light/white.
+ * - The user's choice is persisted to localStorage automatically.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="system"
-      enableSystem
+      defaultTheme="light"
+      enableSystem={false}
       disableTransitionOnChange
     >
-      {children}
+      {/* Honour the OS "reduce motion" setting across all framer-motion. */}
+      <MotionConfig reducedMotion="user">{children}</MotionConfig>
     </NextThemesProvider>
   );
 }

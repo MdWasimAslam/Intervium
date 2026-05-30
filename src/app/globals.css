@@ -1,20 +1,255 @@
 @import "tailwindcss";
 
-/**
- * Enable class-based dark mode (Tailwind v4).
- * `next-themes` toggles the `.dark` class on <html>, and this variant makes
- * `dark:` utilities respond to that class instead of the OS preference.
- */
+/* ------------------------------------------------------------------ */
+/* Dark mode                                                          */
+/* next-themes toggles the `.dark` class on <html>; this variant makes */
+/* `dark:` utilities respond to that class instead of the OS setting.  */
+/* ------------------------------------------------------------------ */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ------------------------------------------------------------------ */
+/* Design tokens (CSS variables)                                       */
+/* ------------------------------------------------------------------ */
 :root {
-  color-scheme: light dark;
+  /* Surfaces & text — light theme: white bg, near-black text */
+  --background: #ffffff;
+  --foreground: #0a0f0d;
+
+  /* Light-gray cards */
+  --card: #f6f8f7;
+  --card-foreground: #0a0f0d;
+
+  --popover: #ffffff;
+  --popover-foreground: #0a0f0d;
+
+  /* Brand green */
+  --primary: #00b775;
+  --primary-foreground: #ffffff;
+
+  /* Secondary / muted / accent neutrals */
+  --secondary: #f1f4f3;
+  --secondary-foreground: #0a0f0d;
+  --muted: #f1f4f3;
+  --muted-foreground: #5b6b66;
+  --accent: #e8f7f0;
+  --accent-foreground: #04532f;
+
+  --destructive: #e5484d;
+  --destructive-foreground: #ffffff;
+
+  --border: #e6eae8;
+  --input: #e6eae8;
+  --ring: #00b775;
+
+  /* Radius scale — base maps to rounded cards (2xl) */
+  --radius: 1rem;
 }
 
-html {
-  scroll-behavior: smooth;
+.dark {
+  /* Dark neutral background, light text */
+  --background: #0b0f0e;
+  --foreground: #f3f5f4;
+
+  /* Slightly lifted cards */
+  --card: #15191a;
+  --card-foreground: #f3f5f4;
+
+  --popover: #15191a;
+  --popover-foreground: #f3f5f4;
+
+  /* Lightened green so it stays readable on dark surfaces */
+  --primary: #2bdc97;
+  --primary-foreground: #04231a;
+
+  --secondary: #1b201f;
+  --secondary-foreground: #f3f5f4;
+  --muted: #1b201f;
+  --muted-foreground: #9aa8a3;
+  --accent: #143027;
+  --accent-foreground: #b6f0d8;
+
+  --destructive: #f2555a;
+  --destructive-foreground: #1a0203;
+
+  --border: #262b2a;
+  --input: #262b2a;
+  --ring: #2bdc97;
 }
 
-body {
-  @apply bg-white text-gray-900 antialiased dark:bg-gray-950 dark:text-gray-100;
+/* ------------------------------------------------------------------ */
+/* Map tokens to Tailwind theme so `bg-background`, `text-primary`,    */
+/* `border-border`, `rounded-2xl`, etc. all resolve to the variables.  */
+/* ------------------------------------------------------------------ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-lg: var(--radius);
+  --radius-md: calc(var(--radius) - 4px);
+  --radius-sm: calc(var(--radius) - 8px);
+  --radius-2xl: calc(var(--radius) + 0.5rem);
+}
+
+/* ------------------------------------------------------------------ */
+/* Base styles                                                         */
+/* ------------------------------------------------------------------ */
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    -webkit-font-smoothing: antialiased;
+  }
+}
+
+:root {
+  color-scheme: light;
+}
+.dark {
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ */
+/* Entrance animation                                                  */
+/* A subtle fade + rise used to stagger dashboard sections in. The     */
+/* prefers-reduced-motion block below collapses the duration to ~0,    */
+/* so motion-sensitive users get the final state with no movement.     */
+/* ------------------------------------------------------------------ */
+@keyframes intervium-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: intervium-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Indeterminate progress bar — a 1/3-width fill sweeping across its track. */
+/* Used by the "Generating your questions…" loading state.                  */
+@keyframes loadingbar {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(420%);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Landing page atmosphere                                             */
+/* A distinctive editorial display face for headlines (wired through   */
+/* next/font as --font-display), plus a faint grid and a soft brand     */
+/* glow that give the marketing hero depth instead of a flat fill.      */
+/* Both adapt to the active theme via the design tokens + color-mix.    */
+/* ------------------------------------------------------------------ */
+.font-display {
+  font-family: var(--font-display), ui-serif, Georgia, "Times New Roman", serif;
+}
+
+.landing-grid {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in srgb, var(--foreground) 6%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--foreground) 6%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(
+    120% 75% at 50% 0%,
+    #000 25%,
+    transparent 72%
+  );
+  mask-image: radial-gradient(120% 75% at 50% 0%, #000 25%, transparent 72%);
+}
+
+.landing-glow {
+  background: radial-gradient(
+    closest-side,
+    color-mix(in srgb, var(--primary) 20%, transparent),
+    transparent
+  );
+  filter: blur(46px);
+}
+
+/* Respect the user's reduced-motion preference for CSS transitions too. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Print-to-PDF for the /cv preview.                                  */
+/*                                                                    */
+/* The printable CV is rendered into a portal at the end of <body>    */
+/* (`.cv-print-root`). On screen it's hidden; when printing we hide   */
+/* every other top-level node and show only the CV — so there are no  */
+/* blank pages from invisible-but-laid-out app chrome. `@page margin: */
+/* 0` removes the browser's default date/URL/title header & footer;   */
+/* the page padding below restores comfortable margins.               */
+/* ------------------------------------------------------------------ */
+.cv-print-root {
+  display: none;
+}
+
+@media print {
+  body > * {
+    display: none !important;
+  }
+  body > .cv-print-root {
+    display: block !important;
+  }
+  .cv-print-page {
+    padding: 14mm 14mm;
+    color: #111111 !important;
+    background: #ffffff !important;
+  }
+  /* Keep section headings with their following content where possible. */
+  .cv-print-page h2,
+  .cv-print-page h3 {
+    break-after: avoid;
+  }
+  @page {
+    margin: 0;
+  }
 }

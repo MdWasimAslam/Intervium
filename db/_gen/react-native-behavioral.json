@@ -1,0 +1,494 @@
+[
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Junior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about the first time you set up a React Native project from scratch. What did you find confusing, and how did you get unstuck?",
+        "idealAnswer": "A strong answer describes a concrete setup (Expo or React Native CLI), names a real friction point such as configuring the Android SDK, Xcode, Metro bundler, or environment variables, and explains the steps taken to resolve it. The candidate should show they read the official docs, searched for the error message, or asked a teammate rather than guessing randomly. Look for honest acknowledgment of confusion paired with a systematic recovery, and a takeaway about what they would set up differently next time."
+      },
+      {
+        "questionText": "Describe a situation where you didn't understand a piece of feedback during a code review on a mobile app. How did you handle it?",
+        "idealAnswer": "The candidate should show they asked clarifying questions instead of staying silent or becoming defensive. A good answer references a specific comment (e.g., about component structure or naming), explains how they sought to understand the reviewer's intent, and describes applying the change and learning from it. Look for humility, willingness to learn, and treating review as collaboration rather than criticism. A pitfall is dismissing feedback or making the change without understanding why."
+      },
+      {
+        "questionText": "Share an experience where you had to learn a new tool or library under a deadline for a React Native task. What was your approach?",
+        "idealAnswer": "Look for a structured learning approach: skimming docs, building a tiny proof of concept, and leaning on examples rather than trying to master everything. The candidate should name the library (e.g., a navigation or networking library) and describe time-boxing their learning so they could still ship. A strong answer balances speed with not blindly copying code, and shows they verified the result worked. The pitfall is endless tutorial-watching with no shipped outcome."
+      },
+      {
+        "questionText": "Tell me about a time you made a mistake that broke the app build or the running app. What did you do?",
+        "idealAnswer": "The candidate should own the mistake without blaming others, describe how they noticed it (CI failure, a teammate, or testing), and explain the fix. A good answer mentions communicating the breakage promptly and reverting or hotfixing quickly to unblock others. Look for a lesson learned, such as testing locally before pushing or reading error logs carefully. Avoiding blame and showing accountability is the core signal at the junior band."
+      },
+      {
+        "questionText": "Describe how you ask for help when you are stuck on a React Native bug for more than an hour.",
+        "idealAnswer": "A good answer shows the candidate tries reasonable self-help first (reading the stack trace, searching, isolating the problem) and then asks for help with a clear, specific question that includes what they tried. They should respect teammates' time by providing context rather than just saying 'it doesn't work.' Look for a healthy balance between independence and not wasting hours stuck. The pitfall is either never asking for help or asking immediately without any attempt."
+      },
+      {
+        "questionText": "Tell me about a task where the requirements were unclear. How did you proceed?",
+        "idealAnswer": "The candidate should describe seeking clarification from a product owner, designer, or senior engineer rather than assuming. A good answer involves restating their understanding, asking targeted questions, or building a small piece to validate direction. Look for proactive communication and avoiding wasted work on the wrong thing. The pitfall is silently building something based on a wrong assumption."
+      },
+      {
+        "questionText": "Describe a moment when you received praise for your work on a mobile feature. What had you done?",
+        "idealAnswer": "Look for the candidate to credit collaboration appropriately while still articulating their specific contribution. A good answer connects the praise to a concrete behavior such as attention to detail, helping a teammate, or finishing a tricky UI on time. The candidate should show self-awareness about what made the work valued. A weak answer is vague or takes sole credit for a team effort."
+      },
+      {
+        "questionText": "Tell me about a time you had to balance multiple small tasks at once. How did you stay organized?",
+        "idealAnswer": "The candidate should describe a concrete system: a task board, a to-do list, communicating priorities with their lead, or focusing on one task at a time. A good answer shows they asked which task mattered most when unsure, rather than guessing. Look for evidence of follow-through and not dropping work silently. The pitfall is claiming to multitask everything without any prioritization."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Mid",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Describe a disagreement you had with a teammate about how to structure a React Native feature. How was it resolved?",
+        "idealAnswer": "A strong answer shows the candidate listened to the other viewpoint, articulated their own reasoning with trade-offs (e.g., reusability vs. shipping speed), and reached a decision based on data or shared principles rather than ego. They should describe disagreeing and committing if the team chose another path. Look for respectful conflict handling and a focus on the product outcome. The pitfall is either steamrolling the teammate or conceding without contributing reasoning."
+      },
+      {
+        "questionText": "Tell me about a time you had to debug an issue that only reproduced on a real device and not in the simulator. Walk me through your process.",
+        "idealAnswer": "The candidate should describe a systematic approach: reproducing reliably, isolating variables (OS version, device, network), adding logging or using debugging tools, and forming hypotheses. A good answer mentions platform-specific causes such as permissions, performance under real memory constraints, or native module behavior. Look for persistence and methodical narrowing rather than random changes. The lesson should reinforce testing on real devices earlier."
+      },
+      {
+        "questionText": "Share an example of when you pushed back on a deadline or scope because of technical concerns. How did that conversation go?",
+        "idealAnswer": "Look for the candidate raising concerns early and framing them in terms of risk, quality, or user impact rather than personal preference. A good answer describes proposing alternatives such as cutting scope, phasing the work, or accepting a known trade-off with stakeholders informed. The candidate should respect the business context while advocating for sustainable engineering. The pitfall is either silently accepting an unrealistic deadline or refusing without offering options."
+      },
+      {
+        "questionText": "Describe a time you took ownership of a problem that wasn't strictly assigned to you.",
+        "idealAnswer": "The candidate should show initiative: noticing a flaky test, a recurring crash, or a gap in the codebase and addressing it. A good answer explains how they communicated before going off-book, scoped the work so it didn't derail their main tasks, and delivered a measurable improvement. Look for ownership beyond their narrow remit balanced with team awareness. The pitfall is rogue work that creates surprises or ignores priorities."
+      },
+      {
+        "questionText": "Tell me about a time you mentored or helped onboard someone less experienced on a React Native codebase.",
+        "idealAnswer": "A good answer describes patient, tailored help: pairing, explaining the why behind patterns, pointing to docs, and gradually increasing the person's independence. The candidate should show empathy and adapt to the learner's level rather than just giving answers. Look for evidence the mentee grew and that the candidate found it rewarding. The pitfall is doing the work for them or condescending teaching."
+      },
+      {
+        "questionText": "Describe a situation where you had to make a trade-off between writing clean code and shipping quickly.",
+        "idealAnswer": "The candidate should demonstrate judgment about when technical debt is acceptable and when it isn't. A good answer describes consciously taking a shortcut, documenting it (a TODO, a ticket, or a note to the team), and revisiting it later. Look for context-driven decisions tied to deadlines and risk rather than a dogmatic stance either way. The pitfall is taking on debt silently or gold-plating low-value code."
+      },
+      {
+        "questionText": "Tell me about a time you handled conflicting priorities from two different stakeholders.",
+        "idealAnswer": "Look for the candidate surfacing the conflict transparently rather than quietly picking one. A good answer describes gathering context on each request's impact, escalating to a manager or PM to arbitrate, and communicating the decision back to both parties. The candidate should focus on the highest-value outcome and avoid promising everything to everyone. The pitfall is overcommitting and missing both."
+      },
+      {
+        "questionText": "Share an experience where a feature you shipped caused an unexpected problem in production. How did you respond?",
+        "idealAnswer": "The candidate should describe calm incident response: assessing impact, communicating to stakeholders, rolling back or hotfixing, and then doing a blameless post-mortem. A good answer identifies the root cause and the process change that prevented recurrence, such as better testing or a feature flag. Look for accountability and a learning orientation rather than defensiveness. The pitfall is hiding the issue or skipping the follow-up analysis."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Senior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Describe a significant technical decision you drove on a React Native project where you had to weigh several competing options. How did you decide?",
+        "idealAnswer": "A senior answer shows a structured decision process: defining criteria (performance, maintainability, team familiarity, cost), evaluating options against them, and documenting the rationale, possibly in an RFC or design doc. The candidate should describe socializing the decision, incorporating feedback, and owning the outcome including any downsides. Look for evidence they considered second-order effects and reversibility. The pitfall is deciding by gut without involving stakeholders or recording the reasoning."
+      },
+      {
+        "questionText": "Tell me about a time you identified and resolved a systemic quality or reliability problem affecting a mobile codebase.",
+        "idealAnswer": "The candidate should describe spotting a pattern (recurring crashes, slow startup, flaky CI) and addressing the root cause rather than symptoms. A good answer includes measuring the problem, proposing a fix that scales across the team, and tracking the improvement with metrics like crash-free rate. Look for influence beyond their own code and a data-driven approach. The pitfall is a one-off fix that doesn't prevent recurrence."
+      },
+      {
+        "questionText": "Describe a situation where you had to convince a skeptical team to adopt a new practice, library, or architecture.",
+        "idealAnswer": "Look for influence through evidence and empathy: understanding the team's concerns, running a pilot or proof of concept, and presenting trade-offs honestly including costs. A good answer shows the candidate built consensus rather than mandating change, and adjusted their proposal based on feedback. The outcome should include adoption and measurable benefit. The pitfall is pushing change for novelty's sake or ignoring legitimate objections."
+      },
+      {
+        "questionText": "Tell me about the hardest production incident you led the response to in a mobile context. What was your role?",
+        "idealAnswer": "A senior answer demonstrates incident leadership: triaging severity, coordinating responders, communicating clearly with stakeholders, and making decisive calls under pressure such as rolling back a release or force-updating clients. The candidate should describe the root-cause analysis and durable preventive changes like monitoring, alerting, or staged rollouts. Look for calm under pressure and ownership of both the fix and the prevention. The pitfall is heroics without process improvement."
+      },
+      {
+        "questionText": "Describe a time you had to deliver difficult feedback to a peer about their work or behavior.",
+        "idealAnswer": "The candidate should show they gave feedback privately, specifically, and with care, focusing on behavior and impact rather than character. A good answer describes preparing examples, listening to the other person's perspective, and agreeing on a path forward. Look for emotional intelligence and follow-up to confirm improvement. The pitfall is avoiding the conversation or delivering it harshly or publicly."
+      },
+      {
+        "questionText": "Share an example of when you had to balance long-term technical health against immediate delivery pressure across a quarter.",
+        "idealAnswer": "Look for the candidate framing tech debt as a managed investment: negotiating capacity for refactoring, quantifying the cost of inaction, and aligning with product on a roadmap. A good answer describes concrete mechanisms such as a debt budget, boy-scout rules, or dedicated cleanup sprints. The candidate should show they protected delivery while preventing decay. The pitfall is either all firefighting or unilateral big refactors that stall features."
+      },
+      {
+        "questionText": "Tell me about a time you changed your mind on an important technical position after new information emerged.",
+        "idealAnswer": "A strong answer shows intellectual humility: holding opinions strongly but loosely, recognizing disconfirming evidence, and updating publicly without ego. The candidate should describe the original position, what changed (data, a failure, a better argument), and how they communicated the reversal to the team. Look for this strengthening rather than damaging their credibility. The pitfall is rigidity or, conversely, having no convictions at all."
+      },
+      {
+        "questionText": "Describe how you have grown the technical skills of a team, not just an individual, over time.",
+        "idealAnswer": "The candidate should describe scalable mechanisms: tech talks, documentation, code review standards, pairing rotations, or a shared component library with usage guidelines. A good answer connects these efforts to measurable team outcomes like faster onboarding or fewer review cycles. Look for a multiplier mindset that raises the whole team's bar. The pitfall is hoarding knowledge or only ever being the individual hero."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Lead",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you set the technical direction for a mobile platform used by multiple teams. How did you align everyone?",
+        "idealAnswer": "A lead answer describes creating a vision and translating it into principles, standards, or a shared architecture that teams could adopt. The candidate should explain building buy-in through forums, RFCs, and incorporating team feedback, and balancing autonomy with consistency. Look for governance mechanisms and how they handled dissent or divergent needs. The pitfall is top-down mandates without alignment or, conversely, no direction at all leading to fragmentation."
+      },
+      {
+        "questionText": "Describe a cross-team conflict over shared mobile infrastructure or release process that you had to resolve.",
+        "idealAnswer": "The candidate should show neutral facilitation: understanding each team's incentives, finding shared goals, and proposing a solution or governance model that balances competing needs. A good answer describes managing organizational politics, escalating appropriately, and getting durable agreement. Look for outcomes that improved the system for everyone, not just one team. The pitfall is picking a winner without addressing underlying tensions."
+      },
+      {
+        "questionText": "Tell me about a major architectural bet you made and how you managed the risk of being wrong.",
+        "idealAnswer": "A strong answer shows the candidate de-risked through prototypes, phased rollouts, reversible decisions, and clear success metrics with off-ramps. The candidate should describe the stakes, how they communicated uncertainty to leadership, and what they would do if signals turned negative. Look for managing the bet as a portfolio of smaller validated steps. The pitfall is a big-bang rewrite with no fallback or a decision made without organizational alignment."
+      },
+      {
+        "questionText": "Describe how you have built and developed a team's engineering culture in a mobile organization.",
+        "idealAnswer": "Look for deliberate culture-building: hiring for values, setting expectations for ownership and quality, creating psychological safety, and modeling the behaviors they want. A good answer ties culture to outcomes like retention, incident handling, or delivery predictability. The candidate should describe specific rituals and how they reinforced them over time. The pitfall is treating culture as posters rather than lived, reinforced behavior."
+      },
+      {
+        "questionText": "Tell me about a time you had to make an unpopular decision that you believed was right for the long term.",
+        "idealAnswer": "The candidate should show conviction grounded in reasoning, transparent communication of the why, and empathy for those affected. A good answer describes how they listened to objections, made the call anyway with clear rationale, and owned the consequences. Look for the ability to be decisive while maintaining trust. The pitfall is either caving to pressure or being authoritarian without explanation."
+      },
+      {
+        "questionText": "Share an experience where you had to influence senior leadership or product to invest in mobile platform work with no direct feature payoff.",
+        "idealAnswer": "A lead answer translates technical needs into business language: risk, velocity, cost, and customer impact, supported by data. The candidate should describe building a compelling narrative, securing budget or headcount, and reporting on outcomes to maintain trust. Look for stakeholder management and quantifying the value of invisible work. The pitfall is asking for investment using only technical jargon or without measurable goals."
+      },
+      {
+        "questionText": "Describe how you have handled an underperforming engineer or a team that was missing its commitments.",
+        "idealAnswer": "The candidate should show diagnosis before action: understanding root causes (skills, clarity, motivation, process, or personal issues), then a tailored plan with clear expectations and support. A good answer describes documenting, giving honest feedback, and following through, including difficult outcomes if improvement didn't happen. Look for fairness, empathy, and protecting the rest of the team. The pitfall is ignoring the problem or acting punitively without support."
+      },
+      {
+        "questionText": "Tell me about a time you led a significant change to how a mobile team works, such as adopting a new release cadence or development process.",
+        "idealAnswer": "A strong answer describes change management: building the case, piloting, communicating, training, and iterating based on feedback. The candidate should acknowledge resistance and how they addressed it, and measure whether the change achieved its goals. Look for sustained adoption rather than a short-lived initiative. The pitfall is mandating a process without buy-in or failing to measure impact."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Junior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you had to translate a designer's mockup into a React Native screen. How did you handle details that were ambiguous?",
+        "idealAnswer": "A good answer shows the candidate paid attention to spacing, fonts, and states, and asked the designer when something was unclear rather than guessing. They should mention checking the result on different screen sizes and matching the design closely. Look for collaboration with design and care for visual detail. The pitfall is shipping something visibly off-spec without flagging the gaps."
+      },
+      {
+        "questionText": "Describe a situation where a UI component you built didn't look right on one platform. What did you do?",
+        "idealAnswer": "The candidate should describe noticing a platform difference (iOS vs Android styling, shadows, fonts, or safe areas) and investigating why. A good answer mentions testing on both platforms and adjusting styles accordingly. Look for awareness that React Native renders differently per platform and a willingness to verify rather than assume. The pitfall is only ever testing on one platform."
+      },
+      {
+        "questionText": "Tell me about a time you got feedback that your UI wasn't accessible or usable. How did you respond?",
+        "idealAnswer": "A good answer shows openness to the feedback and concrete action, such as adding accessibility labels, increasing touch target sizes, or improving contrast. The candidate should describe learning what they missed and applying it going forward. Look for empathy for users and treating accessibility as part of the job. The pitfall is treating it as optional polish or being defensive."
+      },
+      {
+        "questionText": "Share an experience where you had to make a list or scroll view perform better. How did you approach it?",
+        "idealAnswer": "The candidate should describe noticing jank or slow scrolling and trying a known fix such as using a proper list component, keys, or avoiding heavy work in render. A good answer mentions measuring before and after rather than guessing. Look for basic performance awareness and verifying the improvement. The pitfall is random optimization without confirming it helped."
+      },
+      {
+        "questionText": "Describe a time you collaborated closely with a designer or product owner on the look and feel of a feature.",
+        "idealAnswer": "Look for the candidate showing they communicated regularly, shared work-in-progress, and incorporated feedback iteratively. A good answer describes a back-and-forth that improved the result and respected the designer's intent. The candidate should show they valued the partnership rather than treating design as a fixed spec to implement blindly. The pitfall is no communication until the end."
+      },
+      {
+        "questionText": "Tell me about a time you had to fix a confusing layout bug in a React Native UI.",
+        "idealAnswer": "The candidate should describe a systematic approach to a layout issue, such as inspecting the element, simplifying styles, or checking flexbox properties. A good answer shows they isolated the cause rather than randomly tweaking values until it looked right. Look for understanding of how the layout system works at a basic level. The pitfall is trial-and-error with no understanding of why the fix worked."
+      },
+      {
+        "questionText": "Describe a moment when you had to reuse or refactor an existing UI component instead of building a new one.",
+        "idealAnswer": "A good answer shows the candidate checked the codebase for existing components before building from scratch, and adapted one to fit the new need. They should describe communicating with the team if a shared component needed changes. Look for awareness of consistency and avoiding duplication. The pitfall is reinventing a component that already existed."
+      },
+      {
+        "questionText": "Tell me about a time you were unsure whether a UI change matched the brand or style guidelines. What did you do?",
+        "idealAnswer": "The candidate should describe consulting the style guide, design system, or asking a designer rather than assuming. A good answer shows they cared about visual consistency and verified before shipping. Look for proactive checking and respect for established standards. The pitfall is guessing and introducing an inconsistent style."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Mid",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Describe a time you diagnosed and fixed a performance problem in a React Native screen with a long or complex list.",
+        "idealAnswer": "The candidate should describe profiling to find the cause (excessive re-renders, heavy item rendering, large images) and applying targeted fixes such as memoization, virtualization tuning, or deferring work. A good answer includes measuring frame rate or load time before and after. Look for a data-driven approach and understanding of the render pipeline. The pitfall is applying optimizations blindly without confirming they addressed the real bottleneck."
+      },
+      {
+        "questionText": "Tell me about a disagreement with a designer over a UI behavior or interaction. How did you resolve it?",
+        "idealAnswer": "A good answer shows the candidate raised technical constraints or usability concerns respectfully, proposed alternatives, and reached a workable compromise. They should describe focusing on the user outcome rather than winning. Look for collaboration and the ability to explain technical limits without dismissiveness. The pitfall is either silently implementing something they think is wrong or refusing to budge."
+      },
+      {
+        "questionText": "Share an experience where you had to handle inconsistent UI behavior across iOS and Android. How did you manage it?",
+        "idealAnswer": "The candidate should describe identifying the platform difference, deciding whether to unify or respect platform conventions, and implementing platform-specific handling where needed. A good answer references testing on both platforms and documenting the divergence. Look for judgment about when to match platform norms versus enforce consistency. The pitfall is ignoring one platform or forcing identical behavior where it harms UX."
+      },
+      {
+        "questionText": "Describe a time you built a reusable component or pattern that other developers adopted.",
+        "idealAnswer": "Look for the candidate designing for reuse: clear props, sensible defaults, documentation, and gathering input from future consumers. A good answer describes how it reduced duplication and how they handled adoption and feedback. The candidate should show they balanced flexibility with simplicity. The pitfall is an over-engineered component or one nobody else could understand or use."
+      },
+      {
+        "questionText": "Tell me about a time you had to refactor messy UI code while still delivering a feature on time.",
+        "idealAnswer": "The candidate should describe scoping the refactor so it served the feature, avoiding a rewrite, and possibly using small incremental improvements. A good answer mentions verifying behavior didn't change, ideally with tests or careful manual checks. Look for pragmatism and risk awareness. The pitfall is an unbounded refactor that jeopardizes the deadline or untested sweeping changes."
+      },
+      {
+        "questionText": "Describe how you handled implementing a complex form or input flow with validation in React Native.",
+        "idealAnswer": "A good answer describes managing form state, validation feedback, keyboard handling, and edge cases like errors and loading states. The candidate should mention testing the unhappy paths and considering accessibility. Look for attention to user experience details and state management choices. The pitfall is only handling the happy path or ignoring keyboard and focus behavior."
+      },
+      {
+        "questionText": "Tell me about a time you had to make a UI work well on a wide range of device sizes or orientations.",
+        "idealAnswer": "The candidate should describe responsive techniques (flexible layouts, relative units, safe area handling) and testing across devices including small phones and tablets. A good answer mentions catching edge cases like text overflow or notches. Look for proactive cross-device testing rather than assuming one size. The pitfall is designing only for the developer's own device."
+      },
+      {
+        "questionText": "Share an experience where animations or gestures you implemented caused performance or UX issues. How did you address them?",
+        "idealAnswer": "A good answer describes recognizing dropped frames or laggy gestures, moving work off the JS thread where possible, and tuning the animation approach. The candidate should mention measuring smoothness and testing on lower-end devices. Look for awareness of the bridge or threading model and verifying improvements. The pitfall is shipping janky animations that only run smoothly on a flagship device."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Senior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Describe a time you led the design of a component library or design system for a React Native app. What decisions defined it?",
+        "idealAnswer": "A senior answer describes defining API conventions, theming, accessibility standards, and documentation, while balancing flexibility against consistency. The candidate should explain how they drove adoption, versioned changes, and handled breaking changes for consumers. Look for thinking about the developers who consume the system as users themselves. The pitfall is building components in isolation without adoption strategy or governance."
+      },
+      {
+        "questionText": "Tell me about a deep performance investigation you led on a React Native app's UI, including startup or render times.",
+        "idealAnswer": "The candidate should describe systematic profiling (using tools like the performance monitor, Flipper, or native profilers), forming hypotheses about the bridge, re-renders, or bundle size, and validating fixes with metrics. A good answer covers trade-offs of solutions like lazy loading, memoization, or moving to the new architecture. Look for depth in understanding what actually causes jank or slow startup. The pitfall is surface-level fixes without root-cause analysis."
+      },
+      {
+        "questionText": "Describe a situation where you had to make a difficult trade-off between UI polish and engineering effort or maintainability.",
+        "idealAnswer": "A good answer shows the candidate weighing user impact against cost, involving design and product in the decision, and choosing consciously. They should describe articulating the trade-off clearly and the rationale for the chosen point. Look for judgment that considers maintainability and the long-term cost of complex UI. The pitfall is either gold-plating low-value polish or shipping a poor experience to save effort without discussion."
+      },
+      {
+        "questionText": "Tell me about a time you had to handle a tricky edge case in the UI that most developers would overlook.",
+        "idealAnswer": "The candidate should describe anticipating or discovering edge cases such as long text, empty states, slow networks, RTL languages, or accessibility scenarios, and designing robust handling. A good answer shows they thought beyond the happy path and tested thoroughly. Look for a quality mindset and empathy for diverse users and conditions. The pitfall is only considering ideal conditions."
+      },
+      {
+        "questionText": "Share an experience where you influenced the frontend architecture decisions of a mobile team, such as state management strategy.",
+        "idealAnswer": "A senior answer describes evaluating options (e.g., context, a state library, server-state caching) against criteria like complexity, team familiarity, and scale, then building consensus. The candidate should explain the trade-offs and how the decision held up. Look for influence, documentation, and considering the whole team's productivity. The pitfall is imposing a favorite library without evaluating fit or alternatives."
+      },
+      {
+        "questionText": "Describe how you have improved the testing or quality strategy for a React Native UI codebase.",
+        "idealAnswer": "The candidate should describe introducing or improving unit, component, or end-to-end testing, possibly with snapshot or visual regression testing, and balancing coverage against maintenance cost. A good answer ties this to reduced regressions or faster confident releases. Look for a pragmatic strategy rather than dogmatic coverage targets. The pitfall is brittle tests that slow the team or no testing strategy at all."
+      },
+      {
+        "questionText": "Tell me about a time you owned the accessibility of a mobile product and drove meaningful improvements.",
+        "idealAnswer": "A good answer describes auditing with screen readers, fixing labels, focus order, contrast, and touch targets, and embedding accessibility into the team's process. The candidate should show empathy for users with disabilities and measure or validate improvements. Look for treating accessibility as a first-class requirement. The pitfall is treating it as a one-time checkbox rather than an ongoing standard."
+      },
+      {
+        "questionText": "Describe a time you had to manage a large or risky UI migration, such as adopting a new navigation library or framework version.",
+        "idealAnswer": "A senior answer describes planning an incremental migration, maintaining a working app throughout, communicating with stakeholders, and de-risking with feature flags or parallel paths. The candidate should explain how they handled regressions and validated parity. Look for risk management and minimizing disruption to users and the team. The pitfall is a big-bang migration with no rollback or testing."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Lead",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about how you established frontend standards and a shared design system across multiple React Native teams.",
+        "idealAnswer": "A lead answer describes creating governance, versioning, contribution models, and adoption strategy for a shared system used by many teams. The candidate should explain balancing team autonomy with consistency, managing breaking changes, and measuring adoption. Look for organizational influence and treating the system as a product with users. The pitfall is a system imposed without buy-in or one that fragments because no one owns it."
+      },
+      {
+        "questionText": "Describe a time you led a major frontend architecture migration, such as moving to the new React Native architecture, across an organization.",
+        "idealAnswer": "The candidate should describe assessing readiness, phasing the rollout, de-risking with pilots, and coordinating multiple teams and dependencies. A good answer covers communicating timelines to leadership, handling third-party library compatibility, and measuring success. Look for managing a large, risky change with reversibility and clear milestones. The pitfall is a forced cutover without compatibility planning or organizational alignment."
+      },
+      {
+        "questionText": "Share an experience where you had to set a long-term performance budget or quality bar for a mobile product and hold teams to it.",
+        "idealAnswer": "A lead answer describes defining measurable targets (startup time, frame rate, crash-free rate, bundle size), instrumenting them, and integrating them into CI or release gates. The candidate should explain how they got teams to own these metrics and handled regressions. Look for systemic enforcement rather than ad hoc heroics. The pitfall is setting goals nobody measures or enforces."
+      },
+      {
+        "questionText": "Tell me about a cross-functional conflict over frontend direction, such as design versus engineering priorities, that you resolved at an organizational level.",
+        "idealAnswer": "The candidate should show neutral facilitation across functions, finding shared goals, and establishing a durable working agreement or process. A good answer describes managing competing priorities and incentives and reaching alignment that improved collaboration long-term. Look for influence beyond engineering and political savvy. The pitfall is resolving one instance without addressing the recurring tension."
+      },
+      {
+        "questionText": "Describe how you have mentored senior frontend engineers to grow into technical leaders themselves.",
+        "idealAnswer": "A lead answer describes delegating meaningful ownership, coaching on influence and decision-making, and creating opportunities for them to lead initiatives. The candidate should show they stepped back to let others grow rather than doing the work themselves. Look for a multiplier mindset and concrete examples of people who advanced. The pitfall is hoarding the interesting work or mentoring only juniors."
+      },
+      {
+        "questionText": "Tell me about a time you had to make a strategic decision about cross-platform code sharing, such as React Native versus native or web reuse.",
+        "idealAnswer": "A lead answer weighs business goals, team skills, performance needs, and maintenance cost to decide how much to share across platforms. The candidate should describe gathering data, articulating trade-offs to leadership, and owning the long-term consequences. Look for strategic thinking that connects technology choices to business outcomes. The pitfall is a dogmatic stance on cross-platform without analyzing the specific context."
+      },
+      {
+        "questionText": "Share an experience where you championed accessibility or internationalization as an organizational priority for a mobile product.",
+        "idealAnswer": "The candidate should describe making the business and ethical case, setting standards, providing tooling and training, and embedding requirements into the development process across teams. A good answer measures progress and sustains the effort beyond a single push. Look for driving systemic change rather than a one-off project. The pitfall is treating it as a niche concern rather than a product-wide standard."
+      },
+      {
+        "questionText": "Describe a time you had to balance shipping velocity against frontend technical health for an entire mobile org over a long horizon.",
+        "idealAnswer": "A lead answer describes negotiating capacity for platform and tech-debt work, quantifying the cost of decay, and aligning leadership on a sustainable roadmap. The candidate should describe mechanisms like dedicated platform teams, debt budgets, or quality gates, and measuring the impact on velocity. Look for protecting both delivery and long-term health at scale. The pitfall is letting debt accumulate unchecked or stalling features for endless refactoring."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Junior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you integrated a React Native app with a backend API for the first time. What was challenging?",
+        "idealAnswer": "A good answer describes connecting to an endpoint, handling the request and response, and dealing with a real challenge such as authentication headers, parsing JSON, or CORS-like issues. The candidate should show they read the API docs and tested with the actual backend. Look for basic understanding of client-server communication and verifying the integration worked. The pitfall is assuming the API behaved a certain way without checking."
+      },
+      {
+        "questionText": "Describe a situation where an API call in your app failed and you had to figure out why.",
+        "idealAnswer": "The candidate should describe inspecting the network request, checking the status code and response body, and determining whether the issue was client-side or server-side. A good answer mentions tools like network logging or a proxy. Look for a systematic approach to debugging the request rather than guessing. The pitfall is blaming the backend without verifying or not knowing how to inspect the request."
+      },
+      {
+        "questionText": "Tell me about a time you had to handle loading and error states for data fetched from a server.",
+        "idealAnswer": "A good answer describes showing a loading indicator, handling errors gracefully with a user-friendly message, and considering empty results. The candidate should show awareness that network requests can fail or be slow. Look for thinking about the user experience during data fetching. The pitfall is only handling the success case and leaving the UI broken on failure."
+      },
+      {
+        "questionText": "Share an experience where you needed clarification on an API contract from a backend developer.",
+        "idealAnswer": "The candidate should describe asking specific questions about request and response shapes, error formats, or field meanings rather than guessing. A good answer shows good communication and confirming the contract before building against it. Look for collaboration with backend teammates. The pitfall is assuming the contract and building something that breaks when the real response differs."
+      },
+      {
+        "questionText": "Describe a time you stored or cached data locally in a mobile app. Why did you do it and how?",
+        "idealAnswer": "A good answer describes a reason such as offline access or avoiding repeated network calls, and a simple mechanism like local storage. The candidate should show basic awareness of when caching helps and the risk of stale data. Look for a sensible, purpose-driven choice. The pitfall is caching without reason or never invalidating stale data."
+      },
+      {
+        "questionText": "Tell me about a time you had to send user input to a server and handle the response.",
+        "idealAnswer": "The candidate should describe validating input, making the request, and handling success and failure feedback to the user. A good answer mentions basic concerns like not sending invalid data and showing confirmation or errors. Look for end-to-end thinking about the submit flow. The pitfall is sending data without validation or ignoring the server response."
+      },
+      {
+        "questionText": "Describe a situation where you had to handle authentication or a login flow against a backend.",
+        "idealAnswer": "A good answer describes sending credentials, storing the returned token securely, and attaching it to subsequent requests. The candidate should show basic awareness of not hardcoding secrets and handling failed logins. Look for understanding the request flow and handling errors. The pitfall is storing tokens insecurely or not handling auth failures."
+      },
+      {
+        "questionText": "Tell me about a time the data from an API didn't match what your UI expected. How did you handle it?",
+        "idealAnswer": "The candidate should describe noticing the mismatch, checking the actual response versus the expected shape, and either adjusting the client or coordinating with the backend. A good answer mentions defensive handling of missing or null fields. Look for verifying real data rather than trusting assumptions. The pitfall is letting the app crash on unexpected data."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Mid",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Describe a time you had to design how a React Native app interacts with backend APIs, including data fetching and caching.",
+        "idealAnswer": "A good answer describes choosing a data-fetching approach (e.g., a server-state library), deciding on caching, retries, and invalidation, and structuring the API layer. The candidate should explain trade-offs around freshness, offline support, and complexity. Look for thinking beyond a single request to a coherent strategy. The pitfall is ad hoc fetch calls scattered everywhere with no caching or error strategy."
+      },
+      {
+        "questionText": "Tell me about a time you debugged an issue that turned out to be on the boundary between the mobile client and the backend.",
+        "idealAnswer": "The candidate should describe isolating whether the problem was client or server by inspecting requests and responses, reproducing systematically, and collaborating with backend engineers. A good answer mentions logging, comparing against the API contract, and identifying the true root cause. Look for cross-boundary debugging skill and good collaboration. The pitfall is blaming the other side without evidence."
+      },
+      {
+        "questionText": "Share an experience where you had to handle offline support or unreliable network conditions in a mobile app.",
+        "idealAnswer": "A good answer describes detecting connectivity, queuing or caching data, handling retries, and reconciling state when back online. The candidate should discuss trade-offs around stale data and conflict handling. Look for thinking about real-world mobile network conditions. The pitfall is assuming a always-available fast network or ignoring sync conflicts."
+      },
+      {
+        "questionText": "Describe a time you collaborated with backend engineers to define or change an API contract.",
+        "idealAnswer": "The candidate should describe negotiating request and response shapes, versioning, and error handling to serve both client needs and backend constraints. A good answer shows clear communication, documenting the contract, and coordinating the rollout to avoid breaking the app. Look for cross-team collaboration and forward-compatible design. The pitfall is unilateral changes that break one side."
+      },
+      {
+        "questionText": "Tell me about a time you had to improve the performance of data loading in a React Native app.",
+        "idealAnswer": "A good answer describes identifying slow data loads (large payloads, too many requests, no caching) and applying fixes like pagination, caching, prefetching, or reducing payload size. The candidate should mention measuring the improvement. Look for a data-driven approach to client-server performance. The pitfall is optimizing without measuring or ignoring payload and request count."
+      },
+      {
+        "questionText": "Describe a time you had to handle securely storing tokens or sensitive data on a mobile device.",
+        "idealAnswer": "The candidate should describe using secure storage (keychain/keystore), avoiding plaintext storage, and handling token refresh and expiry. A good answer mentions the trade-offs and the risks of insecure storage. Look for security awareness appropriate to mobile. The pitfall is storing secrets in plain async storage or hardcoding them."
+      },
+      {
+        "questionText": "Share an experience where you integrated a third-party service or SDK, such as push notifications or analytics, into a React Native app.",
+        "idealAnswer": "A good answer describes following the SDK's setup including native configuration, handling platform differences, and dealing with edge cases like permissions or initialization timing. The candidate should mention testing on both platforms and handling failures gracefully. Look for thoroughness with native integration. The pitfall is assuming the SDK just works without platform-specific setup or error handling."
+      },
+      {
+        "questionText": "Tell me about a time you had to handle API errors and retries robustly in a mobile app.",
+        "idealAnswer": "The candidate should describe distinguishing error types (network, auth, server, validation), implementing retries with backoff where appropriate, and giving the user clear feedback. A good answer mentions avoiding infinite retry loops and handling token expiry. Look for resilient error handling. The pitfall is treating all errors the same or retrying blindly."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Senior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Describe a time you designed the data synchronization or offline-first strategy for a React Native app. What trade-offs did you weigh?",
+        "idealAnswer": "A senior answer describes choosing a sync model (e.g., optimistic updates, conflict resolution, last-write-wins versus merge), local persistence, and reconciliation logic. The candidate should weigh consistency, complexity, and user experience, and explain how they handled conflicts and failures. Look for depth in distributed-state thinking adapted to mobile. The pitfall is ignoring conflict resolution or underestimating sync complexity."
+      },
+      {
+        "questionText": "Tell me about a deep investigation you led into a client-server reliability issue affecting many mobile users.",
+        "idealAnswer": "The candidate should describe using telemetry and logging to characterize the problem, forming hypotheses spanning client and backend, and validating root cause with data. A good answer covers coordinating with backend teams, fixing the root cause, and adding monitoring to prevent recurrence. Look for rigor across the full stack boundary. The pitfall is a shallow fix without understanding the systemic cause."
+      },
+      {
+        "questionText": "Describe a situation where you had to make a significant decision about the app's networking or data layer architecture.",
+        "idealAnswer": "A senior answer describes evaluating approaches (REST vs GraphQL, server-state library choice, caching layer) against criteria like payload efficiency, caching, team familiarity, and offline needs. The candidate should explain the trade-offs, how they socialized the decision, and how it held up. Look for architectural judgment and documentation. The pitfall is picking a technology by hype without analyzing fit."
+      },
+      {
+        "questionText": "Tell me about a time you had to handle backward compatibility between deployed mobile clients and an evolving backend.",
+        "idealAnswer": "The candidate should describe the challenge that old app versions remain in users' hands, requiring API versioning, additive changes, feature flags, or forced-update strategies. A good answer explains coordinating with backend on compatibility and testing across versions. Look for awareness that mobile clients can't be instantly updated. The pitfall is breaking changes that strand users on old versions."
+      },
+      {
+        "questionText": "Share an experience where you improved the security posture of a mobile app's communication with backend services.",
+        "idealAnswer": "A senior answer describes measures like certificate pinning, secure token handling and refresh, encrypting sensitive data, and protecting against common mobile threats. The candidate should weigh trade-offs such as pinning's operational cost and explain how they validated the improvements. Look for a threat-aware mindset. The pitfall is superficial security or introducing measures that break legitimate flows."
+      },
+      {
+        "questionText": "Describe a time you had to optimize battery, bandwidth, or data usage related to backend communication.",
+        "idealAnswer": "The candidate should describe identifying excessive polling, large payloads, or chatty requests and applying fixes like batching, push instead of poll, compression, or smarter caching. A good answer includes measuring the impact on data and battery. Look for awareness of mobile resource constraints. The pitfall is ignoring the cost of frequent network activity on real devices."
+      },
+      {
+        "questionText": "Tell me about a time you led the integration of a complex native module or backend-dependent feature requiring deep coordination.",
+        "idealAnswer": "A senior answer describes scoping the native and backend work, coordinating across teams and platforms, handling edge cases, and de-risking the integration. The candidate should explain testing across iOS and Android and managing the bridge or native dependencies. Look for ownership across the native-JS-backend boundary. The pitfall is underestimating native complexity or platform differences."
+      },
+      {
+        "questionText": "Describe a situation where you had to balance real-time data needs against performance and complexity in a mobile app.",
+        "idealAnswer": "The candidate should describe choosing between polling, websockets, or push, weighing latency, battery, complexity, and reliability. A good answer explains handling reconnection, backpressure, and stale data, and why they chose their approach. Look for judgment about when real-time is worth the cost. The pitfall is adding real-time complexity without a clear need or ignoring connection lifecycle."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Lead",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about how you set the strategy for client-backend contracts and API governance across multiple mobile teams.",
+        "idealAnswer": "A lead answer describes establishing contract standards, versioning policy, schema governance (e.g., shared schemas or contract testing), and coordination processes between mobile and backend orgs. The candidate should explain balancing team autonomy with consistency and preventing breaking changes. Look for systemic governance and cross-org alignment. The pitfall is ad hoc contracts that cause repeated breakage across teams."
+      },
+      {
+        "questionText": "Describe a time you led the design of an offline-first or sync architecture used across an entire mobile product.",
+        "idealAnswer": "A lead answer describes defining the sync model, conflict resolution strategy, and data consistency guarantees as a platform capability for many teams. The candidate should explain the trade-offs, how they validated it at scale, and how teams adopted it. Look for distributed-systems thinking applied org-wide with measurable reliability. The pitfall is a fragile or inconsistent approach that each team reinvents."
+      },
+      {
+        "questionText": "Share an experience where you drove a major change to how mobile clients handle backend versioning and forced updates at scale.",
+        "idealAnswer": "The candidate should describe a strategy for supporting many deployed app versions: minimum-version enforcement, graceful deprecation, feature flags, and clear policies coordinated with backend and product. A good answer covers measuring version distribution and minimizing user disruption. Look for managing the reality that mobile clients live for a long time. The pitfall is breaking older clients or lacking a coherent update policy."
+      },
+      {
+        "questionText": "Tell me about a cross-team conflict between mobile and backend organizations over priorities or contracts that you resolved.",
+        "idealAnswer": "A lead answer describes facilitating between teams with different incentives, finding shared goals, and establishing durable processes or agreements. The candidate should show political awareness, appropriate escalation, and a solution that improved collaboration long-term. Look for influence across organizational boundaries. The pitfall is resolving a single incident without fixing the recurring friction."
+      },
+      {
+        "questionText": "Describe how you established observability and incident response for the client-backend boundary across a mobile org.",
+        "idealAnswer": "A lead answer describes instrumenting client-side telemetry, error reporting, and metrics that connect to backend monitoring, plus defining incident response across teams. The candidate should explain how this reduced mean time to detection and resolution. Look for systemic reliability practices and ownership of the full path. The pitfall is monitoring only the backend while client failures go unseen."
+      },
+      {
+        "questionText": "Tell me about a strategic decision you made about backend technology or data architecture that significantly affected the mobile experience.",
+        "idealAnswer": "A lead answer connects a backend or data-layer choice (e.g., adopting GraphQL, a BFF, edge caching, or a new data store) to mobile outcomes like latency, payload size, and developer velocity. The candidate should describe gathering data, weighing trade-offs, aligning leadership, and owning the long-term result. Look for strategic, cross-domain thinking. The pitfall is a decision made in a backend silo ignoring mobile constraints."
+      },
+      {
+        "questionText": "Share an experience where you championed security or privacy for mobile-backend data flows as an organizational priority.",
+        "idealAnswer": "The candidate should describe setting standards for secure communication, token management, data minimization, and compliance, then embedding them into processes and tooling across teams. A good answer makes the business and risk case and sustains the effort. Look for driving systemic, measurable change. The pitfall is treating security as a one-off audit rather than an ongoing organizational standard."
+      },
+      {
+        "questionText": "Describe a time you balanced backend integration velocity against long-term platform health for the whole mobile organization.",
+        "idealAnswer": "A lead answer describes negotiating investment in shared client-backend infrastructure, quantifying the cost of duplicated or fragile integrations, and aligning leadership on a sustainable approach. The candidate should describe mechanisms like a shared networking layer or platform team and measure the impact on velocity and reliability. Look for protecting delivery and durability at scale. The pitfall is letting each team build brittle integrations or stalling delivery for over-engineering."
+      }
+    ]
+  }
+]

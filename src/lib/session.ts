@@ -1,39 +1,46 @@
-import { cookies } from "next/headers";
-import { SESSION_COOKIE, SESSION_MAX_AGE_SECONDS } from "@/constants";
-import { signToken, verifyToken } from "@/lib/jwt";
-import type { SessionPayload } from "@/types";
+import { redirect } from "next/navigation";
+import { eq } from "drizzle-orm";
+import { db, profiles } from "@db";
+import { auth } from "@/auth";
 
 /**
- * Server-side session helpers (read/write the httpOnly auth cookie).
- * Import these from route handlers and Server Components only.
+ * Server-side auth helpers for use in Server Components and route handlers.
+ * These do real session checks — never rely on middleware alone for
+ * authorization (especially admin checks).
  */
 
-/** Create a token for the user and store it in the session cookie. */
-export async function createSession(payload: SessionPayload): Promise<void> {
-  const token = await signToken(payload);
-  const cookieStore = await cookies();
-
-  cookieStore.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: SESSION_MAX_AGE_SECONDS,
-  });
-}
-
-/** Remove the session cookie (logout). */
-export async function destroySession(): Promise<void> {
-  const cookieStore = await cookies();
-  cookieStore.delete(SESSION_COOKIE);
+/** Return the current user, or `null` if not signed in. */
+export async function getCurrentUser() {
+  const session = await auth();
+  return session?.user ?? null;
 }
 
 /**
- * Read and verify the current session from the cookie.
- * Returns the payload, or `null` if not authenticated.
+ * Has the user finished the onboarding wizard?
+ *
+ * Onboarding completion lives in `profiles.onboarding.completed` (jsonb) rather
+ * than the JWT, so this can't run in Edge middleware — call it from Server
+ * Components. Mirrors the guard already used by the interview setup page.
  */
-export async function getSession(): Promise<SessionPayload | null> {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(SESSION_COOKIE)?.value;
-  return verifyToken(token);
+export async function isOnboardingComplete(userId: string): Promise<boolean> {
+  const [row] = await db
+    .select({ onboarding: profiles.onboarding })
+    .from(profiles)
+    .where(eq(profiles.userId, userId));
+  const onboarding = (row?.onboarding ?? {}) as { completed?: boolean };
+  return onboarding.completed === true;
+}
+
+/** Require a signed-in user; redirect to /login otherwise. */
+export async function requireAuth() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  return user;
+}
+
+/** Require an admin; redirect non-admins to /dashboard, guests to /login. */
+export async function requireAdmin() {
+  const user = await requireAuth();
+  if (user.role !== "admin") redirect("/dashboard");
+  return user;
 }

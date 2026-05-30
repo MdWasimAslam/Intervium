@@ -1,0 +1,494 @@
+[
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "General",
+    "difficulty": "Junior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "What is the difference between let, const, and var in JavaScript?",
+        "idealAnswer": "var is function-scoped and hoisted with an initial value of undefined, which can cause subtle bugs. let and const are block-scoped and live in the temporal dead zone until declared, so referencing them before declaration throws. const prevents reassignment of the binding but does not make objects immutable; you can still mutate the contents of a const array or object. A good default is to use const everywhere and switch to let only when reassignment is needed, avoiding var in modern code."
+      },
+      {
+        "questionText": "Explain the difference between == and === when comparing values in JavaScript.",
+        "idealAnswer": "== performs loose equality and applies type coercion, so values of different types may be converted before comparison (for example '5' == 5 is true and null == undefined is true). === performs strict equality and returns true only when both type and value match, with no coercion. Coercion rules with == are error-prone, producing surprises like 0 == '' being true. Best practice is to default to === and only use == deliberately, such as the common null/undefined check x == null."
+      },
+      {
+        "questionText": "What does it mean that JavaScript is single-threaded, and what is the event loop?",
+        "idealAnswer": "JavaScript executes on a single call stack, meaning only one piece of code runs at a time and long synchronous work blocks everything. The event loop coordinates this by moving callbacks from task queues onto the stack when it is empty. Asynchronous operations like timers, network requests, and promises hand work off to the host environment and queue their callbacks for later. This lets JavaScript stay responsive without true parallelism, with microtasks (promises) draining before the next macrotask."
+      },
+      {
+        "questionText": "What is the difference between null and undefined?",
+        "idealAnswer": "undefined means a variable has been declared but not assigned a value, or that a property or function return is missing; the engine produces it automatically. null is an intentional assignment by the developer to represent the deliberate absence of a value. typeof undefined is 'undefined' while typeof null is the historical quirk 'object'. They are loosely equal (null == undefined) but not strictly equal (null === undefined is false)."
+      },
+      {
+        "questionText": "Describe a time you received feedback on your code during a review. How did you respond?",
+        "idealAnswer": "A strong answer describes a specific review comment, what the feedback was, and a non-defensive response focused on learning. The candidate should show they asked clarifying questions, understood the reasoning rather than just making the change, and applied the lesson going forward. Look for humility and the ability to separate critique of the code from personal judgment. Red flags include dismissiveness, treating all feedback as an attack, or being unable to recall any feedback at all."
+      },
+      {
+        "questionText": "How do you approach a task when you do not understand the requirements?",
+        "idealAnswer": "The candidate should describe proactively seeking clarification rather than guessing, by asking the assigner, checking documentation, or looking at similar existing code. A good answer mentions restating their understanding back to confirm alignment and breaking ambiguity into concrete questions. They should balance asking questions with not interrupting others for things they can reasonably find themselves. The key signal is taking ownership of clarity instead of silently building the wrong thing."
+      },
+      {
+        "questionText": "Tell me about a technical concept you recently learned and how you went about learning it.",
+        "idealAnswer": "Look for a concrete example with genuine curiosity and a deliberate learning method, such as reading docs, building a small project, or pairing with a colleague. The candidate should explain not just what they learned but how they verified their understanding, for example by applying it to real work. Strong answers show self-direction and reflection on what worked in their learning process. Weak answers are vague, lack a specific topic, or describe passively consuming content without applying it."
+      },
+      {
+        "questionText": "How do you decide when to ask a teammate for help versus continuing to work through a problem yourself?",
+        "idealAnswer": "A good answer sets a reasonable timebox for independent investigation so the developer has context and specific questions before reaching out. They should mention first searching documentation, logs, and the codebase, then framing a clear question that shows what they already tried. The candidate should respect others' time while recognizing that being blocked too long is wasteful. The signal is balanced judgment, self-sufficiency paired with awareness that asking for help is a normal part of collaboration."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "General",
+    "difficulty": "Mid",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "Explain how closures work in JavaScript and give a practical use case.",
+        "idealAnswer": "A closure is created when a function retains access to variables from its lexical scope even after the outer function has returned. The inner function keeps a reference to those variables, not a copy, so they remain alive in memory. Practical uses include data privacy via module patterns, factory functions that capture configuration, and maintaining state in event handlers or once-style functions. A common pitfall is unintentionally capturing a loop variable, historically with var, which is why let or an IIFE is used to capture each iteration's value."
+      },
+      {
+        "questionText": "What is the difference between synchronous and asynchronous code, and how do Promises help manage async flow?",
+        "idealAnswer": "Synchronous code runs line by line and blocks until each operation completes, while asynchronous code defers work and continues without waiting. Promises represent a future value in one of three states: pending, fulfilled, or rejected, and let you chain .then and .catch instead of nesting callbacks. They flatten 'callback hell' and provide a single error channel through rejection propagation. async/await is syntactic sugar over Promises that lets asynchronous code read sequentially while still being non-blocking."
+      },
+      {
+        "questionText": "How does the 'this' keyword get its value in different invocation contexts?",
+        "idealAnswer": "this is determined by how a function is called, not where it is defined. In a plain function call it is undefined in strict mode or the global object otherwise; as a method it is the object before the dot; with new it is the freshly created instance; and with call, apply, or bind it is explicitly set. Arrow functions do not have their own this and instead inherit it lexically from the enclosing scope, which makes them ideal for callbacks where you want the surrounding context. A frequent bug is passing a method as a callback and losing its binding."
+      },
+      {
+        "questionText": "You have an array of objects and need to group them by a property. How would you implement this and what are the performance considerations?",
+        "idealAnswer": "A clean approach uses reduce to build a map keyed by the grouping property, pushing each item into the matching bucket, which is O(n) in a single pass. Using a plain object or a Map as the accumulator both work, though Map preserves insertion order and avoids prototype-key collisions. You should initialize each bucket lazily and avoid repeatedly scanning the array, which would make it O(n squared). For very large datasets, consider whether you can stream or index the data instead of holding everything in memory."
+      },
+      {
+        "questionText": "Describe a situation where you had to debug a problem that was difficult to reproduce. What was your process?",
+        "idealAnswer": "Strong answers describe a systematic process: gathering reproduction steps, checking logs, forming hypotheses, and isolating variables rather than guessing randomly. The candidate should mention narrowing down the surface area, adding targeted logging or breakpoints, and confirming the root cause before fixing. They should also describe how they verified the fix and prevented regression, such as adding a test. The signal is methodical reasoning and patience under uncertainty rather than shotgun debugging."
+      },
+      {
+        "questionText": "Tell me about a time you disagreed with a teammate about a technical approach. How did you resolve it?",
+        "idealAnswer": "Look for a candidate who engaged with the disagreement constructively, separating ego from the decision and focusing on the merits and trade-offs. A good answer shows they listened to the other view, brought data or prototypes where possible, and were willing to commit to a decision even if it was not theirs. They should describe how the conflict was resolved and what the outcome was. Red flags are avoiding the conflict entirely, escalating it personally, or being unable to ever concede a point."
+      },
+      {
+        "questionText": "How do you prioritize work when you have multiple tasks with competing deadlines?",
+        "idealAnswer": "A good answer describes assessing impact, urgency, and dependencies, then communicating trade-offs to stakeholders rather than silently slipping. The candidate should mention breaking large tasks down, identifying what unblocks others, and surfacing conflicts early so priorities can be re-ordered explicitly. They should show they distinguish between truly urgent work and busywork. The key signal is proactive communication and a deliberate prioritization framework rather than reacting to whoever is loudest."
+      },
+      {
+        "questionText": "Describe a time you made a mistake that affected your team or a user. How did you handle it?",
+        "idealAnswer": "The strongest answers show ownership without excuses: the candidate acknowledged the mistake quickly, focused on mitigation, and communicated transparently with affected parties. They should describe the corrective action, what they learned, and a concrete change to prevent recurrence, such as a test, alert, or process change. Look for a blameless, learning-oriented framing rather than hiding the error or blaming others. The signal is accountability and growth, which matters more than the size of the mistake."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "General",
+    "difficulty": "Senior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "Explain the difference between the microtask queue and the macrotask queue, and how this affects execution order.",
+        "idealAnswer": "After each macrotask (such as a timer callback or I/O event), the event loop drains the entire microtask queue before rendering or taking the next macrotask. Microtasks include resolved Promise callbacks and queueMicrotask, while macrotasks include setTimeout, setInterval, and message events. This means a promise chain will fully resolve before a setTimeout(0) callback queued earlier in the same tick. Misunderstanding this causes ordering bugs and can starve the macrotask queue if microtasks recursively schedule more microtasks."
+      },
+      {
+        "questionText": "How would you identify and fix a memory leak in a long-running JavaScript application?",
+        "idealAnswer": "Start by reproducing growth and taking heap snapshots over time in DevTools, comparing retained object counts to find what is not being collected. Common causes include detached DOM nodes still referenced, forgotten event listeners or timers, growing caches without eviction, and closures capturing large objects. The fix is to remove listeners on teardown, clear intervals, bound caches with an LRU or WeakMap, and break unintended references. Verify by re-running snapshots and confirming the retained size stabilizes after garbage collection."
+      },
+      {
+        "questionText": "When would you choose a Map or Set over a plain object or array, and what are the trade-offs?",
+        "idealAnswer": "Map allows any value as a key (including objects), preserves insertion order, has a size property, and is optimized for frequent additions and deletions, unlike objects whose keys are strings or symbols and which carry prototype pollution risks. Set provides O(1) membership tests and automatic deduplication versus array includes which is O(n). The trade-offs are that Map and Set are not directly JSON-serializable and have slightly more verbose APIs. WeakMap and WeakSet additionally allow keys to be garbage collected, useful for metadata that should not prevent cleanup."
+      },
+      {
+        "questionText": "Describe how you would design error handling for a complex asynchronous workflow with several dependent steps.",
+        "idealAnswer": "I would distinguish recoverable from fatal errors, wrap async steps with try/catch under async/await, and avoid swallowing rejections silently. For independent operations I would use Promise.allSettled to gather all outcomes, and Promise.all only when one failure should abort the rest. I would add retries with exponential backoff for transient failures, timeouts to bound hanging operations, and structured error objects carrying context for diagnosis. Critically, I would ensure cleanup runs via finally and that errors propagate to a central handler rather than being lost in detached promises."
+      },
+      {
+        "questionText": "Tell me about a time you had to make a significant technical decision with incomplete information.",
+        "idealAnswer": "A strong answer describes identifying the key unknowns, the cost of delay versus the cost of being wrong, and how the candidate reduced risk, for example with a spike, a reversible decision, or a phased rollout. They should explain the assumptions made explicit, the stakeholders consulted, and how they planned to revisit the decision as information arrived. Look for sound judgment under ambiguity and ownership of the outcome. Weak answers either describe analysis paralysis or reckless decisions with no risk mitigation."
+      },
+      {
+        "questionText": "How do you balance shipping quickly against accumulating technical debt, and how do you communicate that trade-off?",
+        "idealAnswer": "The candidate should treat technical debt as a deliberate, tracked trade-off rather than an accident, distinguishing prudent shortcuts that buy speed from reckless ones that compound. A good answer describes making debt visible with tickets or comments, quantifying its cost in terms of future velocity or risk, and negotiating paydown alongside feature work. They should mention that not all debt needs repaying and that context drives the call. The signal is mature, business-aware judgment and the ability to articulate the trade-off to non-technical stakeholders."
+      },
+      {
+        "questionText": "Describe how you have mentored or leveled up other engineers on your team.",
+        "idealAnswer": "Look for concrete mechanisms: thoughtful code review feedback that teaches rather than just corrects, pairing, breaking work into growth-stretch tasks, and creating space for others to make decisions. A strong answer shows the candidate measured impact by the mentee's growth and increasing autonomy, not by doing the work for them. They should describe adapting their approach to different individuals. The signal is genuine investment in others' growth and the patience to let people learn, including from their own mistakes."
+      },
+      {
+        "questionText": "Tell me about a time you advocated for a change in process, tooling, or architecture across your team.",
+        "idealAnswer": "A strong answer describes identifying a recurring pain point, building a case with evidence, and bringing others along rather than mandating change. The candidate should explain how they piloted the idea, addressed objections, and measured whether it actually improved outcomes. They should acknowledge organizational dynamics and the work of driving adoption, not just having a good idea. Look for influence without authority and follow-through; red flags are proposing change purely for novelty or abandoning it at the first resistance."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "General",
+    "difficulty": "Lead",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you approach standardizing JavaScript practices, tooling, and conventions across multiple teams in a large organization?",
+        "idealAnswer": "I would establish shared standards through enforceable tooling rather than documents alone: a common linter and formatter config, shared TypeScript settings, and CI gates so conventions are automatic. I would create a lightweight RFC process for cross-cutting decisions and a shared component or utility library to reduce duplication, while leaving room for team autonomy on local choices. Adoption matters more than the rules, so I would pilot with willing teams, gather feedback, and provide migration tooling and codemods. The goal is consistency that lowers cognitive load without becoming bureaucratic friction."
+      },
+      {
+        "questionText": "Describe how you would evaluate whether to adopt a new major framework or migrate off an existing one across a sizable codebase.",
+        "idealAnswer": "I would frame it as a business and risk decision, not a preference, weighing maintenance burden, hiring market, ecosystem health, and the concrete problems the change solves against migration cost and opportunity cost. I would prototype on a representative slice, define success metrics, and prefer an incremental strangler-fig migration over a big-bang rewrite to keep delivering value. I would assess team capacity, training needs, and the long-term support story of both the old and new technology. The decision should be reversible where possible and revisited at defined checkpoints rather than treated as final."
+      },
+      {
+        "questionText": "How do you design observability and incident response for a JavaScript-heavy system spanning frontend and backend?",
+        "idealAnswer": "I would instrument logs, metrics, and distributed traces with correlation IDs that flow from client through services so an issue can be followed end to end. On the frontend I would capture real user monitoring, error reporting with source maps, and core web vitals; on the backend, latency, error rates, and saturation with SLO-based alerting to reduce noise. I would establish runbooks, on-call rotations, severity levels, and blameless postmortems so the organization learns from incidents. The aim is fast detection, clear ownership, and continuous reduction of mean time to recovery."
+      },
+      {
+        "questionText": "How would you architect a shared component or design system used by many product teams while keeping it maintainable?",
+        "idealAnswer": "I would version it semantically, publish it as a package with clear changelogs, and treat backward compatibility and deprecation policy as first-class concerns to avoid breaking consumers. Strong API design, accessibility baked in, theming via tokens, and thorough documentation with live examples drive adoption. I would set up automated visual regression and unit tests, plus a contribution model so product teams can extend it without bottlenecking on one team. The hardest part is governance: balancing consistency with flexibility and managing the rollout of breaking changes across many consumers."
+      },
+      {
+        "questionText": "Tell me about a time you led your team through a major technical crisis or outage.",
+        "idealAnswer": "A strong answer describes establishing clear incident command, stabilizing first by mitigating impact before chasing root cause, and keeping stakeholders informed with calm, regular updates. The candidate should show how they coordinated people, made decisions under pressure with imperfect data, and protected the team from chaos. Afterward they should have driven a blameless postmortem and durable preventive actions. The signal is composure, decisiveness, and turning a crisis into organizational learning rather than blame."
+      },
+      {
+        "questionText": "How do you align engineering priorities with product and business goals when they appear to conflict?",
+        "idealAnswer": "The candidate should describe building a shared understanding of the goals behind requests, translating engineering concerns like reliability and debt into business terms such as risk and velocity. A good answer involves negotiating scope and sequencing with product partners, making trade-offs explicit, and finding options that serve both rather than framing it as engineering versus business. They should mention earning trust so technical investments are funded. The signal is partnership and influence at the leadership level, not just executing tickets."
+      },
+      {
+        "questionText": "Describe how you grow engineers and build a healthy technical culture on a team you lead.",
+        "idealAnswer": "Look for deliberate investment in growth: career conversations, stretch assignments matched to individuals, clear expectations by level, and feedback that is frequent and specific. A strong answer covers psychological safety so people raise problems and admit mistakes, knowledge sharing through reviews and design discussions, and modeling the behaviors they want. They should describe how they balance team delivery with individual development and how they measure culture health, for example through retention and engagement. The signal is treating people development as a core responsibility, not a side task."
+      },
+      {
+        "questionText": "How do you make and communicate a difficult decision that you know will be unpopular with part of your team?",
+        "idealAnswer": "A strong answer shows the candidate gathered input and genuinely considered alternatives before deciding, then owned the decision clearly with transparent reasoning rather than hiding behind others. They should describe communicating the why, acknowledging the downsides honestly, and giving people space to disagree while expecting commitment once decided. Following up to monitor impact and adjusting if warranted demonstrates integrity. The signal is decisiveness paired with empathy and transparency, avoiding both authoritarian fiat and conflict-avoidant waffling."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Frontend",
+    "difficulty": "Junior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "What is the DOM and how does JavaScript interact with it?",
+        "idealAnswer": "The DOM (Document Object Model) is a tree representation of an HTML document that the browser builds, where each element, attribute, and text node is an object. JavaScript can read and modify this tree using APIs like document.querySelector, createElement, appendChild, and by setting properties such as textContent or classList. Changes to the DOM update what the user sees on screen. A key beginner concept is that the DOM is an in-memory model separate from the original HTML source, and manipulating it dynamically is how pages become interactive."
+      },
+      {
+        "questionText": "What is event bubbling and how does event delegation use it?",
+        "idealAnswer": "Event bubbling means that when an event fires on an element, it then propagates up through its ancestors, triggering the same event type on each parent. Event delegation leverages this by attaching a single listener to a common parent instead of many child elements, then inspecting event.target to determine which child triggered it. This is efficient for lists or dynamically added elements because you avoid adding and removing many listeners. You can stop propagation with event.stopPropagation, though that should be used sparingly."
+      },
+      {
+        "questionText": "What is the difference between localStorage, sessionStorage, and cookies?",
+        "idealAnswer": "localStorage persists data in the browser with no expiration until explicitly cleared, while sessionStorage lasts only for the duration of the page session and is cleared when the tab closes. Both store strings only and are not sent to the server. Cookies are smaller, can have expiration dates, and are automatically sent with every HTTP request to the matching domain, which makes them suited for authentication tokens but adds request overhead. Sensitive data should not be stored in localStorage because it is accessible to any script on the page."
+      },
+      {
+        "questionText": "How do you select and update elements on a page using JavaScript?",
+        "idealAnswer": "You select elements with methods like document.getElementById, document.querySelector for a single match, or document.querySelectorAll for a list using CSS selectors. Once you have a reference, you update content with textContent or innerHTML, change styles via the style property or classList.add and classList.remove, and modify attributes with setAttribute. Prefer textContent over innerHTML for plain text to avoid injecting markup, and prefer toggling classes over inline styles so presentation stays in CSS. querySelectorAll returns a static NodeList that you typically iterate with forEach."
+      },
+      {
+        "questionText": "Tell me about a UI bug you fixed. How did you find the cause?",
+        "idealAnswer": "A good answer describes a specific visual or interaction bug, the steps taken to reproduce it, and using browser DevTools to inspect elements, styles, or console errors. The candidate should explain how they isolated whether it was a CSS, JavaScript, or data issue before fixing it. They should mention verifying the fix across the relevant browsers or screen sizes. The signal is a curious, methodical approach to the front-end rather than randomly changing values until something works."
+      },
+      {
+        "questionText": "How do you make sure your UI work matches the design provided to you?",
+        "idealAnswer": "The candidate should describe carefully comparing their implementation against the design for spacing, typography, colors, and states, using the design tool's inspect mode or measurement overlays. A good answer mentions asking the designer about ambiguous or missing states like hover, error, empty, and responsive breakpoints rather than guessing. They should check the result on real devices or at multiple widths. The signal is attention to detail and proactive communication with designers rather than approximate, pixel-careless work."
+      },
+      {
+        "questionText": "Describe how you handle a task where you are unfamiliar with the part of the UI codebase you need to change.",
+        "idealAnswer": "A strong answer involves first reading the surrounding code and existing patterns, tracing how similar components are built, and running the app to see the current behavior. The candidate should describe making small, incremental changes and testing frequently rather than large risky edits. They should mention asking targeted questions when conventions are unclear and respecting existing structure. The signal is curiosity, caution, and respect for established patterns instead of imposing unfamiliar approaches blindly."
+      },
+      {
+        "questionText": "How do you respond when a stakeholder asks for a UI change you think will hurt usability?",
+        "idealAnswer": "The candidate should describe raising the concern respectfully with reasoning, ideally backed by usability principles or examples, while staying open to context they may be missing. A good answer shows they would propose alternatives or a quick test rather than simply refusing or silently complying. They should ultimately defer to the decision once the trade-offs are understood, since they may lack full business context. The signal is constructive advocacy for the user combined with humility and collaboration."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Frontend",
+    "difficulty": "Mid",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "Explain debouncing and throttling, and when you would use each in a frontend application.",
+        "idealAnswer": "Debouncing delays running a function until a pause in events, so it fires only after the user stops triggering it, which suits search-as-you-type inputs and resize handlers where you only want the final state. Throttling guarantees a function runs at most once per interval regardless of how many events fire, which suits scroll handlers or rate-limited updates where you want periodic execution. Both reduce expensive work like re-renders or network calls. The key difference is debounce waits for quiet while throttle enforces a steady cadence; choosing wrong leads to either missed updates or excessive calls."
+      },
+      {
+        "questionText": "What causes layout thrashing and how do you avoid it when manipulating the DOM?",
+        "idealAnswer": "Layout thrashing happens when code repeatedly interleaves DOM writes and reads of layout properties like offsetHeight, forcing the browser to recalculate layout synchronously many times within a frame. To avoid it, batch all reads together and then all writes, so the browser only reflows once. Techniques include caching measured values, using requestAnimationFrame to schedule visual updates, and using transforms and opacity for animations since they can be composited without triggering layout. Tools like the Performance panel reveal forced synchronous reflows so you can pinpoint the offending reads."
+      },
+      {
+        "questionText": "How do you manage state shared across multiple components in a frontend application?",
+        "idealAnswer": "The approach depends on scope: local component state for isolated concerns, lifting state up to a common ancestor for sibling sharing, and context or a dedicated store for cross-cutting state like the current user or theme. A good answer warns against putting everything in global state, which causes unnecessary re-renders and coupling, and against prop drilling deeply. For server data, caching libraries that handle fetching, caching, and invalidation are often better than hand-rolled global state. The principle is to keep state as local as possible and only globalize what is genuinely shared."
+      },
+      {
+        "questionText": "A page feels slow to load and interact with. How would you diagnose and improve frontend performance?",
+        "idealAnswer": "I would profile with Lighthouse and the Performance and Network panels to find the bottleneck, looking at metrics like Largest Contentful Paint, Total Blocking Time, and bundle size. Common fixes include code-splitting and lazy-loading non-critical JavaScript, compressing and properly sizing images, deferring third-party scripts, and reducing main-thread work. I would also check for excessive re-renders, unmemoized expensive computations, and large synchronous tasks that block interactivity. The process is measure first, fix the biggest contributor, then re-measure rather than optimizing blindly."
+      },
+      {
+        "questionText": "Tell me about a time you had to balance code quality with a tight deadline on a frontend feature.",
+        "idealAnswer": "A good answer describes making a conscious, communicated trade-off rather than silently cutting corners, for example shipping a focused version while flagging follow-up work. The candidate should explain which quality aspects they protected, such as correctness and accessibility, versus which they deferred, like full test coverage or refactoring. They should mention tracking the debt so it gets addressed. The signal is pragmatic judgment plus transparency, not either gold-plating under deadline pressure or shipping something they knew was broken."
+      },
+      {
+        "questionText": "Describe how you collaborate with designers and backend engineers when building a feature.",
+        "idealAnswer": "The candidate should describe early collaboration: clarifying designs and edge-case states with designers and agreeing on API contracts with backend engineers before building. A good answer mentions surfacing technical constraints to designers, suggesting feasible alternatives, and using mocked data to work in parallel with backend development. They should describe communicating proactively when something in the design or contract does not work. The signal is treating cross-functional work as a partnership and reducing rework through up-front alignment."
+      },
+      {
+        "questionText": "How do you keep up with the fast pace of change in the frontend ecosystem without chasing every trend?",
+        "idealAnswer": "A strong answer shows a deliberate filter: following a few trusted sources, evaluating new tools against real problems they solve rather than novelty, and prototyping before adopting. The candidate should distinguish foundational skills that age well, like JavaScript fundamentals, accessibility, and performance, from churny library choices. They should mention learning by building and being willing to let unproven trends mature. The signal is curiosity tempered by pragmatism, avoiding both stagnation and resume-driven development."
+      },
+      {
+        "questionText": "Tell me about a time you advocated for accessibility or another non-functional quality that was being overlooked.",
+        "idealAnswer": "Look for a candidate who noticed a gap such as missing keyboard navigation, poor contrast, or absent ARIA labels and proactively raised it with concrete impact, for example users who would be excluded. A strong answer shows they educated the team, made the fix low-friction, and connected accessibility to user reach or legal requirements. They should describe how they got buy-in rather than just complaining. The signal is ownership of quality that is easy to ignore and the ability to make the case persuasively."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Frontend",
+    "difficulty": "Senior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you optimize the rendering performance of a component that re-renders too frequently?",
+        "idealAnswer": "First I would confirm the problem with a profiler to see what triggers the renders and how expensive they are, rather than memoizing prematurely. Fixes include memoizing components and expensive computations, stabilizing prop references so callbacks and objects are not recreated each render, and splitting components so unrelated state changes do not cascade. I would consider colocating state lower in the tree, virtualizing long lists, and deferring non-urgent updates. The principle is to reduce both the frequency of renders and the cost per render, validating each change with measurements."
+      },
+      {
+        "questionText": "Explain Critical Rendering Path and how it informs strategies like server-side rendering, code splitting, and resource hints.",
+        "idealAnswer": "The Critical Rendering Path is the sequence the browser follows to turn HTML, CSS, and JavaScript into pixels: parsing HTML to the DOM, CSS to the CSSOM, combining into the render tree, then layout and paint. Render-blocking CSS and synchronous JavaScript delay first paint, so we minimize and prioritize critical resources. Server-side rendering delivers meaningful HTML faster for first contentful paint and SEO, code splitting defers non-critical JavaScript, and resource hints like preload, preconnect, and prefetch reorder fetching to shorten the path. The goal is to get meaningful content and interactivity to the user as early as possible."
+      },
+      {
+        "questionText": "How do you design a frontend to gracefully handle network failures, slow connections, and partial data?",
+        "idealAnswer": "I would design explicit states for loading, success, empty, and error rather than assuming the happy path, and show meaningful fallbacks like skeletons and retry affordances. For resilience I would add timeouts, retry with backoff for idempotent requests, request cancellation to avoid race conditions, and caching so stale-but-usable data can be shown offline. Optimistic updates with rollback improve perceived speed while handling failure. The principle is to treat the network as unreliable and make degradation predictable and recoverable rather than leaving the UI stuck or showing cryptic errors."
+      },
+      {
+        "questionText": "What are the main categories of frontend security risks, and how do you mitigate XSS specifically?",
+        "idealAnswer": "Key risks include cross-site scripting (XSS), cross-site request forgery (CSRF), and exposure of sensitive data on the client. XSS occurs when untrusted input is rendered as executable markup; mitigation is to escape or encode output by default, avoid dangerously setting raw HTML, sanitize any HTML you must render, and apply a strict Content Security Policy to limit script sources. For tokens, prefer HttpOnly cookies over localStorage to keep them out of script reach, and pair with CSRF protection. The overarching principle is to never trust client-side input and to defend in depth rather than relying on a single control."
+      },
+      {
+        "questionText": "Tell me about a time you led the technical design of a substantial frontend feature or refactor.",
+        "idealAnswer": "A strong answer describes scoping the problem, considering multiple approaches with explicit trade-offs, and producing a design others could review and build against. The candidate should explain how they accounted for performance, accessibility, maintainability, and incremental delivery, and how they brought the team along. They should mention the outcome and what they would change. The signal is structured technical leadership: making deliberate decisions, documenting rationale, and de-risking the work, not just writing the most code."
+      },
+      {
+        "questionText": "How do you approach reviewing a large frontend pull request from a teammate?",
+        "idealAnswer": "I start by understanding the intent and overall approach before nitpicking details, checking that the design is sound and the change is appropriately scoped. I look for correctness, edge cases, accessibility, performance implications, and adherence to team patterns, while distinguishing blocking issues from suggestions and preferences. I give specific, kind, actionable feedback and explain the why so it teaches. For very large PRs I would encourage splitting them and may pair or discuss synchronously. The signal is balancing thoroughness with respect for the author's time and growth."
+      },
+      {
+        "questionText": "Describe a situation where you had to push back on scope or requirements to protect quality or timelines.",
+        "idealAnswer": "Look for a candidate who engaged constructively, quantifying the cost of the requested scope and proposing alternatives like phasing or trimming rather than flatly refusing. A strong answer shows they understood the underlying goal, brought data or risk analysis, and reached a decision collaboratively with product partners. They should describe the outcome and that they respected the final call. The signal is principled negotiation that protects the product without being obstructionist or territorial."
+      },
+      {
+        "questionText": "How do you onboard a new frontend engineer and help them become productive quickly?",
+        "idealAnswer": "A strong answer describes a structured ramp: a curated first task that touches real code, clear documentation of conventions and architecture, and an accessible point of contact. The candidate should mention pairing early, gradually increasing complexity, and giving frequent low-stakes feedback to build confidence. They should tailor the approach to the person's experience and create psychological safety to ask questions. The signal is intentional investment in others' success and reducing time-to-first-contribution rather than leaving newcomers to sink or swim."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Frontend",
+    "difficulty": "Lead",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you architect a large-scale frontend application to remain maintainable as the team and codebase grow?",
+        "idealAnswer": "I would organize around feature-based modules with clear boundaries and enforce dependency direction so features stay decoupled and independently changeable. Shared concerns like UI primitives, data fetching, and auth go into well-documented internal packages, with consistent state management conventions to avoid divergent patterns. I would invest in type safety, automated testing, and CI gates to keep quality scalable across many contributors, and consider a monorepo for shared tooling and atomic cross-cutting changes. The aim is to localize change, minimize coordination overhead, and let multiple teams work in parallel without stepping on each other."
+      },
+      {
+        "questionText": "What are the trade-offs of a micro-frontend architecture, and when would you adopt or avoid it?",
+        "idealAnswer": "Micro-frontends let independent teams own, build, and deploy parts of an app autonomously, which helps at large organizational scale and when integrating disparate tech stacks. The costs are significant: runtime integration complexity, duplicated dependencies and larger payloads, harder shared state and consistent UX, and more involved performance and versioning management. I would adopt them when team autonomy and independent deployment outweigh these costs, typically in large orgs with many teams, and avoid them for small teams where a well-structured modular monolith is simpler. The decision hinges on organizational scale, not just technical appeal."
+      },
+      {
+        "questionText": "How do you establish and enforce frontend performance budgets across teams over time?",
+        "idealAnswer": "I would define budgets tied to user-centric metrics like Largest Contentful Paint, Interaction to Next Paint, and bundle size thresholds, derived from real user data and business impact. Enforcement comes from automated checks in CI that fail or warn on regressions, plus continuous real user monitoring dashboards so we catch field degradations. I would make performance a shared, visible responsibility with clear ownership rather than a one-time cleanup, and bake checks into the development workflow. The key is treating performance as a guardrail that prevents slow erosion, not a periodic firefight."
+      },
+      {
+        "questionText": "How would you design a frontend testing strategy that gives confidence without becoming slow and brittle?",
+        "idealAnswer": "I favor the testing trophy emphasis: a strong base of fast unit tests for logic, a substantial layer of integration tests that exercise components the way users do, and a small set of end-to-end tests covering critical user journeys. I would avoid testing implementation details so refactors do not break tests, and prefer querying by accessible roles to also validate accessibility. Flaky tests must be quarantined and fixed quickly, and the suite must stay fast enough to run in CI on every change. The goal is high confidence per test and a pyramid shaped to maximize signal while minimizing maintenance cost."
+      },
+      {
+        "questionText": "Tell me about a time you drove a major frontend modernization or migration across multiple teams.",
+        "idealAnswer": "A strong answer describes framing the migration around concrete business and developer-experience benefits, choosing an incremental strangler-fig approach over a risky rewrite, and providing tooling like codemods to ease adoption. The candidate should explain how they sequenced the work, kept delivering value during the transition, and brought reluctant teams along with support and clear wins. They should discuss measuring progress and handling setbacks. The signal is strategic, people-aware execution of large change, not just a technically clean plan that ignored organizational reality."
+      },
+      {
+        "questionText": "How do you decide what frontend infrastructure to build in-house versus adopting third-party or open-source solutions?",
+        "idealAnswer": "I weigh whether the capability is a core differentiator or undifferentiated heavy lifting, the total cost of ownership of building and maintaining it, the maturity and longevity of available options, and lock-in risk. For commodity needs like routing, data fetching, or component primitives I lean toward proven libraries to focus the team on product value. I build in-house when our needs are unique, when control and customization are critical, or when external options impose unacceptable constraints. The decision is revisited as the ecosystem and our scale evolve, and I plan exit strategies for key dependencies."
+      },
+      {
+        "questionText": "How do you balance shipping product features against investing in developer experience and tooling for the frontend org?",
+        "idealAnswer": "The candidate should treat developer experience as a force multiplier whose value is measured in team velocity, quality, and retention, not as a vanity project. A strong answer describes allocating a steady fraction of capacity to tooling, prioritizing investments by the pain they remove across the org, and justifying them to leadership with metrics like build times, onboarding time, or incident rates. They should avoid both neglecting DX until everyone is miserable and over-investing in gold-plated internal tools. The signal is data-driven prioritization and connecting infrastructure work to business outcomes."
+      },
+      {
+        "questionText": "How do you build alignment and resolve disagreements when multiple senior frontend engineers favor different architectural directions?",
+        "idealAnswer": "I would surface the underlying goals and constraints so the debate is grounded in shared criteria rather than personal preference, and use a lightweight design doc or RFC to make trade-offs explicit. Where feasible I would de-risk with a time-boxed spike or prototype to replace opinion with evidence. I would ensure everyone feels heard, then drive to a decision and document the rationale so it does not get relitigated, expecting disagree-and-commit. The signal is facilitating productive conflict toward a decision while preserving relationships and team buy-in, not avoiding the disagreement or forcing a verdict."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Backend",
+    "difficulty": "Junior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "What is Node.js and how does it let JavaScript run on the server?",
+        "idealAnswer": "Node.js is a runtime that runs JavaScript outside the browser by embedding the V8 engine and adding APIs for file system, network, and process access. It uses a single-threaded, non-blocking event loop with asynchronous I/O, so it can handle many concurrent connections efficiently without a thread per request. This makes it well suited to I/O-heavy workloads like web servers and APIs. Node also provides a module system and the npm ecosystem for reusing packages, enabling full-stack JavaScript development."
+      },
+      {
+        "questionText": "What is a REST API and what do the common HTTP methods mean?",
+        "idealAnswer": "A REST API is a way of exposing resources over HTTP using predictable URLs and standard methods, typically returning JSON. GET retrieves data without side effects, POST creates a new resource, PUT replaces a resource, PATCH partially updates it, and DELETE removes it. Responses carry status codes that signal the outcome, such as 200 for success, 201 for created, 404 for not found, and 500 for server errors. REST emphasizes statelessness, meaning each request carries all the information needed to process it."
+      },
+      {
+        "questionText": "What does asynchronous I/O mean in a Node.js application and why does it matter?",
+        "idealAnswer": "Asynchronous I/O means operations like reading a file or querying a database do not block the main thread; instead Node registers a callback and continues processing other work, invoking the callback when the operation completes. This matters because Node is single-threaded, so blocking on slow I/O would freeze the entire server and prevent handling other requests. By being non-blocking, one Node process can serve many concurrent requests efficiently. The common ways to work with async results are callbacks, Promises, and async/await."
+      },
+      {
+        "questionText": "What is the purpose of environment variables in a backend application?",
+        "idealAnswer": "Environment variables hold configuration that varies by deployment, such as database URLs, API keys, and ports, keeping them out of the source code. This lets the same code run in development, staging, and production with different settings and avoids committing secrets to version control. In Node they are accessed via process.env, often loaded from a .env file locally that is gitignored. Keeping secrets in environment variables or a secrets manager rather than hardcoding them is a basic security practice."
+      },
+      {
+        "questionText": "Describe a time you had to learn a backend tool or concept quickly to complete a task.",
+        "idealAnswer": "A good answer gives a specific example, the concept or tool, and a deliberate approach such as reading official docs, finding examples in the codebase, and building a small test to confirm understanding. The candidate should show they validated their understanding against real behavior rather than assuming. They should reflect on how they got unblocked. The signal is resourcefulness and self-direction in unfamiliar backend territory rather than waiting passively to be taught."
+      },
+      {
+        "questionText": "How do you make sure you understand the data or API contract before building an endpoint?",
+        "idealAnswer": "The candidate should describe confirming the expected request and response shapes, required fields, and error cases with whoever consumes or provides the data, rather than assuming. A good answer mentions checking existing documentation or schemas, looking at similar endpoints for conventions, and validating inputs. They should test the endpoint with sample requests before considering it done. The signal is proactively establishing clear contracts to avoid integration surprises and rework."
+      },
+      {
+        "questionText": "Tell me about a time you found and fixed a bug in backend code. How did you investigate it?",
+        "idealAnswer": "Look for a methodical process: reproducing the issue, reading logs or error messages, and narrowing down the failing code path before changing anything. The candidate should describe forming a hypothesis, testing it, and confirming the root cause rather than guessing. They should mention verifying the fix and ideally adding a test or log to catch it next time. The signal is disciplined debugging and curiosity about why something broke, not just making the error disappear."
+      },
+      {
+        "questionText": "How do you handle a situation where you are blocked waiting on another team's API or service?",
+        "idealAnswer": "A good answer involves communicating the dependency early, agreeing on the contract, and using mocks or stubs to keep building in parallel rather than idling. The candidate should describe following up appropriately and finding other useful work while blocked. They should escalate if the blocker threatens a deadline rather than silently waiting. The signal is proactive communication and resourcefulness in keeping progress moving despite external dependencies."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Backend",
+    "difficulty": "Mid",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How do you handle errors in an Express-style Node.js API so that clients get sensible responses?",
+        "idealAnswer": "I wrap async route handlers so rejected promises are forwarded to a centralized error-handling middleware rather than crashing the process or leaving requests hanging. The handler maps known error types to appropriate status codes, returns a consistent JSON error shape, and avoids leaking internal details or stack traces to clients in production. I distinguish operational errors, like invalid input or not found, from programmer errors and log the latter with full context for debugging. Validation at the boundary plus structured logging makes failures both safe for clients and diagnosable for engineers."
+      },
+      {
+        "questionText": "What are the trade-offs between SQL and NoSQL databases, and how would you choose for a given feature?",
+        "idealAnswer": "SQL databases offer strong schemas, ACID transactions, and powerful joins, which suit relational data and consistency-critical workloads. NoSQL stores like document or key-value databases offer flexible schemas and easy horizontal scaling, which suit unstructured data, high write throughput, or rapidly changing shapes. The choice depends on data relationships, consistency needs, query patterns, and scale rather than fashion. Many systems use both, and the key pitfall is picking NoSQL for inherently relational data and then reimplementing joins and transactions poorly in application code."
+      },
+      {
+        "questionText": "How would you implement authentication for a stateless REST API, and what are the security considerations?",
+        "idealAnswer": "A common approach is token-based auth where the server issues a signed JWT or an opaque session token after verifying credentials, and the client sends it on subsequent requests. JWTs avoid server-side session storage but cannot be easily revoked, so I keep them short-lived and pair them with refresh tokens. Considerations include hashing passwords with a strong algorithm like bcrypt or argon2, transmitting only over HTTPS, storing tokens securely (HttpOnly cookies to resist XSS), guarding against CSRF, and rate-limiting login attempts. The principle is defense in depth: never trust the client and minimize the blast radius of a leaked token."
+      },
+      {
+        "questionText": "A specific API endpoint has become slow under load. How would you investigate and address it?",
+        "idealAnswer": "I would first measure to locate the bottleneck using logs, timing instrumentation, and APM traces to see where time is spent, then reproduce under representative load. Common culprits are unindexed or N+1 database queries, missing caching, blocking synchronous work on the event loop, or external calls without timeouts. Fixes include adding indexes, batching or eager-loading queries, caching hot results, offloading CPU-heavy work, and paginating large responses. I would validate improvements with load testing and add monitoring so regressions are caught, fixing the largest contributor first rather than guessing."
+      },
+      {
+        "questionText": "Tell me about a time you had to make a backend change that risked breaking existing consumers. How did you manage it?",
+        "idealAnswer": "A strong answer shows awareness of backward compatibility: identifying consumers, preferring additive changes, and versioning or feature-flagging breaking ones. The candidate should describe communicating with affected teams, providing a migration path and deprecation window, and rolling out gradually with monitoring and a rollback plan. They should mention testing against real usage patterns. The signal is treating an API as a contract with others and managing change responsibly rather than breaking consumers and dealing with fallout later."
+      },
+      {
+        "questionText": "Describe how you ensure your backend code is testable and how you decide what to test.",
+        "idealAnswer": "The candidate should describe structuring code so business logic is separated from I/O, using dependency injection or thin adapters so logic can be unit tested without a real database or network. A good answer prioritizes testing core logic, edge cases, and error paths, with integration tests for the wiring and critical flows. They should avoid over-testing trivial code or coupling tests to implementation details that make refactoring painful. The signal is pragmatic, design-conscious testing aimed at confidence, not a coverage number for its own sake."
+      },
+      {
+        "questionText": "How do you approach reviewing a teammate's backend pull request that touches data handling or APIs?",
+        "idealAnswer": "I focus first on correctness and safety: input validation, error handling, security implications, and whether the change is backward compatible for API consumers. I check for data integrity concerns like transactions, race conditions, and migration safety, plus performance issues such as inefficient queries. I distinguish blocking concerns from style preferences and give specific, kind, actionable feedback that explains the reasoning. The signal is thoroughness on the high-risk aspects of backend changes while respecting the author's time and intent."
+      },
+      {
+        "questionText": "Tell me about a time you had to balance delivering a backend feature quickly with maintaining reliability.",
+        "idealAnswer": "A good answer describes a conscious trade-off communicated to stakeholders, protecting essentials like data integrity and error handling while deferring lower-risk polish. The candidate should explain how they reduced risk under time pressure, for example with feature flags, monitoring, and a rollback plan, and tracked any debt for follow-up. They should show they did not sacrifice correctness or safety for speed. The signal is pragmatic judgment that recognizes reliability is non-negotiable for backend systems even when moving fast."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Backend",
+    "difficulty": "Senior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you design idempotent APIs and why does idempotency matter in distributed systems?",
+        "idealAnswer": "Idempotency means repeating the same request produces the same result without unintended side effects, which is essential because networks cause retries and clients cannot always tell if a request succeeded. GET, PUT, and DELETE are naturally idempotent, but POST creating resources is not, so I have clients send an idempotency key that the server records and uses to deduplicate, returning the original result on retries. This requires storing keys with their outcomes and handling concurrent duplicates safely, often with a unique constraint. The payoff is safe retries and protection against double-charging or duplicate records under at-least-once delivery."
+      },
+      {
+        "questionText": "Explain why blocking the Node.js event loop is dangerous and how you handle CPU-intensive work.",
+        "idealAnswer": "Because Node runs JavaScript on a single thread, a long synchronous computation blocks the event loop and stalls all other requests, killing throughput and causing timeouts. The fix is to keep request handlers non-blocking: offload CPU-heavy work to worker threads, child processes, or a separate service or queue, and break large tasks into chunks that yield. I would also avoid synchronous file or crypto calls in hot paths and stream large payloads instead of buffering them. Monitoring event loop lag reveals when the loop is being starved so the issue can be caught before it degrades the whole service."
+      },
+      {
+        "questionText": "How do you design a caching strategy for a read-heavy backend, including invalidation?",
+        "idealAnswer": "I identify hot, expensive-to-compute reads and cache them at the right layer, such as an in-memory or distributed cache like Redis, choosing TTLs based on tolerance for staleness. Common patterns are cache-aside, where the app reads cache then falls back to the source and populates it, and write-through for stronger freshness. Invalidation is the hard part: I use TTLs for bounded staleness, explicit invalidation on writes, and keys versioned by data so updates are reflected. I also guard against thundering herd and cache stampedes with locking or request coalescing, and accept that caching trades some consistency for performance."
+      },
+      {
+        "questionText": "How would you safely run a schema migration on a large production database with zero downtime?",
+        "idealAnswer": "I use expand-and-contract: first make additive, backward-compatible changes like adding a nullable column or new table, deploy code that writes to both old and new shapes, backfill data in batches to avoid long locks, then switch reads over, and only later remove the old structure. Each step keeps old and new code compatible so deploys and rollbacks are safe. I avoid operations that lock large tables, run backfills incrementally with throttling, and test the migration on production-like data. The principle is to never require code and schema to change atomically, decoupling them so the system stays available throughout."
+      },
+      {
+        "questionText": "Tell me about a time you designed a backend system or service and the key trade-offs you weighed.",
+        "idealAnswer": "A strong answer describes the requirements and constraints, the alternatives considered, and explicit trade-offs around consistency, scalability, complexity, and cost. The candidate should explain choices like data model, synchronous versus asynchronous processing, and failure handling, and how they validated the design. They should reflect on what worked and what they would change in hindsight. The signal is structured systems thinking and deliberate decision-making with rationale, not just describing what was built without the why."
+      },
+      {
+        "questionText": "How do you decide between synchronous request/response and asynchronous message-based communication between services?",
+        "idealAnswer": "Synchronous calls are simpler and give immediate results, suited when the caller needs the answer now and the dependency is fast and reliable, but they couple availability and can cause cascading failures. Asynchronous messaging via queues or events decouples services, smooths load spikes, and improves resilience, at the cost of eventual consistency and added complexity in ordering, deduplication, and observability. I choose async for long-running work, fan-out, and decoupling, and sync for low-latency reads where the client must wait. Often I combine them, and I always design for failure with timeouts, retries, and idempotency."
+      },
+      {
+        "questionText": "Describe a time you led the resolution of a significant production reliability or data issue.",
+        "idealAnswer": "A strong answer shows prioritizing mitigation and limiting impact first, then methodically finding root cause using logs, metrics, and traces. The candidate should describe coordinating with others, communicating status clearly, and making sound decisions under pressure with incomplete information. Afterward they should have driven durable fixes and prevention such as monitoring, alerts, or process changes via a blameless postmortem. The signal is calm, systematic ownership of reliability and turning the incident into lasting improvements, not just a quick patch."
+      },
+      {
+        "questionText": "How do you mentor mid-level engineers to grow their backend design and system-thinking skills?",
+        "idealAnswer": "Look for deliberate techniques: involving them in design discussions, asking guiding questions instead of giving answers, and giving them ownership of meaningful design decisions with a safety net. A strong answer describes reviewing their designs for trade-offs like failure modes and scaling, sharing the reasoning behind senior decisions, and gradually increasing scope. They should measure success by the mentee's growing independence. The signal is teaching judgment and systems thinking through guided experience rather than simply handing over solutions."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Backend",
+    "difficulty": "Lead",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you architect a Node.js backend to scale horizontally to handle a large increase in traffic?",
+        "idealAnswer": "I would design services to be stateless so any instance can handle any request, moving session and shared state to external stores like Redis or a database, then run multiple instances behind a load balancer with autoscaling. I would offload heavy or bursty work to queues and background workers, add caching at appropriate layers, and ensure the database scales via read replicas, connection pooling, and sharding or partitioning if needed. Observability, health checks, graceful shutdown, and rate limiting keep the system stable under load. The principle is removing single points of contention and designing for failure so capacity can grow by adding instances."
+      },
+      {
+        "questionText": "How do you decide between a monolithic architecture and microservices, and how would you manage a transition?",
+        "idealAnswer": "I treat it as an organizational and complexity trade-off, not a default. A well-structured monolith is simpler to develop, deploy, and debug and is right for most teams early on; microservices pay off when independent scaling, team autonomy, and isolated deployment outweigh the costs of distributed-system complexity, network failure modes, and operational overhead. If a transition is warranted, I would extract services incrementally via the strangler-fig pattern around clear domain boundaries, starting with the parts that most need independent scaling or ownership. I would invest in observability, CI/CD, and contracts before splitting, and avoid premature fragmentation that creates a distributed monolith."
+      },
+      {
+        "questionText": "How do you ensure data consistency across services in a distributed system that cannot rely on a single database transaction?",
+        "idealAnswer": "I accept that distributed transactions are usually impractical and design for eventual consistency using patterns like the saga pattern, where a workflow is a series of local transactions with compensating actions to undo on failure. To bridge state changes and messaging reliably I use the transactional outbox pattern so events are published atomically with the data change, and consumers are made idempotent to tolerate at-least-once delivery. I make boundaries explicit, embrace eventual consistency where business rules allow, and reserve strong consistency for invariants that truly require it. The key is designing for partial failure and reconciliation rather than pretending the system is one database."
+      },
+      {
+        "questionText": "How would you design and roll out an API versioning and deprecation strategy used by many internal and external consumers?",
+        "idealAnswer": "I would favor backward-compatible, additive evolution to minimize breaking changes, and reserve explicit versions for unavoidable breaks, communicated via URL or header with a clear policy. A strong strategy includes published deprecation timelines, monitoring which consumers use which versions, migration guides and tooling, and proactive outreach before sunsetting. I would maintain old versions for a defined support window and use analytics to confirm a version is safe to retire. The principle is treating the API as a long-lived contract, balancing the freedom to evolve with the obligation not to break consumers without ample notice and support."
+      },
+      {
+        "questionText": "Tell me about a time you led a major backend architectural initiative and how you drove it to completion.",
+        "idealAnswer": "A strong answer describes framing the initiative around business outcomes, building alignment with stakeholders, and breaking a large effort into incremental, value-delivering phases rather than a risky big-bang. The candidate should explain how they managed risk, kept the system running during change, handled setbacks, and brought engineers along. They should discuss measuring success and the trade-offs they navigated. The signal is strategic technical leadership combined with execution discipline and people skills, not just authoring an architecture document."
+      },
+      {
+        "questionText": "How do you balance reliability, cost, and delivery speed when making infrastructure and architecture decisions for a backend platform?",
+        "idealAnswer": "The candidate should frame these as explicit, context-dependent trade-offs tied to business needs: defining reliability targets via SLOs so investment matches actual requirements rather than over-engineering, controlling cost by right-sizing and avoiding premature scale, and protecting delivery speed with good tooling and abstractions. A strong answer describes making trade-offs visible to stakeholders and revisiting them as scale and priorities change. They should avoid both gold-plating for hypothetical scale and cutting corners that cause outages. The signal is mature, data-informed judgment connecting architecture to cost and business value."
+      },
+      {
+        "questionText": "How do you establish engineering standards for backend quality, security, and operability across multiple teams?",
+        "idealAnswer": "I would codify standards into automated guardrails wherever possible: shared linting, dependency and vulnerability scanning, required health checks and observability, and CI/CD gates so good practices are the default path. For things that cannot be automated I use lightweight RFCs, paved-road templates and libraries that make the right way the easy way, and clear ownership and on-call expectations. Adoption comes from reducing friction and demonstrating value, not mandates alone, with feedback loops to evolve the standards. The aim is consistent reliability and security at scale without crushing team autonomy."
+      },
+      {
+        "questionText": "How do you handle a situation where leadership pushes for a delivery timeline that you believe will compromise backend reliability or security?",
+        "idealAnswer": "A strong answer shows the candidate translating technical risk into business terms, quantifying the likelihood and impact of outages, data loss, or breaches so leadership can make an informed trade-off. They should propose options such as reduced scope, a phased rollout, or explicit acceptance of tracked risk rather than simply refusing or silently complying. They should advocate firmly for non-negotiables like security and data integrity while respecting that some risk decisions belong to the business. The signal is principled influence, clear communication of consequences, and partnership rather than obstruction or capitulation."
+      }
+    ]
+  }
+]

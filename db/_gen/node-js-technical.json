@@ -1,0 +1,498 @@
+[
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "General",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "What is Node.js and what kind of runtime is it built on?",
+        "idealAnswer": "Node.js is a JavaScript runtime that lets you run JavaScript outside the browser, typically on a server. It is built on Google's V8 engine, which compiles JavaScript to machine code. It uses an event-driven, non-blocking I/O model that makes it efficient for I/O-bound workloads. A common pitfall is thinking Node.js is a language or framework rather than a runtime."
+      },
+      {
+        "questionText": "Explain the difference between synchronous and asynchronous code in Node.js.",
+        "idealAnswer": "Synchronous code runs line by line and blocks the thread until each operation completes, while asynchronous code starts an operation and continues execution, handling the result later via a callback, promise, or await. Node.js favors async for I/O like file or network access so the single thread is not blocked. The key benefit is concurrency without extra threads; the pitfall is blocking the event loop with heavy synchronous work."
+      },
+      {
+        "questionText": "What is npm and what role does the package.json file play?",
+        "idealAnswer": "npm is the default package manager for Node.js, used to install, version, and publish dependencies. The package.json file is the project manifest: it lists dependencies and devDependencies, defines scripts, and records metadata like name and version. Running npm install reads it and populates node_modules, and package-lock.json pins exact resolved versions. A common mistake is committing node_modules instead of the lockfile."
+      },
+      {
+        "questionText": "What is a callback function and how is it commonly used in Node.js?",
+        "idealAnswer": "A callback is a function passed as an argument to another function, to be invoked later when an operation finishes. Node.js historically used the error-first callback convention, where the first parameter is an error (or null) and subsequent parameters carry results. This enables asynchronous APIs like fs.readFile. The classic pitfall is callback hell, deeply nested callbacks that are hard to read, which promises and async/await address."
+      },
+      {
+        "questionText": "What is the difference between require and import in Node.js modules?",
+        "idealAnswer": "require is the CommonJS mechanism, loading modules synchronously and returning module.exports, and it is the historical default in Node.js. import is the ES Modules syntax, which is statically analyzed and supports named and default exports, enabled by setting type to module or using .mjs files. ESM loading is asynchronous and hoisted. A pitfall is mixing the two systems in one file or assuming require works in an ESM context."
+      },
+      {
+        "questionText": "What is the purpose of the process object in Node.js?",
+        "idealAnswer": "process is a global object that provides information about and control over the current Node.js process. Common uses include process.env for environment variables, process.argv for command-line arguments, process.exit to terminate, and process.on to listen for events like uncaughtException or SIGINT. It is the bridge between your code and the operating system environment. A pitfall is reading secrets from process.env without validating they exist."
+      },
+      {
+        "questionText": "How do you handle errors in an asynchronous function that uses async/await?",
+        "idealAnswer": "You wrap the awaited calls in a try/catch block so rejected promises are caught as exceptions. For example, await an async operation inside try and handle the failure in catch. Without try/catch, an unhandled rejection occurs which can crash the process in modern Node.js. It is also good practice to handle or rethrow meaningfully rather than swallowing errors silently."
+      },
+      {
+        "questionText": "What is JSON and how do you convert between JSON strings and JavaScript objects in Node.js?",
+        "idealAnswer": "JSON (JavaScript Object Notation) is a lightweight, text-based data format used widely for APIs and config. JSON.parse converts a JSON string into a JavaScript object, and JSON.stringify converts an object into a JSON string. JSON.parse throws on invalid input, so it should be guarded with try/catch. A pitfall is that functions, undefined, and circular references are not representable in JSON."
+      },
+      {
+        "questionText": "What does it mean that Node.js is single-threaded, and is that fully accurate?",
+        "idealAnswer": "Node.js runs your JavaScript on a single main thread with one event loop, so application code does not run in parallel by default. However, it is not strictly single-threaded overall: libuv uses a thread pool for some operations like file I/O and crypto, and worker threads allow true parallelism. The single main thread is why blocking it with CPU-heavy work harms throughput. The takeaway is that I/O is offloaded while JS execution stays single-threaded."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "General",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "Walk through the phases of the Node.js event loop and what runs in each.",
+        "idealAnswer": "The event loop has ordered phases: timers (setTimeout/setInterval callbacks), pending callbacks, idle/prepare (internal), poll (retrieving I/O events and executing their callbacks), check (setImmediate callbacks), and close callbacks. Between phases, the microtask queue (process.nextTick then promise jobs) is drained. setImmediate runs in the check phase while setTimeout(fn,0) runs in timers, so ordering can differ. A pitfall is starving the loop with recursive process.nextTick calls."
+      },
+      {
+        "questionText": "How do streams work in Node.js and when would you choose them over reading a whole file?",
+        "idealAnswer": "Streams process data in chunks rather than loading everything into memory, with readable, writable, duplex, and transform types. You use them for large files or network data to keep memory low and start processing sooner. pipe or pipeline connects a source to a destination and handles backpressure, where a slow consumer pauses a fast producer. Reading a whole file with readFile is simpler but risks high memory usage and out-of-memory errors on large inputs."
+      },
+      {
+        "questionText": "Explain the difference between process.nextTick and setImmediate.",
+        "idealAnswer": "process.nextTick schedules a callback to run immediately after the current operation completes, before the event loop continues to the next phase, draining the microtask queue. setImmediate schedules a callback to run in the check phase of the next loop iteration. Because nextTick callbacks run before I/O, overusing them can starve I/O and delay other work. setImmediate is generally safer when you want to yield to the loop."
+      },
+      {
+        "questionText": "What is backpressure in streams and how do you handle it correctly?",
+        "idealAnswer": "Backpressure occurs when a writable destination cannot consume data as fast as a readable source produces it, risking unbounded memory growth. You handle it by respecting the boolean return of write (pausing the source when it returns false and resuming on the drain event) or, more simply, by using pipe or stream.pipeline which manage it automatically. pipeline also propagates errors and cleans up resources. A pitfall is ignoring write's return value and buffering data indefinitely."
+      },
+      {
+        "questionText": "How would you debug a memory leak in a long-running Node.js process?",
+        "idealAnswer": "Start by reproducing under load and watching RSS and heap usage via process.memoryUsage over time. Take heap snapshots with the Chrome DevTools inspector or the heapdump module at intervals and diff them to find retained object growth. Common culprits include unbounded caches, event listeners not removed, closures holding references, and global arrays. Tools like clinic.js or --inspect help; the fix is usually bounding caches and removing listeners."
+      },
+      {
+        "questionText": "What is the difference between dependencies and devDependencies, and why does it matter?",
+        "idealAnswer": "dependencies are packages required at runtime in production, while devDependencies are only needed during development and build, such as test frameworks, linters, and bundlers. npm install installs both by default, but npm install with production flag or NODE_ENV=production installs only runtime deps, shrinking the deployed footprint. Misclassifying a runtime package as a devDependency causes failures in production where it is not installed."
+      },
+      {
+        "questionText": "How do you manage configuration and secrets across environments in a Node.js app?",
+        "idealAnswer": "Use environment variables read from process.env, loaded locally from a .env file via dotenv but provided by the platform or a secrets manager in production. Keep secrets out of source control and out of the repo, and validate required variables at startup so the app fails fast. Centralize config into a single typed module rather than scattering process.env reads. A pitfall is committing .env files or logging secret values."
+      },
+      {
+        "questionText": "Explain what an EventEmitter is and a scenario where you would use it.",
+        "idealAnswer": "EventEmitter is a core Node.js class implementing the observer pattern: objects emit named events and registered listeners react to them via on and emit. It underpins many core APIs like streams and HTTP servers. You might use it to decouple components, for example emitting a 'userRegistered' event that several listeners handle independently. Pitfalls include exceeding the default max listeners warning and forgetting that an unhandled 'error' event throws."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "General",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How do worker threads differ from the cluster module, and when would you reach for each?",
+        "idealAnswer": "Worker threads run JavaScript in separate threads within one process, sharing memory via SharedArrayBuffer and communicating through message passing, ideal for CPU-bound tasks like parsing or image processing. The cluster module forks multiple processes that share a server port, scaling I/O-bound HTTP workloads across CPU cores with process isolation. Workers are lighter and share memory but a crash can affect the process; cluster gives stronger isolation. Choose workers for CPU parallelism and cluster for horizontal request handling."
+      },
+      {
+        "questionText": "Describe how you would profile and optimize a CPU-bound bottleneck in a Node.js service.",
+        "idealAnswer": "First confirm it is CPU-bound by observing high event loop latency and a saturated single core. Profile with the V8 profiler via --prof or node --inspect and capture a flame graph using tools like clinic flame or 0x to find hot functions. Optimizations include moving heavy computation to worker threads, caching results, using more efficient algorithms or data structures, or offloading to native addons. The key insight is that CPU work blocks the event loop, so it must be parallelized or reduced."
+      },
+      {
+        "questionText": "What are the trade-offs of using async hooks or AsyncLocalStorage for request context propagation?",
+        "idealAnswer": "AsyncLocalStorage lets you carry context like a request ID or user across async boundaries without threading it through every function, built on async_hooks. The benefits are cleaner code and reliable correlation in logs and tracing. The trade-offs are measurable performance overhead from async_hooks instrumentation and added complexity in reasoning about lifetimes. It is generally preferred over raw async_hooks, but you should benchmark and avoid storing large objects in the store."
+      },
+      {
+        "questionText": "How do you ensure graceful shutdown of a Node.js server handling in-flight requests?",
+        "idealAnswer": "Listen for termination signals like SIGTERM and SIGINT, stop accepting new connections by calling server.close, and allow in-flight requests to finish within a timeout. Drain resources such as database pools, message consumers, and timers, then exit with an appropriate code. Add a hard timeout to force-exit if connections hang, and set keep-alive handling so idle sockets close. Pitfalls include not handling SIGTERM in containers and leaving dangling connections that block shutdown."
+      },
+      {
+        "questionText": "Explain how Node.js handles unhandled promise rejections and uncaught exceptions, and the recommended strategy.",
+        "idealAnswer": "An uncaught synchronous exception emits the uncaughtException event and, if unhandled, crashes the process; an unhandled rejected promise emits unhandledRejection and in modern Node.js terminates the process by default. The recommended strategy is to let the process crash on truly unexpected errors and restart it with a supervisor, since continuing in an unknown state is risky. Use these handlers only to log and perform a fast, last-resort cleanup before exiting. Routine errors should be caught locally rather than relying on these global handlers."
+      },
+      {
+        "questionText": "What edge cases arise when working with Buffers and character encodings in Node.js?",
+        "idealAnswer": "Buffers hold raw bytes, and decoding them to strings requires the correct encoding such as utf8, base64, or hex. A key edge case is multibyte characters split across chunk boundaries, which can corrupt output if you decode each chunk independently; StringDecoder handles partial characters. Buffer.allocUnsafe returns uninitialized memory that may leak old data if not overwritten, so prefer Buffer.alloc for safety. Mismatched encodings and incorrect byte-length assumptions are common bugs."
+      },
+      {
+        "questionText": "How would you design retry and timeout logic for outbound calls in a Node.js service?",
+        "idealAnswer": "Set explicit timeouts on every outbound call so a slow dependency cannot exhaust resources, then add retries with exponential backoff and jitter for transient failures only (e.g., network errors or 5xx, not 4xx). Cap total attempts and combine with a circuit breaker to stop hammering a failing dependency. Use idempotency keys for non-idempotent operations to avoid duplicate side effects. Pitfalls include retrying non-idempotent writes blindly and synchronized retries causing thundering herds."
+      },
+      {
+        "questionText": "What strategies do you use to keep the event loop responsive under heavy load?",
+        "idealAnswer": "Avoid long synchronous work by breaking large computations into chunks with setImmediate or moving them to worker threads, and prefer streaming over buffering large payloads. Monitor event loop delay using perf_hooks monitorEventLoopDelay and shed load or apply backpressure when latency rises. Bound concurrency with queues so spikes do not overwhelm memory and CPU. The core principle is that the single main thread must never be blocked, so heavy or unbounded work is the main risk."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "General",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you architect a Node.js platform to scale horizontally across many instances and regions?",
+        "idealAnswer": "Design stateless services so any instance can handle any request, externalizing session and cache state to shared stores like Redis and using a load balancer for distribution. Run multiple processes per host via cluster or a container orchestrator, and scale instances behind health checks and autoscaling. For multi-region, replicate data with awareness of consistency trade-offs, route users to the nearest region, and design for partition tolerance. Key concerns are statelessness, idempotency, observability, and graceful degradation under partial failure."
+      },
+      {
+        "questionText": "What factors guide the decision between a monolith and microservices for a Node.js system?",
+        "idealAnswer": "Consider team size and boundaries, deployment cadence, domain complexity, and operational maturity. A modular monolith is simpler to develop, test, and deploy and is usually the right starting point; microservices help when independent scaling, team autonomy, and isolated failure domains justify their distributed-systems overhead. Microservices introduce network latency, eventual consistency, and harder debugging. The lead's job is to defer that complexity until organizational and scaling pressures clearly warrant it, often via Conway's Law alignment."
+      },
+      {
+        "questionText": "How do you establish observability standards across multiple Node.js services and teams?",
+        "idealAnswer": "Standardize structured JSON logging with correlation/trace IDs propagated via context (e.g., AsyncLocalStorage), adopt OpenTelemetry for distributed tracing and metrics, and define common dashboards and SLOs. Centralize logs and metrics in shared platforms, enforce conventions through shared libraries so teams get instrumentation by default, and set alerting on golden signals like latency, errors, traffic, and saturation. The goal is consistent, low-friction visibility so cross-team incidents are debuggable. A pitfall is inconsistent, per-team tooling that breaks end-to-end traces."
+      },
+      {
+        "questionText": "How would you approach a large-scale migration from CommonJS to ES Modules across an organization's Node.js codebases?",
+        "idealAnswer": "Treat it as an incremental migration: audit dependencies for ESM compatibility, enable interop where possible, and migrate leaf packages first to limit blast radius. Use dual-package or per-package type:module changes, update tooling (bundlers, test runners, ts config) and CI, and codify conventions in shared guides. Watch for differences like top-level await, lack of __dirname, and dynamic import replacing conditional require. Coordinate across teams with clear timelines, automated codemods, and a rollback plan to avoid a risky big-bang switch."
+      },
+      {
+        "questionText": "What is your strategy for managing dependency security and supply-chain risk across many Node.js repositories?",
+        "idealAnswer": "Pin versions with lockfiles, enable automated scanning (npm audit, Dependabot/Renovate, and an SCA tool), and gate CI on known critical vulnerabilities. Reduce attack surface by minimizing dependencies, vetting new ones, and using provenance and signed packages where available. Establish a patch SLA, maintain an SBOM, and isolate build environments to limit malicious postinstall scripts. The lead also fosters a culture of reviewing transitive dependencies, since supply-chain attacks often arrive through deep dependency trees."
+      },
+      {
+        "questionText": "How do you decide when to introduce a message queue or event-driven architecture into a Node.js system?",
+        "idealAnswer": "Introduce async messaging when you need to decouple producers from consumers, absorb load spikes, smooth backpressure, or enable independent scaling and retries of background work. Queues suit fire-and-forget and buffering; pub/sub and event streams suit fan-out and event sourcing. The trade-offs are added infrastructure, eventual consistency, delivery semantics (at-least-once vs exactly-once), and the need for idempotent consumers and dead-letter handling. Avoid adding them prematurely when a synchronous call or a simple job table suffices."
+      },
+      {
+        "questionText": "How would you set standards for performance and reliability budgets in Node.js services across teams?",
+        "idealAnswer": "Define explicit SLOs and error budgets per service for latency, availability, and event-loop health, and make them visible on shared dashboards. Establish budgets for p99 latency and resource saturation, enforce load and soak testing in CI/CD, and require capacity planning before launches. Tie error-budget burn to release decisions so reliability and feature velocity are balanced. The lead ensures these are owned by teams, reviewed regularly, and backed by runbooks rather than treated as one-off targets."
+      },
+      {
+        "questionText": "How do you mentor engineers on writing maintainable asynchronous Node.js code and reviewing it effectively?",
+        "idealAnswer": "Coach on consistent patterns: prefer async/await with proper error handling over nested callbacks, avoid blocking the event loop, and make concurrency explicit with helpers like Promise.all and bounded queues. In reviews, look for unhandled rejections, missing timeouts, resource leaks, and race conditions, and explain the why behind each comment to build judgment. Encourage small, testable functions and clear ownership of side effects. The aim is to scale good async habits through shared lint rules, examples, and pairing rather than gatekeeping."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Frontend",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "What role does Node.js play in a typical frontend development workflow?",
+        "idealAnswer": "Although Node.js runs server-side JavaScript, it powers most frontend tooling: package managers like npm, bundlers like webpack and Vite, transpilers like Babel and TypeScript, linters, and dev servers all run on Node.js. It lets developers manage dependencies and run build scripts locally and in CI. So even purely client-side projects depend on Node.js for their toolchain. A pitfall is confusing this build-time role with shipping Node.js code to the browser."
+      },
+      {
+        "questionText": "What is a bundler and why do frontend projects use one?",
+        "idealAnswer": "A bundler like webpack, Vite, or esbuild takes many JavaScript modules and assets and combines and optimizes them into files the browser can load efficiently. It resolves import statements, handles assets like CSS and images, and applies transforms such as minification. This reduces HTTP requests and enables using modern modular code that older browsers cannot run natively. The bundler runs in Node.js as part of the build."
+      },
+      {
+        "questionText": "What is the difference between a dependency installed for the browser and one used only at build time?",
+        "idealAnswer": "Browser dependencies, like a UI library, are bundled into the code that ships to the client, while build-time tools, like a bundler or linter, run only in Node.js during development and never reach the browser. In package.json the latter usually go in devDependencies. Confusing the two can bloat the client bundle or break builds. Understanding which code runs where is essential for frontend performance."
+      },
+      {
+        "questionText": "What does the npm run script command do and where are scripts defined?",
+        "idealAnswer": "npm run executes a script defined in the scripts section of package.json, such as build, dev, lint, or test. These scripts are shell commands, often invoking Node.js-based tools, and npm adds local node_modules binaries to the PATH so you can call them by name. Common scripts start a dev server or produce a production build. A pitfall is forgetting that npm start and npm test have shorthand forms while others need the run keyword."
+      },
+      {
+        "questionText": "Why might you transpile modern JavaScript before shipping it to browsers?",
+        "idealAnswer": "Transpiling with tools like Babel or TypeScript converts modern syntax (such as optional chaining, arrow functions, or JSX) into a form older browsers understand. This lets developers write current, readable code while still supporting a wide range of target browsers. It can also strip types and apply polyfill strategies for missing APIs. The trade-off is larger output and a build step, so you target only the browsers you need to support."
+      },
+      {
+        "questionText": "What is the node_modules folder and should it be committed to version control?",
+        "idealAnswer": "node_modules is where npm installs all the project's dependencies locally so tools and code can import them. It should not be committed to version control because it is large, platform-specific, and reproducible from package.json and the lockfile. Instead you add it to .gitignore and run npm install to recreate it. Committing it bloats the repo and causes merge conflicts."
+      },
+      {
+        "questionText": "What is a development server and how does hot reloading help frontend development?",
+        "idealAnswer": "A dev server, run via Node.js, serves your frontend locally and watches files for changes, automatically rebuilding and refreshing the browser. Hot reloading (or hot module replacement) updates changed modules in place without a full page reload, preserving application state where possible. This shortens the feedback loop and speeds up development. It is a development-only convenience and is not used in production."
+      },
+      {
+        "questionText": "What is the difference between client-side rendering and server-side rendering at a basic level?",
+        "idealAnswer": "In client-side rendering the browser downloads JavaScript that builds the page after load, while in server-side rendering Node.js generates the HTML on the server and sends a ready-to-display page. SSR can improve initial load perception and SEO, while CSR can feel more app-like after the first load. Frameworks like Next.js use Node.js to do SSR. The trade-off involves complexity, server cost, and time-to-interactive."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Frontend",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How does a Node.js-based SSR framework like Next.js render a page, and what are the trade-offs versus client-side rendering?",
+        "idealAnswer": "On a request, the Node.js server runs the component code to produce HTML, sends it to the browser for fast first paint, then ships JavaScript that hydrates the markup into an interactive app. Benefits include better SEO and perceived performance and the ability to fetch data server-side. Trade-offs are server compute cost, hydration overhead, and added complexity around what runs on server versus client. Choosing SSR, SSG, or CSR depends on freshness, traffic, and interactivity needs."
+      },
+      {
+        "questionText": "What is hydration in SSR apps and what common problems can it cause?",
+        "idealAnswer": "Hydration is the process where client-side JavaScript attaches event handlers and state to server-rendered HTML so the page becomes interactive. Problems include hydration mismatches when server and client render different markup (often from non-deterministic values like dates or random IDs), causing warnings or broken UI. Large bundles also delay interactivity, hurting time-to-interactive. Fixes include keeping server and client output identical and deferring or streaming non-critical work."
+      },
+      {
+        "questionText": "How would you reduce a frontend bundle's size using Node.js build tooling?",
+        "idealAnswer": "Enable production mode for minification, use code splitting and dynamic import so routes load on demand, and rely on tree shaking to drop unused exports. Analyze the bundle with a visualizer to find heavy dependencies, then replace or lazy-load them and avoid importing whole libraries when a submodule suffices. Compress assets and set proper caching. The trade-off is balancing fewer bytes against added build and runtime complexity."
+      },
+      {
+        "questionText": "What is the difference between SSG, SSR, and ISR in a Node.js framework, and when do you use each?",
+        "idealAnswer": "Static site generation (SSG) builds pages at build time for maximum speed and cacheability, ideal for content that rarely changes. Server-side rendering (SSR) builds per request, suited to highly dynamic or personalized pages but with higher server cost. Incremental static regeneration (ISR) serves static pages but revalidates and rebuilds them in the background after an interval, balancing freshness and performance. The choice depends on how often data changes and per-page traffic."
+      },
+      {
+        "questionText": "How do you debug a difference in behavior between development and production builds of a frontend app?",
+        "idealAnswer": "First identify what changes in production: minification, tree shaking, environment variables, different API endpoints, and stripped dev-only warnings. Reproduce by running the production build locally and inspecting source maps to map minified errors back to source. Check that env vars are injected at build time correctly and that no code relies on dev-only behavior. Common culprits are conditionals on NODE_ENV, dead-code elimination removing needed code, and missing polyfills."
+      },
+      {
+        "questionText": "How would you set up a Node.js dev server to proxy API requests and avoid CORS issues during development?",
+        "idealAnswer": "Configure the dev server's proxy option (e.g., in Vite or webpack devServer) to forward requests matching a path prefix to the backend origin, so the browser sees same-origin requests and CORS does not apply. This avoids enabling permissive CORS on the API just for local work. You map paths, optionally rewrite them, and set changeOrigin for virtual hosts. The pitfall is relying on the proxy in production, where you must instead handle CORS or serve from the same origin."
+      },
+      {
+        "questionText": "What are environment variables in frontend builds, and what is the security caveat with them?",
+        "idealAnswer": "Build tools inject environment variables at build time, typically only those with a required prefix (like VITE_ or NEXT_PUBLIC_), replacing references in the bundle with literal values. The critical caveat is that any variable exposed to the client bundle is publicly visible, so secrets must never be put there. Server-only secrets stay on the Node.js side. A common mistake is prefixing an API key and leaking it into the shipped JavaScript."
+      },
+      {
+        "questionText": "How do source maps work and how do they help debug minified frontend code?",
+        "idealAnswer": "A source map is a file that maps positions in the minified, bundled output back to the original source, letting the browser devtools and error trackers show readable file names, line numbers, and variable names. The bundler generates them during the build. They are essential for debugging production errors but can expose source code if served publicly, so they are often uploaded to error-tracking tools instead. The trade-off is debuggability versus source exposure and build size."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Frontend",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you optimize Time to First Byte and Core Web Vitals for a Node.js SSR application?",
+        "idealAnswer": "Reduce server work per request by caching rendered output or data, using streaming SSR to flush HTML early, and minimizing blocking data fetches before first byte. Improve LCP with priority hints and optimized images, reduce CLS with reserved space, and cut INP by shrinking and deferring JavaScript via code splitting and selective hydration. Add CDN caching and edge rendering where appropriate. The core trade-off is server cost and complexity versus user-perceived performance."
+      },
+      {
+        "questionText": "What are the design considerations for streaming SSR and React Server Components in a Node.js runtime?",
+        "idealAnswer": "Streaming SSR flushes HTML in chunks so the browser renders above-the-fold content before slower data resolves, improving perceived performance, using techniques like Suspense boundaries. Server Components run only on the server, reducing client bundle size by keeping data-fetching and heavy logic off the client, sending a serialized result instead. Considerations include where state and interactivity must live, serialization boundaries, error and fallback handling, and caching. The trade-off is a more complex mental model split across server and client."
+      },
+      {
+        "questionText": "How would you diagnose and fix a recurring hydration mismatch in a production SSR app?",
+        "idealAnswer": "Reproduce by comparing server-rendered HTML with the client's first render and reading the framework's mismatch warnings, which often point to the offending component. Typical causes are non-deterministic values (Date.now, Math.random, locale or timezone differences), browser-only APIs used during render, and conditional rendering based on client state. Fixes include rendering deterministic markup, deferring client-only content with effects or a mounted flag, and ensuring data parity. The pitfall is suppressing warnings instead of fixing the root cause, which can corrupt the DOM."
+      },
+      {
+        "questionText": "How do you architect caching for a Node.js frontend server across CDN, server, and data layers?",
+        "idealAnswer": "Use layered caching: a CDN caches static assets and cacheable HTML with appropriate Cache-Control and stale-while-revalidate, the Node.js server caches rendered fragments or data with sensible TTLs, and the data layer caches expensive queries. Set explicit cache keys including locale, auth state, and query params to avoid serving wrong content, and define invalidation via tags or revalidation. The trade-offs are freshness versus hit rate and the difficulty of correct invalidation, which is the hardest part."
+      },
+      {
+        "questionText": "What strategies prevent leaking server-only code or secrets into the client bundle in a Node.js full-stack framework?",
+        "idealAnswer": "Keep secrets in server-only environment variables without client-exposed prefixes, and use framework boundaries like server-only modules, server actions, or API routes so sensitive logic never enters the bundle. Use a server-only import guard package that throws if imported on the client, and audit the built bundle for accidental inclusions. Structure data fetching to run server-side and pass only the minimal serialized data to the client. The pitfall is importing a server utility into a shared component, dragging its dependencies and secrets clientward."
+      },
+      {
+        "questionText": "How would you handle authentication and session state in a Node.js SSR application securely?",
+        "idealAnswer": "Store the session reference in an HttpOnly, Secure, SameSite cookie so client JavaScript cannot read it, validate it on the server during SSR, and avoid embedding tokens in the HTML or client bundle. Use short-lived tokens with refresh, CSRF protection for state-changing requests, and read auth state server-side to render personalized but uncacheable content correctly. Be careful that authenticated pages are not cached publicly. The pitfall is storing JWTs in localStorage, exposing them to XSS."
+      },
+      {
+        "questionText": "How do you approach memory management and avoid leaks in a long-running Node.js SSR server under load?",
+        "idealAnswer": "Render statelessly per request and avoid accumulating per-request data in module-level variables, caches, or event listeners that are never released. Bound any caches with size limits and TTLs, reuse rather than recreate heavy objects, and watch for closures capturing large request-scoped objects. Monitor heap and event-loop delay, take periodic heap snapshots, and load-test for steady-state memory. A common leak is appending to a global array per render or attaching listeners on a shared emitter without cleanup."
+      },
+      {
+        "questionText": "What are the trade-offs between rendering at the edge versus a regional Node.js origin for SSR?",
+        "idealAnswer": "Edge rendering runs close to users for low latency and global distribution but constrains runtime (limited APIs, no full Node.js, shorter execution, cold starts) and complicates access to centralized databases. A regional origin offers the full Node.js runtime, easier data access, and richer libraries but higher latency for distant users. The decision hinges on data locality, personalization needs, and which logic can run in the constrained edge environment. A hybrid split, with edge for fast personalization and origin for heavy logic, is common."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Frontend",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you architect a micro-frontend system served and composed via Node.js?",
+        "idealAnswer": "Define clear ownership boundaries per team and choose a composition strategy such as build-time integration, runtime composition via Module Federation, or server-side composition where a Node.js shell stitches fragments. Standardize shared dependencies, design tokens, and contracts to avoid duplication and version drift, and isolate failures so one fragment cannot crash the page. Address routing, shared auth, and consistent observability. The trade-off is team autonomy and independent deployability versus increased operational and performance complexity, which must be justified by org scale."
+      },
+      {
+        "questionText": "How do you set frontend performance budgets and enforce them across multiple teams using Node.js CI tooling?",
+        "idealAnswer": "Define budgets for bundle size, LCP, INP, and TTFB, and enforce them in CI with tools like Lighthouse CI and bundle-size checks that fail builds on regressions. Track real-user metrics (RUM) in production to validate lab numbers and catch field-only issues. Provide shared config and dashboards so teams own their budgets, and review regressions in a regular forum. The lead's role is to make budgets visible, automated, and tied to release gates rather than aspirational, avoiding slow erosion of performance."
+      },
+      {
+        "questionText": "How would you plan a large-scale migration of a frontend platform to a new Node.js SSR framework with minimal disruption?",
+        "idealAnswer": "Run an incremental, strangler-style migration: stand up the new framework alongside the old, route specific pages or paths to it behind a proxy, and migrate page by page while keeping shared components and design system stable. Invest in automated testing, feature flags, and parity checks (visual and functional) to catch regressions, and keep a rollback path. Communicate timelines and ownership clearly across teams. The big risk is a big-bang rewrite, so the strategy is steady, measurable migration with continuous delivery of value."
+      },
+      {
+        "questionText": "How do you design a shared component library and design system delivery pipeline for many Node.js frontend apps?",
+        "idealAnswer": "Publish the library as versioned packages (often in a monorepo with workspaces) with semantic versioning, automated releases, and a documented changelog so consumers upgrade predictably. Provide tokens, theming, and accessibility baked in, plus visual regression and a11y testing in CI to prevent regressions. Decide on peer dependencies to avoid duplicate React or styling runtimes in consumer bundles. The challenges are coordinating breaking changes, avoiding bundle bloat, and balancing central governance with team flexibility."
+      },
+      {
+        "questionText": "What is your strategy for ensuring accessibility and internationalization at scale across Node.js-rendered frontends?",
+        "idealAnswer": "Bake accessibility into the shared component library with semantic markup, ARIA where needed, and automated plus manual audits in CI, treating a11y as a release requirement rather than an afterthought. For i18n, externalize strings, support locale-aware formatting and right-to-left layouts, and render the correct locale server-side based on negotiation, ensuring SSR output matches client locale to avoid hydration mismatches. Provide tooling and lint rules so teams comply by default. The lead enforces standards, ownership, and metrics, not one-off fixes."
+      },
+      {
+        "questionText": "How would you balance edge rendering, regional SSR, and static generation across a large product portfolio?",
+        "idealAnswer": "Classify pages by traffic, freshness, personalization, and data-access needs, then map each class to the right strategy: static or ISR for cacheable content, edge for lightweight personalized rendering near users, and regional Node.js SSR for data-heavy or complex logic. Provide platform defaults and guardrails so teams choose appropriately without bespoke infrastructure, and centralize caching and observability. The trade-offs are cost, latency, and operational complexity; the lead's job is a coherent, documented decision framework rather than ad hoc per-team choices."
+      },
+      {
+        "questionText": "How do you manage shared dependency versions and avoid duplicate runtimes across federated Node.js frontends?",
+        "idealAnswer": "Establish shared singletons for core libraries like the UI framework via Module Federation shared config or import maps, with agreed version ranges to prevent multiple copies that bloat bundles and break context-based features. Govern upgrades centrally with a clear deprecation and migration cadence, and detect duplication with bundle analysis in CI. Use peer dependencies and lockfile policies to enforce alignment. The trade-off is team autonomy versus consistency, and the main risk is subtle bugs from loading two versions of a stateful library."
+      },
+      {
+        "questionText": "How do you build resilience into a Node.js frontend platform so backend or third-party failures degrade gracefully?",
+        "idealAnswer": "Design for graceful degradation: render skeletons or cached content when data fetches fail, isolate fragments with error boundaries so one failure does not blank the page, and apply timeouts and circuit breakers on server-side fetches. Use stale-while-revalidate caching to serve last-known-good content during outages and fall back for non-critical third-party scripts loaded async. Monitor and alert on dependency health. The principle is that a partial, slightly stale page beats a full outage, and this must be a platform-wide standard."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Backend",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How do you create a basic HTTP server in Node.js, and what does Express add on top?",
+        "idealAnswer": "You can create a server with the built-in http module by calling http.createServer with a request handler and listening on a port. Express is a popular framework layered on top that adds routing, middleware, and convenient request/response helpers, reducing boilerplate. It makes defining routes and handling JSON bodies much simpler. The pitfall with raw http is manually parsing URLs, methods, and bodies, which Express and middleware handle for you."
+      },
+      {
+        "questionText": "What is middleware in Express and how does it work?",
+        "idealAnswer": "Middleware is a function that receives the request, response, and a next callback, and runs in order during request handling. It can read or modify req and res, end the response, or call next to pass control to the next middleware. Common uses are logging, body parsing, authentication, and error handling. A pitfall is forgetting to call next (or send a response), which leaves the request hanging."
+      },
+      {
+        "questionText": "What are the common HTTP methods and what is each typically used for in a REST API?",
+        "idealAnswer": "GET retrieves data without side effects, POST creates a new resource, PUT replaces a resource (and is idempotent), PATCH partially updates a resource, and DELETE removes one. REST maps these methods to resource URLs to express intent clearly. Using the right method matters for caching, idempotency, and client expectations. A pitfall is using GET for actions that change data or POST for everything."
+      },
+      {
+        "questionText": "What are HTTP status codes and can you give examples for common situations?",
+        "idealAnswer": "Status codes indicate the result of a request: 2xx for success (200 OK, 201 Created), 3xx for redirects, 4xx for client errors (400 Bad Request, 401 Unauthorized, 404 Not Found), and 5xx for server errors (500 Internal Server Error). Returning the correct code helps clients react appropriately and is part of a well-designed API. A pitfall is returning 200 with an error message in the body, which hides failures from clients."
+      },
+      {
+        "questionText": "How do you read the request body and query parameters in an Express route?",
+        "idealAnswer": "Query parameters are available on req.query (parsed from the URL after the question mark), route parameters on req.params, and the parsed body on req.body once a body-parsing middleware like express.json is enabled. Without that middleware, req.body is undefined for JSON requests. You then validate and use these values in the handler. A common mistake is forgetting to add the JSON parser and being confused that req.body is empty."
+      },
+      {
+        "questionText": "What is the purpose of environment variables in a backend Node.js app, and how do you access them?",
+        "idealAnswer": "Environment variables hold configuration and secrets that differ across environments, such as database URLs and API keys, keeping them out of source code. You access them via process.env, and locally you can load them from a .env file using a library like dotenv. This lets the same code run in development, staging, and production with different settings. A pitfall is hardcoding secrets or committing the .env file to version control."
+      },
+      {
+        "questionText": "How would you connect a Node.js app to a database and run a simple query?",
+        "idealAnswer": "You install a driver or ORM (for example pg for PostgreSQL or an ORM like Prisma), configure a connection using credentials from environment variables, and then run queries asynchronously with promises or async/await. Most setups use a connection pool to reuse connections efficiently. You should handle errors and close or release connections appropriately. A common pitfall is concatenating user input into SQL strings, which causes SQL injection; use parameterized queries instead."
+      },
+      {
+        "questionText": "What is JSON's role in backend APIs and how does Express handle JSON responses?",
+        "idealAnswer": "JSON is the standard format for exchanging structured data between clients and backend APIs because it is language-neutral and easy to parse. In Express, res.json sends a JavaScript object as a JSON response and sets the Content-Type header to application/json automatically. Incoming JSON bodies are parsed by the express.json middleware. A pitfall is sending non-serializable values or large objects without considering payload size."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Backend",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How do you structure error handling in an Express application, including async route handlers?",
+        "idealAnswer": "Centralize errors in an error-handling middleware with the signature (err, req, res, next) that maps errors to status codes and consistent response bodies. For async handlers, errors in promises are not caught automatically before Express 5, so wrap them in a helper that catches rejections and calls next(err), or use a library. Distinguish operational errors (expected, like validation) from programmer errors. The pitfall is unhandled rejections in async routes leaving requests hanging or crashing the process."
+      },
+      {
+        "questionText": "What is the difference between authentication and authorization, and how are they typically implemented in a Node.js API?",
+        "idealAnswer": "Authentication verifies who the user is (via credentials, sessions, or tokens like JWTs), while authorization determines what an authenticated user is allowed to do (via roles or permissions). In Node.js you authenticate in middleware that validates a session cookie or bearer token and attaches the user to req, then authorize per route by checking roles or ownership. Keeping them separate keeps logic clear. A pitfall is conflating them or checking authorization only on the client."
+      },
+      {
+        "questionText": "How do connection pools work for databases in Node.js and why are they important?",
+        "idealAnswer": "A connection pool maintains a set of reusable database connections so requests borrow and return connections instead of opening a new one each time, which is expensive. This bounds the number of concurrent connections, improving performance and protecting the database from overload. You configure pool size based on the database's connection limits and your concurrency. Pitfalls include leaking connections by not releasing them and setting a pool size larger than the database can handle."
+      },
+      {
+        "questionText": "How would you debug an Express API that intermittently returns slow responses?",
+        "idealAnswer": "Add timing and structured logging or distributed tracing to find which middleware, query, or external call is slow, and measure event-loop delay to rule out blocking. Check database query plans and missing indexes, connection-pool saturation, and slow downstream dependencies. Reproduce under load to expose contention and look for synchronous CPU work blocking the loop. The systematic approach is to measure each layer rather than guess, since intermittent latency often points to pool exhaustion, GC pauses, or a slow dependency."
+      },
+      {
+        "questionText": "What are the trade-offs between JWT-based stateless auth and server-side sessions?",
+        "idealAnswer": "JWTs are stateless and scale well since the server validates a signed token without a lookup, but they are hard to revoke before expiry and can grow large if overloaded with claims. Server-side sessions store state (often in Redis), making revocation and updates easy at the cost of a store lookup per request and shared state across instances. JWTs suit distributed, short-lived access; sessions suit cases needing immediate revocation. A pitfall is using long-lived JWTs with no refresh or revocation strategy."
+      },
+      {
+        "questionText": "How do you validate and sanitize incoming request data in a Node.js API, and why?",
+        "idealAnswer": "Use a schema validation library (like Zod, Joi, or class-validator) to validate request bodies, params, and queries at the boundary, rejecting malformed input with a 400 before it reaches business logic. This prevents bad data, enforces contracts, and reduces injection and logic errors. Validation also produces typed, trusted data downstream. Pitfalls include validating only on the client, trusting input types, and inconsistent error responses across endpoints."
+      },
+      {
+        "questionText": "How would you implement pagination for a list endpoint, and what are the trade-offs of different approaches?",
+        "idealAnswer": "Offset pagination (LIMIT/OFFSET) is simple and supports jumping to pages but degrades on large offsets and can skip or duplicate rows when data changes. Cursor (keyset) pagination uses a stable sort key and a cursor for the next page, performing well at scale and staying consistent under inserts, but it cannot jump to arbitrary pages. Choose based on dataset size and UX needs. A pitfall is offset pagination over millions of rows causing slow scans."
+      },
+      {
+        "questionText": "What strategies do you use to keep secrets and configuration safe in a backend Node.js service?",
+        "idealAnswer": "Load secrets from environment variables or a managed secrets store, never hardcode them, and keep .env files out of version control. Validate required config at startup so the service fails fast on misconfiguration, and scope credentials with least privilege. Avoid logging secrets and rotate them periodically. Pitfalls include leaking secrets in logs or error messages and baking credentials into container images."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Backend",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design idempotent APIs for operations that may be retried, such as payments?",
+        "idealAnswer": "Require clients to send an idempotency key with each create request; the server stores the key with the result and, on a retry with the same key, returns the original response instead of performing the action again. Persist keys with the operation atomically (often in the same transaction or a dedicated table) and expire them after a window. This makes at-least-once delivery safe. Pitfalls include scoping keys incorrectly, race conditions on concurrent retries, and not handling in-progress states."
+      },
+      {
+        "questionText": "How do you prevent and handle race conditions when multiple requests update the same database record?",
+        "idealAnswer": "Use database-level concurrency control: optimistic locking with a version column that fails the update if the version changed, or pessimistic locking with SELECT FOR UPDATE within a transaction for contended writes. Keep transactions short to avoid deadlocks and contention, and design operations to be atomic (e.g., conditional updates). Choose optimistic for low contention and pessimistic for high contention. Pitfalls include read-modify-write in application code without locking, which loses updates."
+      },
+      {
+        "questionText": "What is N+1 query problem and how would you detect and fix it in a Node.js service?",
+        "idealAnswer": "The N+1 problem is issuing one query to fetch a list and then one additional query per item to load related data, producing many round-trips and poor performance. Detect it via query logging, APM traces, or counting queries per request in tests. Fix it by eager loading with joins, batching with an in-clause, or using a dataloader to coalesce and cache lookups within a request. The trade-off is that aggressive eager loading can over-fetch, so you batch precisely what is needed."
+      },
+      {
+        "questionText": "How would you design a rate limiter for a Node.js API running across multiple instances?",
+        "idealAnswer": "Use a shared store like Redis so limits are enforced globally rather than per instance, implementing an algorithm such as token bucket or sliding window for smooth limiting. Key limits by client/IP/API key, return 429 with Retry-After, and make checks atomic (e.g., Redis Lua scripts) to avoid race conditions. Consider tiered limits and burst allowances. Pitfalls include in-memory limiters that reset on deploy and break across instances, and limiters that themselves become a bottleneck."
+      },
+      {
+        "questionText": "How do you ensure data consistency across multiple services or a database and a cache?",
+        "idealAnswer": "Recognize that distributed updates cannot be atomic without coordination, so choose a pattern: for cross-service work use the saga pattern with compensating actions, or the transactional outbox to reliably publish events from a database transaction. For caches, use cache-aside with explicit invalidation or short TTLs and accept eventual consistency, being careful about dual-write inconsistencies. Define the acceptable consistency model explicitly. Pitfalls include dual writes that diverge on partial failure and stale caches serving wrong data."
+      },
+      {
+        "questionText": "What are the considerations for handling large file uploads and downloads in Node.js without exhausting memory?",
+        "idealAnswer": "Stream data rather than buffering whole files in memory: pipe the request stream to disk or directly to object storage, and stream responses back to clients. Prefer presigned URLs so clients upload/download directly to storage like S3, offloading the Node.js process entirely. Apply size limits, validate content, and handle backpressure and partial-failure cleanup. Pitfalls include reading the full file into a Buffer, missing limits enabling DoS, and not handling aborted uploads."
+      },
+      {
+        "questionText": "How would you design a background job processing system in Node.js, and what reliability concerns matter?",
+        "idealAnswer": "Use a durable queue (e.g., Redis-backed like BullMQ or a broker like RabbitMQ/SQS) where producers enqueue jobs and workers process them, decoupling request latency from heavy work. Ensure jobs are idempotent because delivery is typically at-least-once, add retries with backoff, dead-letter queues for poison messages, and visibility timeouts to avoid duplicate processing. Monitor queue depth and processing latency. Pitfalls include non-idempotent handlers, unbounded retries, and losing jobs by using an in-memory queue."
+      },
+      {
+        "questionText": "How do you secure a Node.js backend against common vulnerabilities like injection, XSS, and insecure deserialization?",
+        "idealAnswer": "Use parameterized queries or an ORM to prevent SQL/NoSQL injection, validate and sanitize all input at the boundary, and encode output to prevent XSS in any rendered content. Set security headers (via helmet), enforce HTTPS, apply CSRF protection for cookie-based auth, and avoid unsafe deserialization of untrusted data. Apply least privilege, keep dependencies patched, and never trust client-supplied data. Pitfalls include string-concatenated queries, reflecting unsanitized input, and overly permissive CORS."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Backend",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design a high-throughput Node.js API platform to handle sudden traffic spikes reliably?",
+        "idealAnswer": "Make services stateless and horizontally scalable behind a load balancer with autoscaling, and protect them with rate limiting, load shedding, and bounded concurrency so spikes do not exhaust resources. Use queues to absorb bursts for non-critical work, multi-layer caching to cut load, and circuit breakers plus timeouts on dependencies. Validate capacity with load testing and define SLOs. The trade-offs are cost versus headroom and consistency versus availability, and the lead ensures graceful degradation rather than cascading failure."
+      },
+      {
+        "questionText": "How do you approach decomposing a Node.js monolith into services without disrupting delivery?",
+        "idealAnswer": "Use the strangler-fig pattern: identify bounded contexts, extract the highest-value or most-independent capability first behind a stable interface, and route traffic incrementally while the monolith still serves the rest. Establish data ownership per service, replace shared-database coupling with APIs or events, and invest in CI/CD, observability, and contract tests. Migrate gradually with feature flags and rollbacks. The main risks are distributed-data consistency and premature decomposition, so the lead extracts only where autonomy and scaling clearly pay off."
+      },
+      {
+        "questionText": "What is your strategy for database scaling (replication, sharding, partitioning) for a Node.js backend at scale?",
+        "idealAnswer": "Start with vertical scaling and read replicas to offload reads, routing reads to replicas while writes go to the primary, accepting replication lag and reading-your-own-writes concerns. When a single primary is saturated, partition tables and ultimately shard by a well-chosen key to distribute writes, accepting cross-shard query and transaction complexity. Add caching and connection pooling to reduce pressure. The lead chooses the simplest option that meets scale, since sharding adds significant operational and application complexity."
+      },
+      {
+        "questionText": "How do you design service-to-service communication and resilience in a Node.js microservices architecture?",
+        "idealAnswer": "Choose synchronous REST/gRPC for request-response and asynchronous messaging for decoupling and load absorption, defining clear contracts and versioning. Add resilience with timeouts, retries with backoff and jitter, circuit breakers, bulkheads, and idempotent consumers, plus distributed tracing for visibility. Prefer async events where eventual consistency is acceptable to reduce tight coupling and cascading failures. The trade-offs are latency, complexity, and consistency; the lead standardizes these patterns in shared libraries so teams get resilience by default."
+      },
+      {
+        "questionText": "How would you implement zero-downtime deployments and safe schema migrations for a Node.js backend?",
+        "idealAnswer": "Use rolling or blue-green/canary deployments behind health checks with graceful shutdown so in-flight requests finish. For schema changes, use expand-and-contract: add backward-compatible columns/tables first, deploy code that writes both old and new, backfill, then remove the old shape after all instances are updated. Keep migrations non-blocking (avoid long locks) and reversible. Pitfalls include destructive migrations deployed with code that still expects the old schema, causing errors during the rollout window."
+      },
+      {
+        "questionText": "How do you establish API governance, versioning, and backward-compatibility standards across many Node.js teams?",
+        "idealAnswer": "Define a versioning strategy (URI or header-based), require additive, backward-compatible changes by default, and enforce contracts with schema definitions (OpenAPI/gRPC) and contract testing in CI to catch breaking changes. Maintain a deprecation policy with timelines and clear consumer communication, and provide shared linters and templates so standards are automatic. Track consumers to assess breaking-change impact. The lead's role is governance that prevents accidental breakage while not blocking evolution, balancing stability with velocity."
+      },
+      {
+        "questionText": "How would you design observability and incident response for a distributed Node.js backend?",
+        "idealAnswer": "Instrument the golden signals (latency, traffic, errors, saturation) with metrics, structured logs, and distributed tracing using OpenTelemetry, propagating correlation IDs across services. Define SLOs and error budgets, alert on symptoms not causes, and provide dashboards and runbooks for fast diagnosis. Establish on-call rotations, incident severities, and blameless postmortems that feed back into reliability work. The aim is to detect, triage, and resolve quickly across service boundaries; a pitfall is alert fatigue from noisy, cause-based alerts."
+      },
+      {
+        "questionText": "How do you decide between synchronous request-response and event-driven architectures for a new Node.js backend capability?",
+        "idealAnswer": "Use synchronous calls when the caller needs an immediate result and strong consistency, accepting tighter coupling and shared availability. Use event-driven/async when you can tolerate eventual consistency and want decoupling, independent scaling, load buffering, and resilience to consumer downtime, at the cost of harder debugging and delivery-semantics handling. Often a hybrid fits: synchronous for the critical path, events for side effects. The lead weighs consistency, coupling, latency, and operational maturity rather than defaulting to one style."
+      }
+    ]
+  }
+]

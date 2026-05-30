@@ -1,0 +1,494 @@
+[
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "General",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "What is the difference between let, const, and var in JavaScript?",
+        "idealAnswer": "var is function-scoped and hoisted with an initial value of undefined, while let and const are block-scoped and live in a temporal dead zone until declared. const must be initialized and cannot be reassigned, though objects it points to can still be mutated. let allows reassignment within its block. Best practice is to default to const, use let when reassignment is needed, and avoid var to prevent scoping bugs and accidental redeclaration."
+      },
+      {
+        "questionText": "Explain the difference between == and === in JavaScript.",
+        "idealAnswer": "=== is the strict equality operator that compares both value and type without any conversion, while == is loose equality that performs type coercion before comparing. For example, 0 == '' is true and 0 == false is true, but the same comparisons with === are false. Coercion rules can be surprising, so the recommended practice is to use === almost always. A common exception is using == null to check for both null and undefined in one expression."
+      },
+      {
+        "questionText": "What does it mean that JavaScript is single-threaded, and how does it handle asynchronous operations?",
+        "idealAnswer": "JavaScript runs on a single main thread with one call stack, so only one piece of code executes at a time. Asynchronous work like timers, network requests, and I/O is delegated to the host environment (browser or Node), which uses the event loop to push completed callbacks back onto the stack when it is empty. This non-blocking model lets long operations run in the background without freezing the thread. The key terms are call stack, callback/task queue, microtask queue, and event loop."
+      },
+      {
+        "questionText": "What is the difference between null and undefined in JavaScript?",
+        "idealAnswer": "undefined means a variable has been declared but not assigned a value, or a property/return value is missing, and it is what JavaScript assigns automatically. null is an intentional, explicit absence of a value that a developer assigns. typeof undefined is 'undefined' while typeof null is the historical bug 'object'. Both are falsy, and a common pitfall is that null == undefined is true with loose equality but null === undefined is false."
+      },
+      {
+        "questionText": "What are truthy and falsy values in JavaScript, and which values are falsy?",
+        "idealAnswer": "A value is falsy if it coerces to false in a boolean context, and truthy otherwise. The falsy values are false, 0, -0, 0n (BigInt zero), '' (empty string), null, undefined, and NaN. Everything else is truthy, including '0', 'false', empty arrays [], and empty objects {}, which surprises many beginners. This matters for conditionals, the logical operators &&, ||, and the nullish coalescing operator ??, which only treats null and undefined as triggers."
+      },
+      {
+        "questionText": "What is the difference between an array and an object in JavaScript, and when would you use each?",
+        "idealAnswer": "An array is an ordered, integer-indexed collection ideal for lists where order and iteration matter, and it provides methods like map, filter, push, and forEach. An object is an unordered collection of key-value pairs ideal for representing entities with named properties or for fast lookups by key. Arrays are technically a specialized kind of object with a length property. Choose an array for sequences and an object (or Map) for keyed associations and fast existence checks."
+      },
+      {
+        "questionText": "What does the typeof operator do, and what are its common return values?",
+        "idealAnswer": "typeof returns a string indicating the primitive type of its operand: 'string', 'number', 'boolean', 'undefined', 'bigint', 'symbol', 'function', and 'object'. A well-known quirk is that typeof null returns 'object' rather than 'null', and arrays also return 'object', so Array.isArray is used to detect arrays. typeof is useful for guarding against undefined variables because it does not throw on undeclared identifiers. It cannot distinguish between different object subtypes like dates or plain objects."
+      },
+      {
+        "questionText": "What is a function in JavaScript, and what are the different ways to declare one?",
+        "idealAnswer": "A function is a reusable block of code that can take parameters and return a value, and functions are first-class values that can be assigned and passed around. You can declare them as function declarations (hoisted, named), function expressions (assigned to a variable, not hoisted in the same way), and arrow functions (concise syntax with no own this or arguments binding). Arrow functions inherit this lexically, which makes them convenient for callbacks. A common pitfall is using an arrow function as an object method when you actually need a dynamic this."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "General",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "Explain closures in JavaScript and give a practical use case.",
+        "idealAnswer": "A closure is formed when an inner function retains access to variables from its outer (enclosing) lexical scope even after the outer function has returned. This works because the function keeps a reference to its scope chain rather than a snapshot. Practical uses include data privacy (emulating private state via factory functions), memoization caches, and event handlers that remember context. A classic pitfall is creating closures in a loop with var, where all closures share the same variable; using let or an IIFE per iteration fixes it."
+      },
+      {
+        "questionText": "What is the difference between the microtask queue and the macrotask queue in the event loop?",
+        "idealAnswer": "Macrotasks include things like setTimeout, setInterval, and I/O callbacks, while microtasks include Promise then/catch/finally callbacks and queueMicrotask. After each macrotask the event loop drains the entire microtask queue completely before rendering or running the next macrotask. This means Promise callbacks always run before a setTimeout(0) scheduled around the same time. A pitfall is starving the event loop by continuously enqueuing microtasks, which can block rendering and timers indefinitely."
+      },
+      {
+        "questionText": "How does prototypal inheritance work in JavaScript?",
+        "idealAnswer": "Every object has an internal [[Prototype]] link (accessible via Object.getPrototypeOf or the deprecated __proto__) that points to another object, forming a prototype chain. When a property is accessed, the engine walks up the chain until it finds the property or reaches null. Constructor functions and class syntax set up this chain via the prototype property, so methods defined on the prototype are shared across instances rather than copied. Pitfalls include accidentally shadowing prototype properties and mutating shared prototype state across instances."
+      },
+      {
+        "questionText": "What is the difference between shallow copy and deep copy, and how do you create each?",
+        "idealAnswer": "A shallow copy duplicates only the top-level properties, so nested objects are still shared by reference, which can cause unintended mutations. You can make shallow copies with the spread operator, Object.assign, or Array.prototype.slice. A deep copy recursively clones all nested structures so the copy is fully independent; structuredClone is the modern built-in, while JSON.parse(JSON.stringify(x)) is a common but lossy approach that drops functions, undefined, Dates become strings, and breaks on circular references. Choose based on whether nested mutation isolation is required."
+      },
+      {
+        "questionText": "Explain how 'this' is determined in JavaScript across different call patterns.",
+        "idealAnswer": "this is determined by how a function is called, not where it is defined. With a plain function call it is the global object or undefined in strict mode; as a method (obj.fn()) it is the object before the dot; with new it is the freshly created instance; and with call/apply/bind it is explicitly set. Arrow functions are the exception because they capture this lexically from the enclosing scope and ignore these rules. Common bugs arise when passing a method as a callback and losing its receiver, which bind or an arrow wrapper resolves."
+      },
+      {
+        "questionText": "What are the differences between map, filter, and reduce, and when would you use reduce over the others?",
+        "idealAnswer": "map transforms each element into a new array of the same length, filter returns a subset of elements matching a predicate, and reduce folds the array into a single accumulated value using an accumulator and a reducer function. reduce is the most general and can implement map and filter, but you reach for it specifically when producing a non-array result, grouping items, or computing aggregates like sums or lookup objects. Pitfalls include forgetting the initial accumulator value (which causes errors on empty arrays) and overusing reduce where a simpler map/filter or loop would be clearer."
+      },
+      {
+        "questionText": "How do you debug a memory leak in a long-running JavaScript application?",
+        "idealAnswer": "Start by reproducing the growth and taking heap snapshots over time in DevTools (or using process memory metrics in Node) to identify objects whose retained size keeps increasing. Common causes are forgotten event listeners and timers, detached DOM nodes still referenced by closures, growing caches or global arrays, and closures that capture large objects. Use the allocation timeline and compare snapshots to find retainers, then break the references by removing listeners, clearing intervals, using WeakMap/WeakRef for caches, and scoping variables tightly. Verify by confirming memory plateaus after fixes."
+      },
+      {
+        "questionText": "What is the difference between synchronous and asynchronous error handling, and how do you handle errors with async/await?",
+        "idealAnswer": "Synchronous errors propagate up the call stack and are caught with try/catch, while asynchronous errors in callbacks or promises do not propagate synchronously and a plain try/catch around an async-scheduling call will miss them. With async/await you can use try/catch because await turns a rejected promise into a thrown error at that point. Pitfalls include forgetting to await (causing unhandled rejections), not handling errors in fire-and-forget calls, and swallowing errors by catching without rethrowing or logging. Global handlers like unhandledrejection or process.on('unhandledRejection') are a safety net, not a substitute."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "General",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "Explain how the JavaScript engine optimizes code with JIT compilation and what hidden classes are.",
+        "idealAnswer": "Modern engines like V8 first interpret bytecode and then use a just-in-time compiler to produce optimized machine code for hot functions based on runtime type feedback. Hidden classes (shapes/maps) are internal structures the engine creates to track object layouts so property access can use fast inline caches instead of dictionary lookups. Adding properties in a consistent order and avoiding changing an object's shape after creation keeps objects on the same hidden class and keeps code monomorphic. Deoptimization happens when assumptions break, such as polymorphic property types or deleting properties, so writing shape-stable, type-stable code improves performance."
+      },
+      {
+        "questionText": "What are the edge cases and pitfalls of floating-point arithmetic in JavaScript, and how do you handle money?",
+        "idealAnswer": "JavaScript numbers are IEEE-754 doubles, so values like 0.1 + 0.2 produce 0.30000000000000004 and many decimals cannot be represented exactly. Integers are only safe up to Number.MAX_SAFE_INTEGER (2^53 - 1), beyond which precision is lost. For money you should avoid floats: store amounts as integer minor units (cents), use a decimal library like decimal.js, or use BigInt for large integer math. Comparisons should use an epsilon tolerance rather than equality, and you must round consistently to avoid accumulating errors."
+      },
+      {
+        "questionText": "How would you design a function to limit concurrency when running many asynchronous tasks?",
+        "idealAnswer": "I would implement a pool that runs at most N promises at once: maintain a set of in-flight promises, start tasks up to the limit, and as each settles, start the next from a queue. This avoids overwhelming downstream services or exhausting connections compared to Promise.all which fires everything at once. Key considerations are preserving result ordering if required, handling rejections without aborting the whole batch (Promise.allSettled semantics), and supporting cancellation via AbortController. Backpressure and retry/backoff for transient failures round out a robust implementation."
+      },
+      {
+        "questionText": "Explain the difference between Promise.all, Promise.allSettled, Promise.race, and Promise.any, including failure semantics.",
+        "idealAnswer": "Promise.all resolves with an array of all results but rejects immediately if any input rejects, making it fail-fast. Promise.allSettled never rejects and resolves with a status/value-or-reason object for each input, ideal when you want every result regardless of failures. Promise.race settles as soon as the first promise settles, whether fulfilled or rejected, useful for timeouts. Promise.any resolves with the first fulfilled value and only rejects with an AggregateError if all reject, useful for trying multiple redundant sources. A common pitfall is using Promise.all when partial failures should not abort the whole operation."
+      },
+      {
+        "questionText": "What are generators and iterators in JavaScript, and where do they provide value over alternatives?",
+        "idealAnswer": "An iterator is an object with a next() method returning {value, done}, and the iterable protocol (Symbol.iterator) lets objects work with for...of and spread. Generators are functions declared with function* that can pause and resume via yield, producing iterators lazily and maintaining internal state between calls. They shine for lazy evaluation of large or infinite sequences, custom iteration, and modeling cooperative coroutines, and async generators handle streaming async data with for await...of. Trade-offs include slightly more overhead than plain loops and that they are stateful and single-pass, so they must be recreated to iterate again."
+      },
+      {
+        "questionText": "How do WeakMap and WeakRef help with memory management, and what are their constraints?",
+        "idealAnswer": "WeakMap holds keys weakly so that if there are no other references to a key object, it can be garbage collected along with its associated value, which prevents leaks when associating metadata with objects. WeakRef lets you hold a reference that does not prevent collection, useful for caches, and FinalizationRegistry can run cleanup after collection. Constraints are that WeakMap keys must be objects, it is not enumerable, and you cannot observe or rely on the timing of garbage collection, so WeakRef-based logic must tolerate the referent disappearing at any time. Misusing them for control flow rather than caching leads to non-deterministic bugs."
+      },
+      {
+        "questionText": "Describe how you would implement a robust debounce and throttle, and explain the difference between them.",
+        "idealAnswer": "Debounce delays invoking a function until a quiet period has elapsed since the last call, collapsing bursts into one call at the end (or optionally a leading edge), ideal for search-as-you-type. Throttle guarantees the function runs at most once per interval, ideal for scroll or resize handlers where periodic updates are needed. A robust implementation tracks timer ids, preserves the latest arguments and this context, and supports leading/trailing options plus a cancel/flush method. Pitfalls include capturing stale closures, not clearing timers on unmount, and losing the final invocation if trailing is disabled."
+      },
+      {
+        "questionText": "What are the trade-offs between using ES modules and CommonJS, and how does module resolution differ?",
+        "idealAnswer": "ES modules use static import/export that is resolved at parse time, enabling tree-shaking, top-level await, and a clear dependency graph, and they are asynchronous and strict by default. CommonJS uses dynamic require with synchronous, runtime resolution and module.exports, which is harder to statically analyze but allows conditional requires. Interop is tricky: ESM importing CommonJS gets a default export, named exports may not be detected, and __dirname/require are not directly available in ESM. The trade-off is ESM's static optimizability and standardization versus CommonJS's dynamic flexibility and broad legacy support."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "General",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you establish and enforce JavaScript coding standards and architecture across multiple teams?",
+        "idealAnswer": "I would codify standards as automated, enforceable rules rather than documents alone: shared ESLint/Prettier configs, TypeScript with strict settings, and CI gates that block merges on violations. Architecturally I would define clear module boundaries, dependency rules (enforced with tools like dependency-cruiser or Nx tags), and shared libraries published as versioned internal packages. To scale across teams I would pair tooling with lightweight RFCs for significant decisions, an architecture review forum, and example reference implementations, while measuring adoption and avoiding rules that generate noise. The goal is consistency and discoverability without becoming a bottleneck."
+      },
+      {
+        "questionText": "Describe your approach to migrating a large JavaScript codebase to TypeScript incrementally.",
+        "idealAnswer": "I would enable TypeScript in allowJs mode so JS and TS coexist, start with non-strict settings, and convert leaf modules and shared utilities first to maximize downstream type benefits. Adding type declarations for boundaries (APIs, third-party libs via DefinitelyTyped) and turning on strict flags progressively (noImplicitAny, strictNullChecks) lets teams adopt without a big-bang rewrite. I would gate new files to be TS-only, track conversion with metrics, and use codemods and ts-migrate to accelerate. The main trade-offs are temporary any escape hatches and the risk of low-value strictness churn, which I manage by prioritizing high-traffic, bug-prone modules first."
+      },
+      {
+        "questionText": "How do you decide between a monorepo and polyrepo strategy for JavaScript projects, and how do you scale the chosen approach?",
+        "idealAnswer": "A monorepo simplifies cross-package refactoring, atomic changes, and shared tooling, but requires investment in build orchestration (Nx, Turborepo), caching, and CI that only tests affected projects to avoid slow pipelines. Polyrepos give teams autonomy and independent release cadence but make coordinated changes and dependency upgrades harder, often leading to version drift. I weigh team size, coupling between packages, release independence needs, and tooling maturity. At scale, a monorepo demands remote caching, code ownership boundaries, and selective CI, while polyrepos demand strong contract testing and automated dependency update tooling like Renovate."
+      },
+      {
+        "questionText": "What is your strategy for managing breaking changes and versioning in shared internal JavaScript libraries?",
+        "idealAnswer": "I follow semantic versioning strictly, reserving major bumps for breaking changes and providing clear migration guides and codemods. To reduce breakage I prefer additive, backward-compatible changes, deprecate before removing with runtime warnings and a deprecation window, and use feature flags for risky transitions. Automated consumer testing (canary publishing, contract tests, or running downstream test suites in CI) catches regressions early. Coordinating across teams means communicating timelines, supporting old and new APIs during a transition period, and tracking adoption before removing deprecated paths."
+      },
+      {
+        "questionText": "How would you architect a JavaScript application to remain performant and maintainable as it grows to hundreds of contributors?",
+        "idealAnswer": "I would enforce strong modular boundaries with clear public interfaces, code splitting and lazy loading to keep bundles small, and a layered architecture separating UI, domain logic, and data access. Performance is protected with budgets enforced in CI (bundle size, Lighthouse), observability for runtime metrics, and shared performance primitives. Maintainability comes from ownership via CODEOWNERS, automated linting/typing, comprehensive testing pyramids, and design systems to prevent UI duplication. The key trade-off is upfront platform investment and governance overhead versus the long-term cost of an unbounded, tightly coupled codebase."
+      },
+      {
+        "questionText": "How do you approach mentoring engineers on asynchronous JavaScript patterns and avoiding common concurrency bugs?",
+        "idealAnswer": "I teach the mental model first: the event loop, microtasks vs macrotasks, and that JavaScript concurrency is cooperative, not parallel. I use real code reviews to surface anti-patterns like unawaited promises, sequential awaits that should be parallelized with Promise.all, race conditions on shared state, and missing error handling, then pair to refactor them. I encourage defensive habits such as AbortController for cancellation, idempotent operations, and lint rules (no-floating-promises) that codify the lessons. Growth comes from progressively harder tasks plus reflective discussion of trade-offs rather than rote rules."
+      },
+      {
+        "questionText": "What factors guide your decision on bundling, transpilation targets, and browser support for a JavaScript product, and how do you balance them across stakeholders?",
+        "idealAnswer": "I base browser support on real usage analytics and business requirements rather than guesses, then set browserslist targets that balance reach against bundle size and feature availability. Modern output (ES2020+) with differential serving or a single modern baseline reduces polyfill weight, while transpilation and polyfills (core-js) extend reach at a performance cost. Trade-offs involve product/marketing wanting broad support, engineering wanting smaller faster code, and security wanting to drop insecure legacy browsers. I make the cost explicit with metrics, sunset old targets on a communicated schedule, and use feature detection and progressive enhancement to degrade gracefully."
+      },
+      {
+        "questionText": "How would you design a logging, monitoring, and error-tracking strategy for a distributed JavaScript system spanning frontend and backend?",
+        "idealAnswer": "I would use structured logging with correlation/trace IDs propagated across services and into the client so a single request can be followed end to end, integrating with distributed tracing (OpenTelemetry). On the frontend I would capture errors and performance via tools like Sentry with source maps and release tagging, scrubbing PII, and on the backend collect metrics, logs, and traces into a central platform with alerting on SLOs. I would set sampling to control cost, define clear severity levels and on-call runbooks, and avoid noisy alerts. The trade-offs are observability cost and data volume versus debuggability, balanced through sampling, retention policies, and privacy compliance."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Frontend",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "What is the DOM, and how do you select and modify an element with JavaScript?",
+        "idealAnswer": "The DOM (Document Object Model) is a tree representation of an HTML document that JavaScript can read and manipulate, where each node corresponds to an element, attribute, or text. You select elements with methods like document.querySelector, querySelectorAll, getElementById, or getElementsByClassName. You modify them by changing properties such as textContent, innerHTML, style, classList, or setAttribute. A common pitfall is using innerHTML with untrusted input, which risks XSS, so textContent or proper sanitization is preferred for user data."
+      },
+      {
+        "questionText": "What is event bubbling, and how does event delegation use it?",
+        "idealAnswer": "Event bubbling is the phase where an event fired on an element propagates upward through its ancestors, so a click on a child also triggers handlers on its parents. Event delegation leverages this by attaching a single listener to a common parent and using event.target to determine which child triggered it, instead of adding listeners to many elements. This improves performance and works for dynamically added elements. There is also a capturing phase that runs top-down before bubbling, which you can opt into with the capture option."
+      },
+      {
+        "questionText": "How do you add an event listener in JavaScript, and how do you remove one?",
+        "idealAnswer": "You add a listener with element.addEventListener(type, handler, options), for example element.addEventListener('click', onClick). To remove it you call element.removeEventListener with the exact same type and the same function reference, so anonymous inline functions cannot be removed. Options include once, capture, and passive (which improves scroll performance by promising not to call preventDefault). Forgetting to remove listeners on elements that are recreated or destroyed is a common source of memory leaks."
+      },
+      {
+        "questionText": "What is the difference between innerHTML, textContent, and innerText?",
+        "idealAnswer": "innerHTML gets or sets the HTML markup inside an element and will parse strings as HTML, which is powerful but unsafe with untrusted input due to XSS risk. textContent gets or sets the raw text of all nodes including hidden ones and does not parse HTML, making it safe and fast. innerText is similar but is aware of CSS rendering, so it ignores hidden elements and triggers reflow, making it slower. For inserting user-provided text you should prefer textContent."
+      },
+      {
+        "questionText": "What does it mean for a webpage to be responsive, and how can JavaScript assist with responsiveness?",
+        "idealAnswer": "A responsive page adapts its layout and content to different screen sizes and devices, primarily achieved with CSS media queries, flexible units, and fluid grids. JavaScript can assist by reading viewport size via window.innerWidth or matchMedia, observing element size changes with ResizeObserver, and conditionally loading assets or features for certain breakpoints. It is best to let CSS handle most layout and reserve JS for behavior that CSS cannot express. A pitfall is doing layout work in resize handlers without debouncing, which hurts performance."
+      },
+      {
+        "questionText": "What is the purpose of the addEventListener 'DOMContentLoaded' event versus the 'load' event?",
+        "idealAnswer": "DOMContentLoaded fires when the HTML has been fully parsed and the DOM tree is built, without waiting for stylesheets, images, and subframes, so it is the right time to run scripts that manipulate the DOM. The load event fires later, only after all dependent resources like images and stylesheets have finished loading. Running DOM code on DOMContentLoaded makes pages feel faster. With scripts placed at the end of the body or marked defer, the DOM is already available, often making explicit listeners unnecessary."
+      },
+      {
+        "questionText": "How do you make an HTTP request from the browser using fetch, and how do you handle the response?",
+        "idealAnswer": "fetch(url) returns a promise that resolves to a Response object, and you typically await it then call response.json() (also a promise) to parse the body. fetch only rejects on network failure, not on HTTP error status codes, so you must check response.ok or response.status yourself and throw if needed. You can pass an options object for method, headers, and body for POST requests. A common pitfall is forgetting to handle non-2xx responses and assuming any resolved fetch means success."
+      },
+      {
+        "questionText": "What is the difference between localStorage, sessionStorage, and cookies?",
+        "idealAnswer": "localStorage persists key-value string data with no expiration until explicitly cleared and is scoped to the origin, while sessionStorage holds data only for the lifetime of the tab/session. Cookies are smaller (around 4KB), are automatically sent with every HTTP request to the matching domain, and support expiration, HttpOnly, and Secure flags, making them suitable for server-read session tokens. Web Storage holds more data and is not sent to the server automatically, so it is better for client-only state. Sensitive tokens should use HttpOnly cookies, not localStorage, to reduce XSS exposure."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Frontend",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "Explain the critical rendering path and how reflow and repaint affect frontend performance.",
+        "idealAnswer": "The critical rendering path is the sequence the browser follows to turn HTML, CSS, and JS into pixels: parse HTML into the DOM, parse CSS into the CSSOM, combine into the render tree, compute layout, and paint. Reflow (layout) recalculates element geometry and is expensive, triggered by changing sizes, positions, or reading layout properties; repaint redraws pixels without geometry changes, such as color updates. To optimize you batch DOM reads and writes to avoid layout thrashing, animate with transform and opacity (which can be GPU-composited), and minimize forced synchronous layouts. Virtualizing long lists and reducing DOM depth also help."
+      },
+      {
+        "questionText": "How does the browser handle CORS, and what does a preflight request involve?",
+        "idealAnswer": "CORS (Cross-Origin Resource Sharing) is a browser security mechanism that controls whether a page can read responses from a different origin, enforced via response headers like Access-Control-Allow-Origin. For non-simple requests (custom headers, methods other than GET/POST/HEAD, or certain content types) the browser first sends an OPTIONS preflight asking the server which methods and headers are allowed before sending the real request. The server must respond with the appropriate Access-Control-Allow-* headers, and for credentialed requests the origin cannot be a wildcard. A common confusion is thinking CORS protects the server; it actually restricts what the browser lets client JS read."
+      },
+      {
+        "questionText": "What are the trade-offs between client-side rendering, server-side rendering, and static site generation?",
+        "idealAnswer": "Client-side rendering ships a minimal HTML shell and renders in the browser, giving rich interactivity but slower first paint and worse SEO without extra work. Server-side rendering generates HTML per request, improving time-to-content and SEO at the cost of server load and TTFB, and requires hydration. Static site generation pre-builds pages at build time for the fastest delivery and easy CDN caching, but is best for content that does not change per request and needs rebuilds or incremental regeneration for updates. The choice depends on content dynamism, SEO needs, interactivity, and infrastructure constraints, and hybrid approaches mix them per route."
+      },
+      {
+        "questionText": "How do you prevent and debug layout shift (CLS) on a web page?",
+        "idealAnswer": "Cumulative Layout Shift happens when visible elements move unexpectedly, usually because content loads without reserved space. To prevent it, set explicit width/height or aspect-ratio on images and media, reserve space for ads and embeds, avoid inserting content above existing content, and preload fonts with font-display strategies to limit reflow. To debug, use the Performance panel and Web Vitals overlay in DevTools to identify which elements shift and when. The key principle is reserving space for asynchronously loaded content so layout is stable from first paint."
+      },
+      {
+        "questionText": "What is the virtual DOM, and what problem does it solve compared to direct DOM manipulation?",
+        "idealAnswer": "The virtual DOM is an in-memory tree representation of the UI that libraries like React diff against a previous version to compute the minimal set of real DOM mutations needed. The problem it addresses is that direct, manual DOM manipulation is error-prone and that naive full re-renders are slow because DOM operations are expensive. By batching and reconciling changes, the virtual DOM lets developers write declarative UI while the library optimizes updates. It is not always faster than hand-tuned direct manipulation; its real value is the declarative programming model and predictable updates, and keys are essential for efficient list diffing."
+      },
+      {
+        "questionText": "How would you optimize the loading performance of a JavaScript-heavy web application?",
+        "idealAnswer": "I would reduce and split the bundle with code splitting and lazy loading so users download only what they need, and use tree-shaking to drop dead code. Critical resources should be preloaded/prefetched, scripts deferred or async, and assets served compressed (Brotli) over HTTP/2 or HTTP/3 with effective caching. Images should be responsive, lazy-loaded, and in modern formats, and third-party scripts audited since they often dominate load time. I would measure with Lighthouse and real-user monitoring of Core Web Vitals to prioritize the highest-impact changes rather than guessing."
+      },
+      {
+        "questionText": "Explain how debouncing user input in a search box improves UX and how you would implement it.",
+        "idealAnswer": "Debouncing delays firing the search request until the user pauses typing for a set interval, so instead of one request per keystroke you send one request after the burst, reducing server load and avoiding flickering or out-of-order results. I implement it by storing a timer id, clearing it on each keystroke, and setting a new setTimeout that fires the search after the delay. I would also cancel in-flight requests with AbortController to avoid stale responses overwriting newer ones, and handle the leading vs trailing edge based on desired responsiveness. Pitfalls include not cleaning up timers on unmount and showing stale results from race conditions."
+      },
+      {
+        "questionText": "What are the security risks of XSS, and how do you defend against it in frontend code?",
+        "idealAnswer": "Cross-Site Scripting occurs when an attacker injects executable script into a page, letting them steal cookies, tokens, or perform actions as the user. Defenses include never injecting untrusted data via innerHTML (use textContent or framework escaping), contextual output encoding, and sanitizing any HTML you must render with a library like DOMPurify. A strong Content Security Policy limits which scripts can run, and HttpOnly cookies keep tokens out of JS reach. The three variants are stored, reflected, and DOM-based XSS, and trusting client-side validation alone or building HTML via string concatenation are common mistakes."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Frontend",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design state management for a large frontend application, and what trade-offs guide the choice?",
+        "idealAnswer": "I categorize state into server cache state, global client state, URL state, and local component state, and use the right tool for each rather than putting everything in one store. Server state is best handled by a data-fetching cache (React Query/SWR) with caching, dedup, and invalidation, while truly global UI state may use a store like Redux Toolkit, Zustand, or context for small needs. Trade-offs involve boilerplate vs predictability, re-render performance (selector granularity, memoization), and devtools/time-travel needs. Over-centralizing state causes unnecessary re-renders and complexity, so I keep state as local as possible and lift only when sharing is required."
+      },
+      {
+        "questionText": "Explain hydration, its performance costs, and techniques like partial or progressive hydration.",
+        "idealAnswer": "Hydration is the process where client-side JavaScript attaches event listeners and reconciles state onto server-rendered HTML to make it interactive. Its cost is that the framework must download, parse, and execute JS and re-walk the tree even though markup already exists, delaying interactivity (poor TTI/INP) on large pages. Partial hydration hydrates only interactive islands while leaving static content alone, progressive hydration hydrates components lazily as they enter the viewport or on interaction, and approaches like React Server Components or resumability (Qwik) avoid re-executing all component code. The trade-off is added architectural complexity and constraints on where interactivity can live in exchange for faster, cheaper interactivity."
+      },
+      {
+        "questionText": "How do you diagnose and fix excessive re-renders in a component-based frontend framework?",
+        "idealAnswer": "I profile with the framework's devtools (React Profiler) to find which components render and why, looking for unstable props such as new object/array/function references created each render, context value changes that fan out, or state placed too high in the tree. Fixes include memoizing values and callbacks (useMemo/useCallback), splitting context or using selectors so only consumers of changed slices re-render, and moving state down or using component composition (children as props). I verify improvements by re-profiling rather than memoizing blindly, since over-memoization adds overhead and complexity without measured benefit. Stable keys and avoiding inline object literals in hot paths also matter."
+      },
+      {
+        "questionText": "What are the considerations for building an accessible, keyboard-navigable custom component like a dropdown or modal?",
+        "idealAnswer": "I follow the WAI-ARIA authoring patterns for the specific widget: correct roles (e.g., dialog, listbox), aria-expanded/aria-selected state, and labeling via aria-label or aria-labelledby. Keyboard support must mirror native behavior, such as arrow keys to navigate options, Enter/Space to select, and Escape to close, plus focus management like trapping focus in a modal and restoring it on close. Screen reader announcements, sufficient color contrast, visible focus indicators, and not relying on hover-only interactions are essential. Pitfalls include using div soup without semantics, breaking the tab order, and forgetting to manage focus, which makes the component unusable for assistive technology."
+      },
+      {
+        "questionText": "How would you implement efficient rendering of a list with tens of thousands of items?",
+        "idealAnswer": "I would use windowing/virtualization so only the visible rows (plus a small overscan buffer) are mounted in the DOM, computing item positions from scroll offset, with libraries like react-window or virtua handling the bookkeeping. For variable heights I measure and cache row sizes or use an estimated size with correction. Stable keys, avoiding heavy per-row work, memoizing rows, and minimizing layout thrashing keep scrolling smooth at 60fps. Trade-offs include complexity, accessibility considerations (ensuring screen readers and find-in-page still work), and handling sticky headers or dynamic content; pagination or infinite scroll can complement virtualization for very large datasets."
+      },
+      {
+        "questionText": "Explain how you would architect code splitting and lazy loading to balance performance and user experience.",
+        "idealAnswer": "I split bundles along route boundaries first, then lazy-load heavy or rarely used components (modals, charts, editors) on interaction or viewport entry using dynamic import. To preserve UX I add meaningful loading states and skeletons, prefetch likely-next chunks on hover or idle, and avoid splitting so granularly that many tiny requests hurt performance. I keep a shared vendor/common chunk to leverage caching and watch for waterfalls where a chunk loads only after another resolves. The trade-off is reduced initial load versus added complexity and potential runtime latency, which I validate with bundle analysis and real-user metrics."
+      },
+      {
+        "questionText": "How do you handle race conditions and stale data when fetching data based on rapidly changing inputs?",
+        "idealAnswer": "The core issue is that responses can arrive out of order, so an earlier request may resolve after a later one and overwrite fresh data. I guard against this by tracking the latest request (e.g., a request id or generation counter) and ignoring responses that are not current, or by cancelling superseded requests with AbortController. A data-fetching library that keys queries by input and dedupes/cancels (React Query/SWR) handles much of this automatically. I also debounce the input, show clear loading/stale indicators, and ensure cleanup on unmount to avoid setting state on an unmounted component."
+      },
+      {
+        "questionText": "What strategies do you use to manage and prevent CSS and styling conflicts at scale?",
+        "idealAnswer": "I rely on scoping strategies that prevent global leakage: CSS Modules, scoped styles, CSS-in-JS, or utility frameworks like Tailwind, combined with a design-token system for consistent spacing, color, and typography. A naming methodology (BEM) or component encapsulation reduces specificity wars, and I keep specificity low and avoid !important. Shared design-system components prevent duplication and drift, and linting (stylelint) enforces conventions. Trade-offs include runtime cost of CSS-in-JS, build complexity, and learning curve, so I choose based on team size, SSR needs, and performance budgets."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Frontend",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design a micro-frontend architecture, and when is it the wrong choice?",
+        "idealAnswer": "Micro-frontends split a UI into independently developed and deployed pieces owned by different teams, composed at build time, server time, or runtime (e.g., Module Federation). I would define clear contracts, a shared design system, a thin shell/host for routing and shared dependencies, and conventions for cross-app communication via events or a shared state contract. Key challenges are dependency duplication and version skew, consistent UX, performance overhead, and end-to-end testing across boundaries. It is the wrong choice for small teams or tightly coupled UIs where the operational and integration overhead outweighs the autonomy benefits; a well-modularized monolith is often better."
+      },
+      {
+        "questionText": "How do you establish and enforce performance budgets across a large frontend organization?",
+        "idealAnswer": "I set budgets tied to user-centric metrics (Core Web Vitals like LCP, INP, CLS) and asset budgets (bundle size, request count), grounded in real-user monitoring and business impact data. Enforcement happens in CI with tools like Lighthouse CI and bundle-size checks that fail or warn on regressions, plus dashboards tracking field data over time. I make budgets per-route where appropriate, assign ownership, and treat regressions like bugs with clear remediation. The trade-offs are potential developer friction and false positives, which I manage with sensible thresholds, trend-based alerting, and education so teams understand the why, not just the gate."
+      },
+      {
+        "questionText": "What is your approach to building and governing a design system shared across many product teams?",
+        "idealAnswer": "I treat the design system as a product with its own roadmap, versioned package releases, documentation, and contribution model so teams can both consume and contribute components. Governance balances consistency with flexibility: accessible, themeable, well-tested primitives plus design tokens, clear deprecation policies, and a review process for additions to avoid bloat and duplication. Adoption is driven by making the system the easiest path (good docs, codemods, examples) and measuring usage. The main tensions are central control versus team autonomy and stability versus velocity, which I resolve with semver discipline, RFCs for breaking changes, and close design-engineering collaboration."
+      },
+      {
+        "questionText": "How would you lead a framework migration (for example from a legacy framework to a modern one) for a large production frontend with zero downtime?",
+        "idealAnswer": "I would favor an incremental strangler-fig approach over a big-bang rewrite: run old and new frameworks side by side, migrating route by route or component by component behind a routing layer or wrapper that mounts new code within the old shell. I would prioritize high-value and high-churn areas, maintain feature parity with strong test coverage and feature flags, and continuously ship to avoid long-lived branches. Risks include shipping two frameworks (bundle size), interop complexity, and team context-switching, so I track migration progress with metrics, communicate timelines, and keep a rollback path. The goal is sustained delivery during migration rather than a frozen, risky rewrite."
+      },
+      {
+        "questionText": "How do you architect a frontend for internationalization, localization, and right-to-left support from the start?",
+        "idealAnswer": "I externalize all user-facing strings into message catalogs with a robust i18n library supporting ICU message format for plurals, gender, and interpolation, and never concatenate translated fragments. Layout must be direction-agnostic using logical CSS properties (margin-inline, text-align: start) so RTL works by flipping a dir attribute, and I account for text expansion, locale-aware dates/numbers/currencies via Intl APIs, and lazy-loading locale bundles. Pseudo-localization and screenshot tests catch truncation and hardcoded strings early. The trade-offs are added build/runtime complexity and translation workflow overhead, which I mitigate with tooling, linting for hardcoded strings, and clear contributor guidelines."
+      },
+      {
+        "questionText": "What is your strategy for testing a large frontend codebase across unit, integration, and end-to-end levels?",
+        "idealAnswer": "I apply the testing trophy/pyramid: many fast unit tests for logic, a strong layer of integration/component tests (Testing Library) that exercise components as users do, and a smaller set of end-to-end tests (Playwright/Cypress) covering critical user journeys. I emphasize testing behavior over implementation details to reduce brittleness, mock at network boundaries (MSW) rather than internal modules, and add visual regression and accessibility checks. To keep CI fast and reliable I parallelize, shard, manage flakiness aggressively, and gate merges on the right subset. The trade-off is coverage and confidence versus run time and maintenance, balanced by putting most weight where bugs are costliest."
+      },
+      {
+        "questionText": "How do you approach observability and real-user monitoring for frontend applications to drive reliability and performance improvements?",
+        "idealAnswer": "I instrument real-user monitoring to capture Core Web Vitals, custom performance marks, JS errors with source-mapped stack traces, and user-flow funnels, tagged by release, device, geography, and connection type so I can segment regressions. I combine this with synthetic monitoring for consistent baselines and alerting on SLO breaches, ensuring PII is scrubbed and data sampled to control cost. The data feeds prioritization: I correlate performance and error rates with conversion or engagement to justify work. Pitfalls include alert fatigue, missing source maps, and over-collecting data, which I manage with thresholds, release tracking, and privacy-conscious sampling."
+      },
+      {
+        "questionText": "How would you decide on and govern third-party script and dependency usage in a frontend product?",
+        "idealAnswer": "I evaluate third-party scripts on performance impact, security/privacy risk, maintenance health, license, and bundle cost, and prefer loading them async/deferred, sandboxed, or via a tag manager with strict review. For npm dependencies I enforce lockfiles, automated vulnerability scanning, supply-chain protections (provenance, pinned versions), and a policy that weighs maintenance burden against building in-house. Governance includes an approval process for new dependencies, periodic audits to remove unused ones, and Content Security Policy plus Subresource Integrity to limit blast radius. The core trade-off is speed of delivery from reuse versus the long-term performance, security, and reliability cost of external code."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Backend",
+    "difficulty": "Junior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "What is Node.js, and how does it differ from running JavaScript in a browser?",
+        "idealAnswer": "Node.js is a runtime that executes JavaScript outside the browser using the V8 engine plus libuv for non-blocking I/O, enabling server-side and command-line programs. Unlike the browser, Node has no DOM or window but provides APIs for the file system, networking, processes, and streams, and uses modules (CommonJS or ES modules). It is event-driven and single-threaded for JS execution with a thread pool for certain I/O. The key idea is that Node lets JavaScript handle backend tasks like serving HTTP requests and accessing databases."
+      },
+      {
+        "questionText": "What is npm, and what is the role of package.json and package-lock.json?",
+        "idealAnswer": "npm is the default package manager for Node.js used to install, publish, and manage dependencies. package.json declares project metadata, scripts, and dependency version ranges (using semver like ^ and ~), while package-lock.json records the exact resolved versions and dependency tree to make installs reproducible across machines. dependencies are needed at runtime and devDependencies only during development. Committing the lock file is important so everyone and CI install identical versions, avoiding 'works on my machine' issues."
+      },
+      {
+        "questionText": "What is a RESTful API, and what do the common HTTP methods mean?",
+        "idealAnswer": "A RESTful API exposes resources via URLs and uses standard HTTP methods to operate on them in a stateless way. GET retrieves data, POST creates a resource, PUT replaces a resource (and is idempotent), PATCH partially updates it, and DELETE removes it. Responses use status codes such as 200 OK, 201 Created, 400 Bad Request, 404 Not Found, and 500 Server Error to communicate outcomes. A common pitfall is using GET for actions that change state or returning 200 for errors instead of appropriate status codes."
+      },
+      {
+        "questionText": "What is middleware in a Node.js web framework like Express, and how is it used?",
+        "idealAnswer": "Middleware is a function that runs during the request-response cycle and has access to the request, response, and a next function to pass control to the next middleware. It is used for cross-cutting concerns like logging, parsing request bodies, authentication, and error handling. Order matters because middleware runs in the sequence it is registered, and calling next() (or sending a response) is required to continue. Error-handling middleware has four parameters (err, req, res, next) and is defined last to catch errors from earlier handlers."
+      },
+      {
+        "questionText": "What are environment variables, and why should you not hardcode secrets in your code?",
+        "idealAnswer": "Environment variables are configuration values supplied to a process by its environment (accessed via process.env in Node) that vary between development, staging, and production. They keep secrets like database passwords and API keys out of source code so they are not exposed in version control and can change per environment without code changes. Tools like dotenv load them from a .env file in development, which should be gitignored. Hardcoding secrets risks leaking credentials and makes rotation and multi-environment deployment difficult."
+      },
+      {
+        "questionText": "What is the difference between SQL and NoSQL databases at a basic level?",
+        "idealAnswer": "SQL (relational) databases store data in tables with a fixed schema and relationships, use SQL for querying, and provide strong consistency and ACID transactions, making them good for structured, related data. NoSQL databases include document, key-value, column, and graph stores that typically offer flexible schemas and horizontal scalability, often trading some consistency for availability and performance. You choose SQL when data is highly relational and integrity matters, and NoSQL for flexible or rapidly changing schemas, large scale, or specific access patterns. Neither is universally better; it depends on the data model and requirements."
+      },
+      {
+        "questionText": "How do you handle asynchronous operations in Node.js when reading a file or querying a database?",
+        "idealAnswer": "Node provides asynchronous APIs so I/O does not block the event loop, historically via callbacks (error-first signature) and now commonly via promises with async/await. For example, using fs.promises.readFile with await lets the function pause without blocking other work, and errors are caught with try/catch. I avoid the synchronous variants like readFileSync in request handlers because they block the single thread and hurt throughput. The general rule is to keep I/O non-blocking and handle both success and error paths."
+      },
+      {
+        "questionText": "What is JSON, and how do you convert between JSON and JavaScript objects?",
+        "idealAnswer": "JSON (JavaScript Object Notation) is a lightweight, text-based data format for representing structured data using objects, arrays, strings, numbers, booleans, and null, widely used for APIs. You convert a JavaScript object to a JSON string with JSON.stringify and parse a JSON string back into an object with JSON.parse. JSON has constraints: keys must be double-quoted strings, and it cannot represent functions, undefined, or special types like Date (which become strings) or circular references. Parsing untrusted JSON should be wrapped in try/catch because invalid JSON throws."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Backend",
+    "difficulty": "Mid",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "Explain the phases of the Node.js event loop and where setImmediate, setTimeout, and process.nextTick fit.",
+        "idealAnswer": "The libuv event loop runs in phases: timers (setTimeout/setInterval callbacks), pending callbacks, poll (retrieving I/O events and executing their callbacks), check (setImmediate callbacks), and close callbacks. process.nextTick callbacks and Promise microtasks run between phases and before the loop continues, with nextTick draining before promise microtasks. setImmediate fires in the check phase after the current poll completes, while setTimeout(0) fires in the timers phase, so their relative order is not guaranteed in the main module but setImmediate runs first inside an I/O callback. Overusing process.nextTick can starve the loop and delay I/O."
+      },
+      {
+        "questionText": "How do you prevent blocking the event loop, and what do you do with CPU-intensive work in Node.js?",
+        "idealAnswer": "Because JS runs on one thread, long synchronous CPU work (heavy loops, large JSON parsing, synchronous crypto) blocks all other requests, so I avoid synchronous APIs and break up or offload heavy tasks. For CPU-bound work I use worker threads, child processes, or a separate service/queue so the main loop stays responsive, and I stream large data instead of buffering it all. I monitor event loop lag to detect blocking. The trade-off is added complexity of inter-thread communication and serialization versus keeping latency low for concurrent requests."
+      },
+      {
+        "questionText": "What are streams in Node.js, and why are they useful for handling large data?",
+        "idealAnswer": "Streams process data in chunks over time instead of loading everything into memory, with types Readable, Writable, Duplex, and Transform. They are useful for large files, network responses, and pipelines because they keep memory usage low and start producing output before all input is available. You connect them with pipe or pipeline (which handles errors and cleanup), and backpressure automatically slows a fast producer when a slow consumer cannot keep up. Pitfalls include ignoring error events, not handling backpressure manually when not using pipeline, and mixing streaming with full buffering."
+      },
+      {
+        "questionText": "How would you implement authentication in a Node.js API, and what is the difference between sessions and JWTs?",
+        "idealAnswer": "Authentication verifies identity, typically via credentials checked against hashed passwords (bcrypt/argon2), after which the server issues a credential for subsequent requests. Session-based auth stores session state server-side (or in a store like Redis) and gives the client a session id cookie, making revocation easy but requiring shared storage to scale. JWT-based auth issues a signed, stateless token the client sends in an Authorization header or cookie; it scales without server state but is hard to revoke before expiry and must be protected from theft. I store tokens in HttpOnly, Secure cookies where possible, keep access tokens short-lived with refresh tokens, and never put sensitive data in a JWT payload since it is only encoded, not encrypted."
+      },
+      {
+        "questionText": "How do you handle errors in an Express application so that failures return proper responses and the process stays healthy?",
+        "idealAnswer": "I centralize error handling with an error-handling middleware (four args) that maps errors to appropriate status codes and a consistent response shape, logging details server-side without leaking internals to clients. For async route handlers I ensure rejected promises reach the error middleware by awaiting and using next(err) or a wrapper, since Express versions before 5 do not catch async errors automatically. I distinguish operational errors (expected, like validation/404) from programmer errors and let truly unexpected ones crash the process so a supervisor (PM2/Kubernetes) restarts it cleanly. I also add handlers for unhandledRejection and uncaughtException for logging and graceful shutdown."
+      },
+      {
+        "questionText": "What strategies do you use to validate and sanitize incoming request data in a backend service?",
+        "idealAnswer": "I validate all external input against an explicit schema at the boundary using a library like Zod, Joi, or class-validator, rejecting malformed requests with a 400 and clear messages before any business logic runs. Validation covers types, required fields, ranges, formats, and allowed values, and I avoid trusting client-side validation alone. To prevent injection I use parameterized queries or an ORM rather than string-concatenated SQL, and I sanitize or encode data used in other contexts. The principle is to never trust input, fail fast, and keep validation schemas as the single source of truth, ideally shared as types."
+      },
+      {
+        "questionText": "How would you implement caching in a backend service, and what cache invalidation issues must you consider?",
+        "idealAnswer": "I add caching at the layer with the best cost/benefit: in-memory for hot, small data, a distributed cache like Redis for shared state across instances, and HTTP caching headers/CDN for cacheable responses. I set TTLs based on data volatility, choose key strategies carefully, and decide between cache-aside (lazy load on miss), write-through, or write-behind patterns. The hard part is invalidation: stale data, thundering herd on expiry (mitigated with locks or staggered TTLs), and cache stampede, so I use techniques like soft TTLs, request coalescing, and explicit invalidation on writes. I also guard against caching user-specific or sensitive data inappropriately."
+      },
+      {
+        "questionText": "What is the difference between horizontal and vertical scaling, and how does the Node.js cluster module or process model relate?",
+        "idealAnswer": "Vertical scaling adds more resources (CPU, RAM) to a single machine and is simple but bounded by hardware limits and a single point of failure. Horizontal scaling adds more instances behind a load balancer, improving capacity and resilience but requiring statelessness or shared state stores. Because a single Node process uses one CPU core for JS, the cluster module (or running multiple processes/PM2/containers) lets you utilize all cores on a machine, while horizontal scaling spreads load across machines. The key is keeping app state external (sessions in Redis, sticky sessions only when necessary) so any instance can serve any request."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Backend",
+    "difficulty": "Senior",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you design a rate limiter for a distributed Node.js API, and what algorithms would you consider?",
+        "idealAnswer": "I would use a shared store like Redis so limits are enforced consistently across instances, and choose an algorithm based on needs: fixed window is simplest but allows bursts at boundaries, sliding window log/counter smooths that out, and token bucket allows controlled bursts while capping the average rate. I would implement it atomically (Lua script or Redis INCR with expiry) to avoid race conditions, key by user/IP/API key, and return 429 with Retry-After headers. Considerations include clock skew, failing open vs closed when the store is down, per-tier limits, and the latency added by the extra round trip, which can be mitigated with local pre-checks."
+      },
+      {
+        "questionText": "How do you ensure data consistency across services in a distributed system without distributed transactions?",
+        "idealAnswer": "Since two-phase commit across services is brittle and tightly coupling, I favor eventual consistency using patterns like the Saga pattern with compensating transactions to undo prior steps on failure, coordinated via orchestration or choreography through events. The outbox pattern ensures a database write and its event publication are atomic by writing the event to an outbox table in the same transaction and relaying it reliably. I design operations to be idempotent so retries are safe, handle out-of-order and duplicate messages, and accept that the system is consistent eventually rather than instantly. The trade-off is increased complexity and reasoning about intermediate states in exchange for availability and loose coupling."
+      },
+      {
+        "questionText": "What are the security considerations when designing a Node.js backend, and how do you mitigate the top risks?",
+        "idealAnswer": "I address the OWASP Top 10: prevent injection with parameterized queries/ORMs, enforce strong authentication and least-privilege authorization checks on every endpoint, and protect secrets with a vault and environment config rather than code. I validate and limit input size to prevent ReDoS and payload-based DoS, set security headers (helmet), enforce HTTPS, use HttpOnly/Secure/SameSite cookies, and guard against SSRF and prototype pollution. Dependency supply-chain risk is managed with auditing, lockfiles, and minimal trusted packages, and I add rate limiting, logging/monitoring, and proper error handling that does not leak stack traces. Defense in depth and not trusting any input or client are the guiding principles."
+      },
+      {
+        "questionText": "How would you design a job/queue system for reliable background processing in a Node.js backend?",
+        "idealAnswer": "I would use a durable queue (Redis-backed like BullMQ, or a broker like RabbitMQ/SQS/Kafka) so jobs survive restarts, with workers consuming jobs and acknowledging only on success. Reliability requires idempotent job handlers (since at-least-once delivery means duplicates), retries with exponential backoff and jitter, a dead-letter queue for poison messages, and visibility timeouts so stuck jobs are reprocessed. I would add concurrency control, priorities, scheduling/delayed jobs, and observability for queue depth and failure rates. Trade-offs include exactly-once being effectively unattainable (so design for idempotency), ordering guarantees versus parallelism, and backpressure when producers outpace consumers."
+      },
+      {
+        "questionText": "How do you diagnose and fix performance bottlenecks in a Node.js service under load?",
+        "idealAnswer": "I start by measuring rather than guessing: collect metrics (latency percentiles, throughput, event loop lag, CPU, memory, GC) and use profiling tools like clinic.js, the V8 profiler, or flame graphs to find hot paths. Common culprits are blocking the event loop with sync work, N+1 database queries, missing indexes, lack of connection pooling, excessive serialization, and unbounded concurrency. I fix the highest-impact issues first: offload CPU work to workers, add caching and proper indexes, batch and paginate queries, tune pool sizes, and add backpressure. I validate each change under realistic load testing and watch tail latency, since averages hide problems."
+      },
+      {
+        "questionText": "Explain idempotency in API design and how you would implement idempotent operations for payments or critical writes.",
+        "idealAnswer": "An idempotent operation produces the same result whether executed once or multiple times, which is essential because clients retry on timeouts and networks duplicate requests. For unsafe operations like creating a payment, I require the client to send an idempotency key; the server stores the key with the result and, on a repeat, returns the original result instead of performing the action again. Implementation needs atomic insert-or-fetch of the key (handling concurrent duplicates), scoping keys to the operation, and an expiry policy. This prevents double charges and duplicate records, and pairs with retries plus exactly-once semantics being approximated through deduplication."
+      },
+      {
+        "questionText": "What are the trade-offs between REST, GraphQL, and gRPC for a backend API, and when would you choose each?",
+        "idealAnswer": "REST is simple, cacheable over HTTP, and ubiquitous but can over- or under-fetch and require many round trips. GraphQL lets clients request exactly the fields they need from a typed schema, great for diverse clients and aggregating data, but adds server complexity, caching difficulty, and risks like expensive nested queries (mitigated with depth limits, query cost analysis, and persisted queries plus DataLoader to fix N+1). gRPC uses HTTP/2 and Protocol Buffers for high-performance, strongly-typed, low-latency internal service-to-service communication and streaming, but is less browser-friendly and human-readable. I choose REST for public/simple APIs, GraphQL for flexible client-driven data needs, and gRPC for internal microservice communication."
+      },
+      {
+        "questionText": "How would you implement graceful shutdown and zero-downtime deployments for a Node.js service?",
+        "idealAnswer": "On receiving SIGTERM I stop accepting new connections, finish in-flight requests within a timeout, close database and queue connections, and then exit, so no request is dropped mid-flight. I make readiness/liveness probes reflect real state so the load balancer stops routing traffic before shutdown and only sends traffic once the new instance is warm. Zero-downtime deploys use rolling or blue-green/canary releases with health checks, backward-compatible database migrations (expand-then-contract), and draining of old instances. Pitfalls include not handling SIGTERM, hanging on stuck connections (needing a forced-exit timeout), and incompatible schema changes during the overlap window."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Javascript",
+    "focusArea": "Backend",
+    "difficulty": "Lead",
+    "interviewType": "technical",
+    "questions": [
+      {
+        "questionText": "How would you decide between a monolithic and microservices architecture for a backend platform, and how do you evolve between them?",
+        "idealAnswer": "I would start with a well-modularized monolith for most new products because it is simpler to develop, deploy, and reason about, and only adopt microservices when there are clear drivers: independent scaling, team autonomy at scale, differing reliability or technology needs, and a mature operational platform. Microservices add network latency, distributed-system complexity, data consistency challenges, and heavy DevOps/observability requirements. Evolution typically follows the strangler-fig pattern, extracting services along well-defined bounded contexts where coupling is low and load is high. The trade-off is upfront simplicity versus long-term organizational scalability, so I let domain boundaries and team structure (Conway's Law) guide the split."
+      },
+      {
+        "questionText": "How do you design a data architecture and ownership model across many backend services to avoid coupling?",
+        "idealAnswer": "I follow database-per-service so each service owns its data and exposes it only through APIs or events, preventing the tight coupling and hidden dependencies of a shared database. Cross-service data needs are met with event-driven replication into read models (CQRS), API composition, or materialized views, accepting eventual consistency. I define clear data ownership, contracts, and schemas, and use an event backbone (Kafka) with schema registry and versioning for evolution. Trade-offs include data duplication, eventual consistency complexity, and the operational overhead of many stores, balanced against autonomy, independent scaling, and fault isolation."
+      },
+      {
+        "questionText": "What is your approach to API versioning and managing breaking changes for backend services consumed by many clients?",
+        "idealAnswer": "I prefer additive, backward-compatible evolution and avoid breaking changes when possible, versioning explicitly (URI, header, or media-type) only when necessary, with clear deprecation policies and timelines. I maintain old versions during a transition window, provide migration guides, monitor usage per version, and communicate proactively with consumers before removal. Contract testing (consumer-driven contracts) and a schema/API gateway help catch incompatibilities early. The trade-offs are the maintenance burden of supporting multiple versions versus forcing risky coordinated upgrades, which I manage by minimizing versions in flight and sunsetting on a disciplined schedule."
+      },
+      {
+        "questionText": "How would you architect a Node.js backend to handle a 10x or 100x increase in traffic?",
+        "idealAnswer": "I ensure services are stateless and horizontally scalable behind load balancers with autoscaling, externalize state (Redis, databases) and add caching layers and CDNs to shed read load. Database scaling uses read replicas, connection pooling, query optimization, and partitioning/sharding for write scaling, while asynchronous processing via queues smooths spikes and decouples slow work. I add rate limiting, backpressure, circuit breakers, and graceful degradation so the system fails partially rather than totally, and capacity-plan with load testing. The trade-offs involve consistency versus availability, cost versus headroom, and added complexity, so I scale the proven bottlenecks identified through observability rather than everything at once."
+      },
+      {
+        "questionText": "How do you design for resilience and fault tolerance in a distributed backend, including handling cascading failures?",
+        "idealAnswer": "I apply patterns like timeouts on every remote call, retries with exponential backoff and jitter (only for idempotent operations), and circuit breakers to stop hammering a failing dependency and allow it to recover. Bulkheads isolate resource pools so one failing dependency does not exhaust threads/connections for others, and graceful degradation with fallbacks keeps core functionality available. I add health checks, load shedding, and rate limiting to prevent overload, and ensure idempotency so retries are safe. The goal is to contain failures and avoid cascades; the trade-off is added complexity and the need to test failure modes with chaos engineering and validate via observability and SLO-based alerting."
+      },
+      {
+        "questionText": "How would you establish observability (logging, metrics, tracing) and SLOs for a backend platform spanning many services?",
+        "idealAnswer": "I standardize structured logging with correlation IDs, RED/USE metrics, and distributed tracing via OpenTelemetry so requests can be followed across services, feeding a central platform with dashboards and alerting. I define SLIs (latency, error rate, availability) and set SLOs with error budgets that inform release pace and reliability investment, alerting on symptoms and budget burn rather than noisy causes. To control cost I use sampling, retention policies, and cardinality discipline, and I ensure source maps/release tagging for accurate diagnosis. The trade-offs are instrumentation overhead and data cost versus the ability to detect, diagnose, and prevent incidents quickly."
+      },
+      {
+        "questionText": "How do you approach technical debt, dependency upgrades, and long-term maintainability across multiple backend teams?",
+        "idealAnswer": "I make technical debt visible by tracking it explicitly, quantifying its impact (velocity, incident rate, security exposure), and allocating a steady capacity (such as a fixed percentage of each cycle) rather than waiting for crises. Dependency and runtime upgrades are automated with tools like Renovate, gated by strong test suites and staged rollouts, with a policy to stay on supported versions for security. I promote shared platform libraries, paved-road templates, and clear ownership so improvements scale across teams, and I prioritize debt that blocks delivery or poses risk. The trade-off is short-term feature velocity versus long-term sustainability, which I justify with data and leadership buy-in."
+      },
+      {
+        "questionText": "What factors guide your choice of database and data-modeling strategy for a new backend service at scale, and how do you handle migrations safely?",
+        "idealAnswer": "I choose the data store based on access patterns, consistency requirements, scale, and the data's shape: relational for strong consistency and complex relations, document stores for flexible schemas, key-value for caching/hot paths, and specialized stores (time-series, search, graph) when access patterns demand them. I model around how the data is queried, considering indexing, partitioning/sharding keys, and read/write ratios, and avoid premature distribution. Safe migrations use the expand-and-contract pattern, backward-compatible schema changes deployed before code, online/zero-downtime techniques for large tables, and reversible, tested migration scripts. The trade-offs are consistency versus scalability and flexibility versus query power, decided by concrete requirements rather than trends."
+      }
+    ]
+  }
+]

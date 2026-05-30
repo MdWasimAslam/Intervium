@@ -1,0 +1,494 @@
+[
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "General",
+    "difficulty": "Junior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you joined a new Node.js project and had to get familiar with an unfamiliar codebase. How did you approach it?",
+        "idealAnswer": "A strong answer follows STAR: the situation (a new repo), the task (becoming productive), the actions (reading the README, running the app locally, tracing a single request from route to response, asking targeted questions), and the result (first contribution merged). Look for systematic exploration rather than random reading, use of tools like npm scripts and the debugger, and humility in asking teammates. Pitfalls include claiming they 'just knew it all' or never asking for help."
+      },
+      {
+        "questionText": "Describe a situation where you received critical feedback on a pull request. How did you respond?",
+        "idealAnswer": "The candidate should show emotional maturity: receiving feedback without defensiveness, asking clarifying questions, and acting on it (e.g., fixing a callback that wasn't handling errors). A good answer separates the code critique from personal worth, and ideally mentions learning a reusable lesson such as adding tests or following the linter. Red flags are blaming the reviewer or describing feedback as an attack."
+      },
+      {
+        "questionText": "Give an example of a small task you completed independently. How did you make sure it was actually done?",
+        "idealAnswer": "Expect a concrete deliverable (e.g., an npm script, a small endpoint) plus a definition of done: ran it locally, wrote or updated a test, checked it against the acceptance criteria, and asked for review. The point is demonstrating ownership and verification habits even at a junior level. A weak answer stops at 'it worked on my machine' with no validation step."
+      },
+      {
+        "questionText": "Tell me about a time you got stuck on a bug for longer than expected. What did you do?",
+        "idealAnswer": "Look for a balanced timebox: trying console.log or the Node inspector, reading the stack trace, searching docs, then escalating to a teammate after a reasonable effort rather than spinning for days. The result should show what they learned (e.g., reading async stack traces). Pitfalls are never asking for help, or immediately asking before any independent effort."
+      },
+      {
+        "questionText": "Describe how you keep track of your work and communicate progress to your team.",
+        "idealAnswer": "A good answer mentions concrete practices: updating ticket status, posting brief standup updates, flagging blockers early, and being honest about delays. The candidate should show that communication is proactive, not just reactive when asked. Look for awareness that silence creates risk for the team. Weak answers describe only doing the coding and never surfacing status."
+      },
+      {
+        "questionText": "Tell me about a time you had to learn a new tool or library to finish a Node.js task. How did you go about it?",
+        "idealAnswer": "Expect a deliberate learning approach: reading official docs, building a tiny throwaway example, checking the package's GitHub issues, and verifying assumptions with a test. The result is shipping the feature and gaining a transferable skill. Look for curiosity and resourcefulness; a red flag is copying snippets without understanding what they do."
+      },
+      {
+        "questionText": "Describe a moment when you made a mistake that affected your team. How did you handle it?",
+        "idealAnswer": "The candidate should own the mistake (e.g., merged a change that broke the build), communicate it promptly, help fix it, and put a guardrail in place such as a CI check or a checklist. Honesty and lack of blame-shifting are the key signals. A poor answer hides the mistake or claims to have never made one."
+      },
+      {
+        "questionText": "Tell me about a time you asked a teammate for help. What made the interaction effective?",
+        "idealAnswer": "Strong answers show the candidate prepared before asking: they framed the problem clearly, shared what they had already tried, and were specific about the question. Effectiveness comes from respecting the helper's time and following up to confirm resolution. Look for collaboration mindset; the pitfall is vague 'it doesn't work' requests with no context."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "General",
+    "difficulty": "Mid",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you disagreed with a teammate about a technical approach in a Node.js service. How did you resolve it?",
+        "idealAnswer": "Look for a structured disagreement: stating the trade-offs (e.g., synchronous vs. async flow, library choice), seeking data or a quick spike to decide, and committing to the outcome even if it wasn't their preference. Strong candidates focus on the problem, not winning, and document the decision. Red flags are escalating emotionally or silently overriding the other person's code."
+      },
+      {
+        "questionText": "Describe a production incident you helped debug. Walk me through what you did and what you learned.",
+        "idealAnswer": "Expect a clear incident narrative: detecting the issue (alerts, logs), forming a hypothesis, mitigating quickly (rollback, scaling, feature flag), then root-causing afterward. A mid-level answer names concrete tooling (logs, metrics, error tracking) and ends with a preventive action like a test or alert. Pitfalls include skipping mitigation in favor of perfect root cause, or no follow-up."
+      },
+      {
+        "questionText": "Tell me about a time you had to balance shipping a feature quickly against doing it 'right'. How did you decide?",
+        "idealAnswer": "A good answer surfaces the trade-off explicitly, communicates the risk and any tech debt to stakeholders, and chooses a pragmatic path with a plan to revisit. Look for tracking the debt (ticket, TODO with context) rather than ignoring it. The signal is judgment plus transparency; the pitfall is gold-plating under deadline or shipping recklessly without flagging risk."
+      },
+      {
+        "questionText": "Describe a time you improved the reliability or quality of a Node.js codebase you worked on.",
+        "idealAnswer": "Expect a concrete initiative: adding tests around fragile code, introducing input validation, improving error handling, or setting up linting/CI. The candidate should explain why they prioritized it and how they measured improvement (fewer bugs, faster reviews). Look for proactive ownership beyond assigned tickets; a weak answer is purely reactive bug fixing."
+      },
+      {
+        "questionText": "Tell me about a time you had to give constructive feedback to a peer. How did you approach it?",
+        "idealAnswer": "Strong candidates describe being specific and kind: focusing on the work, giving examples, suggesting alternatives, and checking the person understood. They pick a private channel for sensitive points and frame it as helping the team. Look for empathy plus directness. Pitfalls are sugarcoating to the point of being unclear, or being harsh in public."
+      },
+      {
+        "questionText": "Describe a situation where requirements changed mid-task. How did you adapt?",
+        "idealAnswer": "Expect the candidate to confirm the new requirements, assess impact on the existing work, communicate timeline changes, and adjust the plan without over-engineering. A good answer shows flexibility plus the discipline to clarify scope rather than guessing. The pitfall is either rigidly resisting change or quietly absorbing scope creep that blows the estimate."
+      },
+      {
+        "questionText": "Tell me about a time you took ownership of something that wasn't strictly your responsibility.",
+        "idealAnswer": "Look for initiative: noticing a flaky dependency, an undocumented setup step, or a recurring on-call pain, and fixing it or raising it. The candidate should explain how they balanced this with their assigned work and looped in the right owner. The signal is team-first ownership; the pitfall is overstepping without communication or doing nothing because 'not my job'."
+      },
+      {
+        "questionText": "Describe how you handled a time when you were assigned more work than you could realistically finish.",
+        "idealAnswer": "A strong answer shows prioritization and honest communication: surfacing the overload early, negotiating scope or deadlines with the manager, and proposing what to cut or defer. Look for proactive renegotiation rather than silently burning out or missing deadlines without warning. The pitfall is saying yes to everything and then failing quietly."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "General",
+    "difficulty": "Senior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a significant technical decision you drove on a Node.js system. How did you make and communicate it?",
+        "idealAnswer": "Expect a decision with real weight (e.g., choosing a queue, restructuring async flows, picking a framework) supported by explicit trade-off analysis, stakeholder input, and possibly a short design doc or RFC. A senior answer covers risks, alternatives considered, and how they built buy-in. The result should include validating the decision in production. Pitfalls are deciding in isolation or ignoring operational cost."
+      },
+      {
+        "questionText": "Describe a time you mentored a less experienced engineer through a difficult problem. What was your approach?",
+        "idealAnswer": "Look for teaching rather than doing it for them: asking guiding questions, pairing, reviewing their reasoning, and gradually increasing autonomy. A strong answer measures success by the mentee's growth and independence, not just the bug being fixed. The candidate should adapt to the person's level. Pitfalls are taking over the keyboard or being condescending."
+      },
+      {
+        "questionText": "Tell me about a time you had to push back on a deadline or scope set by leadership. How did you handle it?",
+        "idealAnswer": "Strong candidates bring data and options rather than just complaints: quantifying risk, proposing a phased delivery, and respecting that the final call may be the business's. They communicate up clearly and professionally. Look for influence with respect and a focus on outcomes. The pitfall is either capitulating silently or being adversarial."
+      },
+      {
+        "questionText": "Describe a situation where you identified and paid down significant technical debt. How did you justify the work?",
+        "idealAnswer": "Expect the candidate to tie the debt to concrete pain (slow deploys, frequent incidents, blocked features) and to make a business case with measurable benefit. A senior answer phases the work to avoid a risky big-bang rewrite and protects it with tests. Look for prioritization and stakeholder alignment. Pitfalls are rewriting for purity's sake or never getting buy-in."
+      },
+      {
+        "questionText": "Tell me about a time a project you led was at risk of failing. What did you do?",
+        "idealAnswer": "Look for early risk detection, transparent escalation, and concrete recovery actions: re-scoping, reallocating people, cutting non-essentials, or changing approach. A strong answer shows calm under pressure and protecting the team from thrash. The result should reflect learning that fed back into process. Pitfalls are hiding the risk until it explodes or blaming others."
+      },
+      {
+        "questionText": "Describe how you handled a conflict between two team members that was affecting delivery.",
+        "idealAnswer": "Expect the candidate to address it directly but tactfully: understanding both sides, finding the underlying technical or process issue, and facilitating a resolution rather than picking a winner. A senior answer focuses on restoring collaboration and may involve a manager when appropriate. Look for emotional intelligence. The pitfall is ignoring the tension or taking sides prematurely."
+      },
+      {
+        "questionText": "Tell me about a time you championed a change in engineering practice or culture. How did it land?",
+        "idealAnswer": "Strong answers describe identifying a systemic problem (flaky tests, slow reviews, weak observability), proposing a change, piloting it, and iterating based on feedback. The candidate should show how they earned adoption through influence rather than mandate. Look for measurable impact and persistence. Pitfalls are forcing change top-down or giving up at the first resistance."
+      },
+      {
+        "questionText": "Describe a decision you made that turned out to be wrong. How did you recognize it and recover?",
+        "idealAnswer": "Look for intellectual honesty: a real wrong call, the signal that revealed it (metrics, incidents, feedback), and a clean reversal or correction without ego. A senior answer extracts a durable lesson and shares it so the team avoids repeating it. The signal is accountability and learning. Pitfalls are a fake 'weakness' answer or never admitting genuine error."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "General",
+    "difficulty": "Lead",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you set the technical direction for a Node.js platform used by multiple teams. How did you align everyone?",
+        "idealAnswer": "Expect a lead-level narrative: establishing principles or standards, writing an RFC, gathering cross-team input, and balancing local autonomy with global consistency. A strong answer addresses migration paths, deprecation, and how dissent was handled. Success is measured by adoption and reduced fragmentation. Pitfalls are dictating standards without buy-in or letting every team diverge."
+      },
+      {
+        "questionText": "Describe how you scaled an engineering team or process while keeping delivery healthy.",
+        "idealAnswer": "Look for deliberate scaling: defining ownership boundaries, onboarding pipelines, documentation, and decision-making frameworks so the team isn't a bottleneck on the leader. A strong answer discusses preserving quality and culture as headcount grew, and delegating real authority. The signal is building systems, not heroics. Pitfalls are centralizing all decisions or growing chaotically."
+      },
+      {
+        "questionText": "Tell me about a cross-organizational trade-off you negotiated, such as between product velocity and platform stability.",
+        "idealAnswer": "Strong candidates frame the trade-off in business terms, bring data, and find a path that serves multiple stakeholders (e.g., guardrails that allow speed safely). They show influence without direct authority and willingness to own the outcome. Look for systems thinking across org boundaries. Pitfalls are optimizing only their team's metrics or avoiding the hard conversation."
+      },
+      {
+        "questionText": "Describe a time you had to make a high-stakes decision with incomplete information. How did you proceed?",
+        "idealAnswer": "Expect a structured approach under uncertainty: identifying what's reversible vs. irreversible, gathering the cheapest informative signals, setting a decision deadline, and communicating the reasoning. A lead answer also plans for being wrong (rollback, monitoring). The signal is decisiveness balanced with risk management. Pitfalls are analysis paralysis or reckless gambling."
+      },
+      {
+        "questionText": "Tell me about how you developed leadership or technical skills in your team over time.",
+        "idealAnswer": "Look for intentional growth: stretch assignments, sponsorship, structured feedback, career conversations, and creating space for others to lead designs. A strong answer points to specific people who advanced and how the leader stepped back. Success is the team's capability, not the leader's indispensability. Pitfalls are hoarding interesting work or only mentoring favorites."
+      },
+      {
+        "questionText": "Describe a situation where you had to manage a major organizational or technical change, such as a re-architecture or reorg.",
+        "idealAnswer": "Expect change-management fundamentals: a clear narrative for why, phased execution, communication cadence, and attention to morale and stragglers. A strong lead answer mitigates risk with incremental rollout and metrics, and addresses the human side as much as the technical. The signal is steering through ambiguity. Pitfalls are announcing change without a plan or ignoring resistance."
+      },
+      {
+        "questionText": "Tell me about a time you had to hold a team member accountable for underperformance. How did you handle it?",
+        "idealAnswer": "Strong candidates address it early, privately, with specific expectations and support, documenting and following a fair process. They balance compassion with the team's needs and escalate appropriately if it doesn't improve. Look for directness plus care and consistency. Pitfalls are avoiding the conversation, being vague, or acting impulsively without giving a chance to improve."
+      },
+      {
+        "questionText": "Describe how you balance long-term architectural investment against short-term business pressure across quarters.",
+        "idealAnswer": "Expect a portfolio mindset: reserving capacity for platform health, tying investments to business outcomes, and making the cost of neglect visible to leadership. A strong answer uses concrete mechanisms like roadmaps, error budgets, or dedicated time, and shows negotiation with stakeholders. The signal is sustainable strategy. Pitfalls are perpetually deferring investment or over-investing without business linkage."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Frontend",
+    "difficulty": "Junior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you worked with a designer to build a UI feature served by a Node.js backend. How did you collaborate?",
+        "idealAnswer": "Look for clear communication with the designer: clarifying expected behavior, confirming edge states (loading, empty, error), and asking about responsive needs. A good junior answer shows iterating on feedback and verifying against the design. The result is a feature matching intent. Pitfalls are building from assumptions without asking or ignoring non-happy-path states."
+      },
+      {
+        "questionText": "Describe a time you fixed a bug that only appeared in the browser, not on the server. How did you investigate?",
+        "idealAnswer": "Expect use of browser devtools: the console, network tab, and inspecting the API response from the Node service to see if frontend or backend was at fault. A good answer isolates the layer methodically. The result is a correct fix in the right place. Pitfalls are guessing randomly or not checking the actual network payload."
+      },
+      {
+        "questionText": "Tell me about a time you had to make a UI change based on user or stakeholder feedback.",
+        "idealAnswer": "A strong answer shows listening to the feedback, confirming the real need behind it, making the change, and verifying the user was satisfied. Look for treating feedback as a signal rather than an order and checking the change didn't break other things. Pitfalls are implementing literally without understanding the goal or skipping verification."
+      },
+      {
+        "questionText": "Describe how you ensured a feature you built worked across different screen sizes or browsers.",
+        "idealAnswer": "Expect concrete testing habits: resizing the browser, using device emulation, checking on at least one other browser, and asking about supported targets. A good junior answer shows awareness that 'works on my machine' isn't enough. The pitfall is testing only their own setup or not knowing what the support matrix is."
+      },
+      {
+        "questionText": "Tell me about a time you needed data from a teammate's API endpoint that wasn't ready yet. What did you do?",
+        "idealAnswer": "Look for unblocking themselves: agreeing on the response shape early, mocking the data, and integrating once the endpoint shipped. A good answer shows proactive coordination rather than idle waiting. The result is parallel progress. Pitfalls are blocking entirely or building against a guessed shape that later mismatched."
+      },
+      {
+        "questionText": "Describe a time you received a design that was hard to implement. How did you handle the conversation?",
+        "idealAnswer": "Strong candidates raise the concern constructively: explaining the technical constraint, proposing an alternative that preserves the intent, and collaborating rather than refusing. Look for respectful pushback and problem-solving. The result is a workable design both sides accept. Pitfalls are silently building something subpar or flatly rejecting the design."
+      },
+      {
+        "questionText": "Tell me about a time you improved the usability or accessibility of something you built.",
+        "idealAnswer": "Expect a concrete improvement: adding labels, keyboard support, clearer error messages, or loading feedback, and an explanation of who it helped. A good junior answer shows empathy for the end user and some awareness of accessibility basics. The pitfall is treating UI purely as visuals with no thought for the people using it."
+      },
+      {
+        "questionText": "Describe a situation where you had to ask for clarification on a frontend ticket before starting.",
+        "idealAnswer": "Look for recognizing ambiguity early and asking specific questions (expected behavior, edge cases, data source) rather than guessing and reworking later. A strong answer shows this saved time and built trust. The signal is judgment about when to clarify versus proceed. Pitfalls are building the wrong thing from a vague ticket or asking endless questions without trying."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Frontend",
+    "difficulty": "Mid",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you disagreed with a backend engineer over an API contract. How did you reach agreement?",
+        "idealAnswer": "Expect collaborative contract design: discussing payload shape, pagination, error formats, and who owns which validation, then documenting the agreed contract. A mid-level answer weighs frontend ergonomics against backend constraints and finds a pragmatic middle. The result is a stable interface. Pitfalls are dictating the shape or working around a bad contract instead of fixing it."
+      },
+      {
+        "questionText": "Describe a time you diagnosed and fixed a performance problem in a frontend backed by a Node.js service.",
+        "idealAnswer": "Look for profiling rather than guessing: measuring with devtools or a performance panel, identifying the bottleneck (too many requests, large payloads, render thrash), and fixing it (batching, caching, lazy loading). A good answer ties the fix to a measured improvement. Pitfalls are premature optimization or claiming a fix without before/after numbers."
+      },
+      {
+        "questionText": "Tell me about a time you had to coordinate a frontend release with a backend change. How did you avoid breakage?",
+        "idealAnswer": "Expect awareness of deployment ordering and compatibility: feature flags, backward-compatible APIs, or coordinating the release sequence. A mid-level answer plans for the window where old and new code coexist. The result is a smooth release. Pitfalls are deploying both at once and hoping, or breaking users mid-deploy with no rollback plan."
+      },
+      {
+        "questionText": "Describe a situation where you had to handle errors from a Node.js API gracefully in the UI.",
+        "idealAnswer": "A strong answer covers distinguishing error types (validation, auth, server, network), showing helpful messages, retrying where sensible, and avoiding leaking raw errors to users. Look for a consistent error-handling strategy rather than ad hoc try/catch. The result is a resilient UI. Pitfalls are swallowing errors silently or showing cryptic stack traces."
+      },
+      {
+        "questionText": "Tell me about a time you pushed for better testing or tooling on the frontend. What changed?",
+        "idealAnswer": "Expect an initiative like adding component tests, a linter, type checking, or a CI step, with a rationale tied to recurring bugs or slow reviews. A mid-level answer shows getting team buy-in and measuring impact. The signal is proactive quality ownership. Pitfalls are adding tooling nobody adopts or never advocating for improvements."
+      },
+      {
+        "questionText": "Describe a time you had to refactor a tangled piece of frontend code while keeping it shippable.",
+        "idealAnswer": "Look for incremental refactoring behind a stable interface, leaning on tests to avoid regressions, and resisting a risky big rewrite. A good answer explains how they kept the feature working throughout and reduced complexity measurably. Pitfalls are rewriting everything at once, breaking behavior, or refactoring without any safety net."
+      },
+      {
+        "questionText": "Tell me about a time user behavior in production differed from what you expected. How did you respond?",
+        "idealAnswer": "Expect the candidate to use real signals (analytics, error logs, session data) to understand actual usage, then adjust the UI or flow accordingly. A mid-level answer shows humility about assumptions and a data-informed iteration. The result is a better experience. Pitfalls are ignoring the data or over-reacting to a single complaint."
+      },
+      {
+        "questionText": "Describe a time you balanced visual polish against shipping on schedule. How did you decide what mattered?",
+        "idealAnswer": "Strong candidates prioritize by user impact: core functionality and obvious defects first, fine pixel polish later, and communicate the trade-off with design. Look for pragmatism plus respect for craft, and a follow-up plan for deferred polish. The signal is judgment. Pitfalls are endlessly polishing past the deadline or shipping something visibly broken."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Frontend",
+    "difficulty": "Senior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you led the design of how a frontend consumes data from Node.js services at scale. What trade-offs did you weigh?",
+        "idealAnswer": "Expect senior-level design thinking: choosing between REST, GraphQL, or BFF patterns, handling caching, over/under-fetching, and resilience to backend failures. A strong answer discusses developer experience, performance, and operational cost, plus how they validated the choice. Look for stakeholder alignment across frontend and backend. Pitfalls are picking a pattern by fashion or ignoring failure modes."
+      },
+      {
+        "questionText": "Describe how you drove a major improvement in frontend performance or perceived performance for a large app.",
+        "idealAnswer": "Look for metric-driven work: defining targets (e.g., load and interactivity metrics), profiling, and implementing fixes like code splitting, caching, streaming server-rendered content from Node, or reducing payloads. A senior answer ties improvements to user or business outcomes and prevents regressions with monitoring. Pitfalls are vague 'made it faster' claims without measurement."
+      },
+      {
+        "questionText": "Tell me about a time you established a frontend standard or pattern that other engineers adopted.",
+        "idealAnswer": "Expect identifying inconsistency or pain, proposing a pattern (component library, state management approach, error boundaries), piloting it, and earning adoption through documentation and examples rather than mandate. A strong answer measures adoption and reduced defects. The signal is influence at scale. Pitfalls are imposing a standard nobody uses or solving a non-problem."
+      },
+      {
+        "questionText": "Describe a difficult cross-functional decision you made involving frontend, backend, and product priorities.",
+        "idealAnswer": "Look for navigating competing interests: surfacing the trade-offs, facilitating a decision with data, and owning the outcome across teams. A senior answer shows building consensus and a clear rationale that everyone could rally behind. The signal is systems and stakeholder thinking. Pitfalls are optimizing only the frontend or avoiding the hard alignment conversation."
+      },
+      {
+        "questionText": "Tell me about a time you handled a frontend incident that affected many users. What was your role?",
+        "idealAnswer": "Expect calm incident leadership: rapid triage, mitigation (rollback, flag, cache bust), clear communication, and a thorough postmortem with preventive actions. A senior answer distinguishes immediate mitigation from root cause and improves monitoring afterward. The signal is composure and ownership. Pitfalls are panic, blame, or no follow-through."
+      },
+      {
+        "questionText": "Describe how you mentored other frontend engineers on architecture or quality.",
+        "idealAnswer": "Look for scalable mentoring: design reviews, pairing, written guidance, and raising the bar through thoughtful PR feedback. A strong answer shows growing others' judgment, not just correcting code, and measures success by the team's improvement. The signal is leverage through people. Pitfalls are gatekeeping or doing the hard parts themselves instead of teaching."
+      },
+      {
+        "questionText": "Tell me about a time you had to make a frontend architecture decision that you knew would be hard to reverse.",
+        "idealAnswer": "Expect treating it as a one-way door: thorough evaluation of alternatives, prototyping, considering long-term maintenance and team familiarity, and documenting the reasoning. A senior answer plans an escape hatch where possible. The signal is rigor proportional to reversibility. Pitfalls are over-committing on a whim or endless deliberation on a reversible choice."
+      },
+      {
+        "questionText": "Describe a situation where you balanced accessibility, performance, and feature richness in a constrained timeline.",
+        "idealAnswer": "Strong candidates treat accessibility and performance as requirements, not extras, prioritizing by impact and negotiating scope with product. A senior answer shows a principled framework and concrete trade-offs made, plus a plan for what was deferred. The signal is mature prioritization. Pitfalls are dropping accessibility entirely or gold-plating one dimension."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Frontend",
+    "difficulty": "Lead",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about how you set frontend architecture strategy across multiple teams consuming shared Node.js APIs.",
+        "idealAnswer": "Expect a lead-level approach: establishing shared standards (design system, BFF or API contracts, error conventions), governance that balances autonomy and consistency, and a migration strategy. A strong answer addresses cross-team alignment, ownership, and measuring health. The signal is org-wide systems thinking. Pitfalls are dictating without buy-in or letting teams fragment into incompatible stacks."
+      },
+      {
+        "questionText": "Describe how you led a large frontend migration or modernization effort. How did you manage risk and morale?",
+        "idealAnswer": "Look for phased, incremental migration (strangler pattern), maintaining delivery during the transition, and clear communication of why and how. A lead answer addresses the human side, training, and measurable milestones. Success is migrating without halting the business. Pitfalls are a risky big-bang rewrite or losing team buy-in midway."
+      },
+      {
+        "questionText": "Tell me about a time you negotiated frontend platform investment against product feature demands at the org level.",
+        "idealAnswer": "Expect framing platform work in business terms (velocity, reliability, hiring) and securing dedicated capacity through negotiation with leadership. A strong answer makes the cost of neglect visible and balances both needs over time. The signal is strategic influence. Pitfalls are perpetually deprioritizing platform health or investing without a business case."
+      },
+      {
+        "questionText": "Describe how you built a culture of quality and ownership in a frontend organization.",
+        "idealAnswer": "Look for systemic levers: testing and review norms, on-call or error budgets, blameless postmortems, and clear ownership. A lead answer shows shaping incentives and behavior at scale, not just rules. Success is sustained quality and engaged engineers. Pitfalls are top-down mandates that don't stick or relying on a few heroes."
+      },
+      {
+        "questionText": "Tell me about a high-stakes frontend decision you made that affected user trust or brand at scale.",
+        "idealAnswer": "Expect weighing user trust, accessibility, and reputational risk alongside technical factors, with a reversible rollout (staged release, monitoring) and a plan for failure. A lead answer communicates broadly and owns the outcome. The signal is judgment under high stakes. Pitfalls are treating it as a purely technical call or shipping without safeguards."
+      },
+      {
+        "questionText": "Describe how you developed senior frontend engineers into technical leaders.",
+        "idealAnswer": "Look for intentional growth: delegating architecture ownership, sponsoring visibility, structured feedback, and creating room to fail safely. A lead answer points to specific people who grew and how the leader stepped back. Success is a deeper bench, not personal indispensability. Pitfalls are hoarding key work or only investing in a chosen few."
+      },
+      {
+        "questionText": "Tell me about a time you had to align frontend engineering with a major shift in company or product strategy.",
+        "idealAnswer": "Expect translating strategy into technical priorities, re-roadmapping, and communicating the why to keep the team motivated through change. A strong answer balances responsiveness with not chasing every pivot. The signal is steering through ambiguity while protecting the team. Pitfalls are ignoring strategy shifts or thrashing the team with constant redirection."
+      },
+      {
+        "questionText": "Describe the most difficult trade-off you made between long-term frontend maintainability and immediate delivery pressure.",
+        "idealAnswer": "Expect a portfolio view: protecting core architecture while making pragmatic short-term concessions, tracking the resulting debt, and renegotiating capacity to address it. A lead answer makes the trade-off explicit to stakeholders and follows through on repayment. The signal is sustainable leadership. Pitfalls are sacrificing all long-term health or blocking delivery for purity."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Backend",
+    "difficulty": "Junior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you built or modified a Node.js API endpoint. How did you make sure it behaved correctly?",
+        "idealAnswer": "Look for a verification mindset: testing the endpoint with a tool like curl or Postman, checking status codes and the response shape, handling the error path, and adding or running a test. A good junior answer shows understanding the requirement before coding. The result is a correct endpoint. Pitfalls are testing only the happy path or never running it against real inputs."
+      },
+      {
+        "questionText": "Describe a time you had to debug why a Node.js server request was failing. What steps did you take?",
+        "idealAnswer": "Expect systematic debugging: reading the error and stack trace, checking logs, reproducing the request, and isolating whether it was input, logic, or a dependency like the database. A good answer uses the Node inspector or logging deliberately. The result is a root-caused fix. Pitfalls are random changes or fixing the symptom without understanding the cause."
+      },
+      {
+        "questionText": "Tell me about a time you worked with a database in a Node.js project. How did you ensure your queries were correct?",
+        "idealAnswer": "Look for checking the data against expectations, testing with sample records, being careful about edge cases like missing rows, and asking when unsure about the schema. A good junior answer shows awareness of not trusting a query blindly. The result is correct data handling. Pitfalls are assuming the query works without verifying or ignoring null/empty cases."
+      },
+      {
+        "questionText": "Describe a situation where you had to handle sensitive data or credentials in a backend task. How did you approach it?",
+        "idealAnswer": "Expect basic security hygiene: keeping secrets in environment variables not code, not logging sensitive data, and asking a senior when unsure. A good answer shows awareness that mishandling credentials is serious. The result is a safe implementation. Pitfalls are hardcoding secrets, committing them, or logging passwords."
+      },
+      {
+        "questionText": "Tell me about a time you had to follow an existing pattern or convention in a Node.js backend rather than your own.",
+        "idealAnswer": "Look for respecting the codebase: understanding why the pattern exists, matching it for consistency, and raising concerns through review rather than silently diverging. A good junior answer values team consistency over personal preference. The result is maintainable code. Pitfalls are ignoring conventions or blindly following without understanding."
+      },
+      {
+        "questionText": "Describe a time you asked for help understanding how a backend service connected to other systems.",
+        "idealAnswer": "Expect the candidate to identify the gap (e.g., how the service called a database or external API), prepare a specific question, and learn enough to proceed. A good answer shows resourcefulness plus humility. The result is understanding and a contribution. Pitfalls are guessing at integrations or never asking and breaking something."
+      },
+      {
+        "questionText": "Tell me about a time you wrote logs or added monitoring to help understand a backend issue.",
+        "idealAnswer": "Look for purposeful logging: adding meaningful messages at the right points, avoiding noise, and using the logs to confirm a hypothesis. A good junior answer shows logs as a debugging tool, not clutter. The result is faster diagnosis. Pitfalls are logging everything indiscriminately or logging sensitive data."
+      },
+      {
+        "questionText": "Describe a time you completed a backend task and handed it off for review or deployment. What did you check first?",
+        "idealAnswer": "Expect a pre-handoff checklist: tests passing, error handling present, no leftover debug code or secrets, and a clear PR description. A good answer shows ownership through to deployment readiness. The result is a clean handoff. Pitfalls are handing off untested code or leaving the reviewer to find obvious issues."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Backend",
+    "difficulty": "Mid",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a time you debugged a tricky asynchronous or concurrency issue in a Node.js backend.",
+        "idealAnswer": "Expect a clear narrative around the event loop or async pitfalls: an unhandled promise rejection, a race condition, or blocking the event loop. A mid-level answer describes reproducing it, using logs or the inspector, and fixing it properly (awaiting correctly, sequencing, or offloading work). The result is a stable fix with a test. Pitfalls are masking the issue with retries or not understanding why it happened."
+      },
+      {
+        "questionText": "Describe a time you improved the performance of a Node.js backend service. How did you find the bottleneck?",
+        "idealAnswer": "Look for measurement first: profiling, examining slow queries, checking event-loop lag or memory, then targeted fixes like adding an index, caching, or batching. A mid-level answer ties the fix to a measured improvement and avoids premature optimization. The result is quantified gains. Pitfalls are guessing at the bottleneck or optimizing the wrong thing."
+      },
+      {
+        "questionText": "Tell me about a time you designed an API or data model and had to weigh trade-offs.",
+        "idealAnswer": "Expect explicit trade-offs: consistency vs. flexibility, normalization vs. read performance, versioning strategy, and how clients would use it. A mid-level answer considers future change and documents the contract. The result is a usable, evolvable design. Pitfalls are designing only for the immediate case or ignoring how it will be consumed."
+      },
+      {
+        "questionText": "Describe a production incident involving a backend service where you were involved in the response.",
+        "idealAnswer": "Look for incident handling: detecting via alerts/logs, mitigating quickly (rollback, scaling, circuit breaker), then root-causing and adding a preventive measure. A mid-level answer separates mitigation from fix and documents learnings. The result is restored service and prevention. Pitfalls are no mitigation, no follow-up, or blame."
+      },
+      {
+        "questionText": "Tell me about a time you had to handle a backward-incompatible change to a backend API. How did you manage it?",
+        "idealAnswer": "Expect awareness of consumers: versioning, deprecation windows, dual-running old and new, and communicating with affected teams. A mid-level answer avoids breaking clients abruptly. The result is a smooth migration. Pitfalls are breaking consumers without warning or never deprecating old paths."
+      },
+      {
+        "questionText": "Describe a time you improved error handling or resilience in a Node.js service.",
+        "idealAnswer": "Look for concrete resilience work: consistent error handling, timeouts, retries with backoff, graceful degradation, or handling unhandled rejections. A mid-level answer explains the failure mode it addressed and how it was validated. The result is a more robust service. Pitfalls are swallowing errors or adding retries that amplify load."
+      },
+      {
+        "questionText": "Tell me about a time you collaborated with another team on a shared backend dependency or service.",
+        "idealAnswer": "Expect coordination: agreeing on contracts, communicating changes, respecting their constraints, and avoiding surprises. A mid-level answer shows clear ownership boundaries and proactive communication. The result is a smooth integration. Pitfalls are changing a shared service without notice or working around it instead of collaborating."
+      },
+      {
+        "questionText": "Describe a time you had to make a backend change quickly under pressure without compromising data integrity.",
+        "idealAnswer": "Look for careful execution under pressure: understanding the data risk, using transactions or backups, testing the path, and having a rollback plan. A mid-level answer balances speed with safeguards for data correctness. The result is a fast but safe change. Pitfalls are rushing a destructive migration or skipping verification on data-touching code."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Backend",
+    "difficulty": "Senior",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about a backend system you designed in Node.js to handle significant scale. What trade-offs did you make?",
+        "idealAnswer": "Expect senior design depth: horizontal scaling, statelessness, caching layers, queues for async work, and database scaling (read replicas, sharding). A strong answer names the trade-offs (consistency vs. availability, latency vs. throughput) and how they validated capacity. The signal is end-to-end systems thinking with operational awareness. Pitfalls are over-engineering or ignoring failure and cost."
+      },
+      {
+        "questionText": "Describe a time you led the resolution of a complex, intermittent production issue in a Node.js backend.",
+        "idealAnswer": "Look for rigorous diagnosis of a hard bug: gathering metrics and traces, forming and testing hypotheses, and isolating an intermittent cause like a memory leak, event-loop blocking, or a connection pool exhaustion. A senior answer mitigates first, root-causes thoroughly, and adds observability and prevention. The signal is methodical depth. Pitfalls are guesswork or accepting flakiness."
+      },
+      {
+        "questionText": "Tell me about a significant trade-off you made between data consistency and system availability or performance.",
+        "idealAnswer": "Expect understanding of consistency models: when eventual consistency is acceptable, how to handle it (idempotency, reconciliation, sagas), and the business implications. A senior answer ties the choice to requirements and explains the safeguards. The signal is principled distributed-systems reasoning. Pitfalls are choosing strong consistency reflexively or ignoring the correctness risks of eventual consistency."
+      },
+      {
+        "questionText": "Describe how you drove a major improvement in the reliability or observability of a backend platform.",
+        "idealAnswer": "Look for initiative on SLOs, structured logging, metrics, tracing, and alerting, plus reducing toil through automation. A senior answer ties the work to measurable reliability gains and faster incident response. The signal is operational maturity and ownership beyond features. Pitfalls are adding dashboards nobody uses or treating reliability as someone else's job."
+      },
+      {
+        "questionText": "Tell me about a time you made a build-vs-buy or library-vs-custom decision for a backend capability.",
+        "idealAnswer": "Expect a structured evaluation: requirements, total cost of ownership, maintenance burden, ecosystem maturity, and lock-in risk. A senior answer documents alternatives and reasoning and revisits if assumptions change. The signal is pragmatic judgment over NIH bias. Pitfalls are building everything from scratch or pulling in a heavy dependency without due diligence."
+      },
+      {
+        "questionText": "Describe a time you mentored engineers on backend design or operational best practices.",
+        "idealAnswer": "Look for scalable teaching: design reviews, runbooks, pairing on incidents, and guiding rather than dictating. A senior answer shows raising the team's judgment on reliability and design, measured by their growing independence. The signal is leverage through people. Pitfalls are gatekeeping designs or solving every hard problem themselves."
+      },
+      {
+        "questionText": "Tell me about a difficult decision you made about a database migration or schema change at scale.",
+        "idealAnswer": "Expect careful execution: zero-downtime migration techniques (expand/contract), backfilling safely, handling large tables without locking, and a rollback plan. A senior answer addresses data integrity and coordination with consumers. The signal is risk-aware operational rigor. Pitfalls are a locking migration on a hot table or no rollback strategy."
+      },
+      {
+        "questionText": "Describe a time you had to balance security requirements against developer velocity in a backend system.",
+        "idealAnswer": "Look for treating security as a requirement while reducing friction: secure defaults, automated checks, secrets management, and least privilege, balanced with developer ergonomics. A senior answer makes secure paths the easy paths. The signal is mature security thinking. Pitfalls are sacrificing security for speed or imposing controls so heavy they get bypassed."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "Node.js",
+    "focusArea": "Backend",
+    "difficulty": "Lead",
+    "interviewType": "behavioral",
+    "questions": [
+      {
+        "questionText": "Tell me about how you set the architecture direction for Node.js backend services across multiple teams.",
+        "idealAnswer": "Expect lead-level strategy: defining service boundaries, shared standards for APIs, observability, and error handling, plus governance balancing autonomy and consistency. A strong answer covers migration paths, deprecation, and earning buy-in via RFCs. Success is reduced fragmentation and faster delivery. Pitfalls are dictating standards top-down or letting every team reinvent infrastructure."
+      },
+      {
+        "questionText": "Describe how you led an organization through a major backend re-architecture, such as monolith to services.",
+        "idealAnswer": "Look for an incremental strategy (strangler pattern), preserving delivery, defining boundaries by domain, and managing data ownership and distributed-system complexity. A lead answer addresses team structure, risk, and morale, with measurable milestones. Success is migrating without halting the business. Pitfalls are a big-bang rewrite or creating a distributed monolith."
+      },
+      {
+        "questionText": "Tell me about a cross-team trade-off you negotiated between backend reliability and product delivery speed.",
+        "idealAnswer": "Expect framing in business terms, using error budgets or SLOs to align incentives, and negotiating guardrails that let teams move fast safely. A strong answer shows influence without authority and ownership of the outcome across teams. The signal is org-level systems thinking. Pitfalls are optimizing only one team's metrics or avoiding the hard alignment conversation."
+      },
+      {
+        "questionText": "Describe how you built operational excellence and on-call health into a backend engineering organization.",
+        "idealAnswer": "Look for systemic levers: SLOs, blameless postmortems, runbooks, alert hygiene, sustainable on-call rotations, and reducing toil through automation. A lead answer shapes culture and incentives, not just process. Success is reliable systems and a healthy team. Pitfalls are alert fatigue, hero culture, or treating reliability as an afterthought."
+      },
+      {
+        "questionText": "Tell me about a high-stakes infrastructure or data decision you made with incomplete information.",
+        "idealAnswer": "Expect structured decision-making under uncertainty: distinguishing reversible from irreversible, gathering cheap signals, setting a deadline, and planning for being wrong with rollback and monitoring. A lead answer communicates the reasoning broadly. The signal is decisive risk management. Pitfalls are analysis paralysis or betting the system without safeguards."
+      },
+      {
+        "questionText": "Describe how you developed senior backend engineers into technical leaders or owners of critical systems.",
+        "idealAnswer": "Look for intentional growth: delegating ownership of services, sponsoring visibility, structured feedback, and creating safe room to lead designs and incidents. A lead answer cites specific growth and how they stepped back. Success is a deeper bench and reduced bus factor. Pitfalls are hoarding critical knowledge or only developing a favored few."
+      },
+      {
+        "questionText": "Tell me about a time you had to manage technical risk across many backend services during rapid company growth.",
+        "idealAnswer": "Expect proactive risk management: capacity planning, identifying single points of failure, standardizing reliability practices, and prioritizing the highest-risk areas. A lead answer balances growth velocity with not accumulating catastrophic risk, and makes risk visible to leadership. The signal is strategic foresight. Pitfalls are reactive firefighting or ignoring scaling risk until it breaks."
+      },
+      {
+        "questionText": "Describe the most difficult trade-off you made between long-term backend platform investment and short-term business needs.",
+        "idealAnswer": "Expect a portfolio view: reserving capacity for platform health, tying investment to business outcomes like velocity and reliability, and making the cost of neglect visible. A lead answer negotiates dedicated capacity and follows through on debt repayment. The signal is sustainable strategic leadership. Pitfalls are perpetually deferring platform work or over-investing without business linkage."
+      }
+    ]
+  }
+]

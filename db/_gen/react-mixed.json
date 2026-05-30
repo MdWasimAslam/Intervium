@@ -1,0 +1,494 @@
+[
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "General",
+    "difficulty": "Junior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "What is JSX and how does it differ from plain HTML?",
+        "idealAnswer": "JSX is a syntax extension for JavaScript that lets you write markup-like code inside JS, which is transpiled (usually by Babel) into React.createElement calls or the automatic runtime's jsx() calls. Unlike HTML, JSX uses camelCase attribute names like className and onClick, requires expressions wrapped in curly braces, and must return a single root element (or a Fragment). It is not a string template; it produces React element objects. A common pitfall is forgetting that class is className and that JSX is JavaScript, so all tags must be closed."
+      },
+      {
+        "questionText": "What is the difference between props and state in React?",
+        "idealAnswer": "Props are inputs passed into a component from its parent and are read-only from the component's perspective, while state is data owned and managed internally by the component that can change over time. Changing state (via useState's setter or setState) triggers a re-render, whereas a component cannot mutate its own props. Props enable parent-to-child data flow; state enables local interactivity. A common pitfall is mutating props directly or trying to derive state that could simply be computed from props during render."
+      },
+      {
+        "questionText": "What does the useState hook do and what does it return?",
+        "idealAnswer": "useState is a React hook that adds local state to a function component. It takes an initial value and returns an array with two elements: the current state value and a setter function to update it, which you typically destructure. Calling the setter schedules a re-render with the new value; React preserves state across renders by call order, so hooks must be called unconditionally at the top level. A pitfall is expecting the state variable to update synchronously after calling the setter within the same render."
+      },
+      {
+        "questionText": "Why does React use a virtual DOM, and what problem does it solve?",
+        "idealAnswer": "The virtual DOM is an in-memory representation of the UI that React uses to compute the minimal set of changes needed in the real DOM. When state changes, React builds a new virtual tree, diffs it against the previous one (reconciliation), and applies only the differences, avoiding costly full DOM rebuilds. This gives a declarative programming model where you describe what the UI should look like and React handles the imperative updates. The pitfall is assuming the virtual DOM is always faster; it is an optimization that trades memory and diffing work for fewer direct DOM mutations."
+      },
+      {
+        "questionText": "Tell me about a time you received feedback on your code during a review. How did you respond?",
+        "idealAnswer": "A strong answer describes a specific review, the feedback received, and a non-defensive response: asking clarifying questions, understanding the reasoning, and making the change. The candidate should show they treat reviews as learning opportunities rather than criticism and that they followed up to confirm the fix met expectations. Look for humility, a growth mindset, and concrete improvement. A weak answer is dismissive of feedback or unable to recall any."
+      },
+      {
+        "questionText": "Describe how you approach learning a new technology or framework you have never used before.",
+        "idealAnswer": "A good answer outlines a structured approach: reading official docs, building a small hands-on project, breaking the problem into pieces, and leaning on examples and teammates when stuck. The candidate should mention validating understanding by experimenting and not being afraid to ask questions. Look for self-direction, curiosity, and an iterative learn-by-doing mindset. A weak answer relies solely on copy-pasting without understanding."
+      },
+      {
+        "questionText": "How do you decide when to ask for help versus continuing to work through a problem on your own?",
+        "idealAnswer": "A solid answer describes a time-boxing or effort threshold: trying to solve it independently first, documenting what was attempted, and reaching out once blocked beyond a reasonable point to avoid wasting time. The candidate should value both autonomy and team efficiency, framing asking for help as responsible rather than a weakness. Look for self-awareness about diminishing returns. A weak answer either asks immediately without trying or stubbornly stays stuck for too long."
+      },
+      {
+        "questionText": "What does it mean to you to write code that other developers can read and maintain?",
+        "idealAnswer": "A good answer emphasizes clear naming, small focused functions, consistent style, meaningful comments only where needed, and following team conventions. The candidate should mention that code is read more often than written and that maintainability reduces bugs and onboarding cost. Look for empathy toward future readers and awareness of consistency. A weak answer focuses only on making code work without regard for clarity."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "General",
+    "difficulty": "Mid",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "Explain the useEffect dependency array and how an incorrect array can cause bugs.",
+        "idealAnswer": "The dependency array tells React when to re-run an effect: an empty array runs it once after mount, omitting it runs after every render, and listing values runs it when any of those values change. Including stale or missing dependencies causes bugs like effects reading outdated closure values or not re-running when they should; listing too many or unstable references causes excessive re-runs and potential infinite loops. The fix is to include every reactive value the effect uses and to stabilize functions/objects with useCallback/useMemo or move them inside the effect. The exhaustive-deps lint rule helps catch these mistakes."
+      },
+      {
+        "questionText": "How does React's reconciliation use keys when rendering lists, and what goes wrong with index keys?",
+        "idealAnswer": "Keys give React a stable identity for each list item so it can match elements between renders and reorder, insert, or remove efficiently rather than recreating them. Using the array index as a key breaks when the list is reordered, filtered, or items are inserted, because the index no longer maps to the same logical item, leading to incorrect state, wrong DOM reuse, and input focus or value bugs. The correct approach is a stable unique id derived from the data. Index keys are only safe for static, never-reordered lists."
+      },
+      {
+        "questionText": "What is the difference between controlled and uncontrolled components, and when would you use each?",
+        "idealAnswer": "A controlled component has its value driven by React state, with onChange handlers updating that state, giving React full control and a single source of truth. An uncontrolled component lets the DOM hold the value, accessed via a ref, which is simpler for quick forms or integrating non-React code. Controlled inputs enable validation, conditional disabling, and formatting on every keystroke but require more boilerplate. The pitfall is mixing the two, such as providing value without onChange, which makes the field read-only and logs a warning."
+      },
+      {
+        "questionText": "Walk me through how you would debug a React component that re-renders far more often than expected.",
+        "idealAnswer": "I would first use the React DevTools Profiler and the 'highlight updates' feature to confirm and locate the excessive renders. Then I would inspect for unstable props such as inline objects, arrays, or functions recreated each render, missing memoization, context value churn, or parent re-renders cascading down. Fixes include memoizing values with useMemo/useCallback, splitting context, applying React.memo where appropriate, and lifting or colocating state. The pitfall is over-memoizing prematurely; I would verify each change actually reduces renders rather than guessing."
+      },
+      {
+        "questionText": "Describe a situation where you had to balance shipping a feature quickly against code quality. How did you decide?",
+        "idealAnswer": "A strong answer describes a concrete trade-off, the business context, and a deliberate decision such as shipping a pragmatic version while documenting tech debt and creating a follow-up. The candidate should weigh deadline pressure, risk, and reversibility, and communicate the trade-off to stakeholders. Look for judgment rather than dogmatism and accountability for the debt incurred. A weak answer either always cuts corners or refuses to compromise regardless of context."
+      },
+      {
+        "questionText": "Tell me about a disagreement you had with a teammate over a technical approach and how it was resolved.",
+        "idealAnswer": "A good answer presents the disagreement objectively, shows the candidate listened to the other view, and describes resolving it through data, a prototype, a senior opinion, or a documented decision. The candidate should focus on the merits rather than ego and accept the outcome professionally even if it differed from their preference. Look for collaboration, evidence-based reasoning, and disagree-and-commit. A weak answer is adversarial or shows inability to move past being overruled."
+      },
+      {
+        "questionText": "How do you keep yourself productive and unblocked when working on a task with unclear requirements?",
+        "idealAnswer": "A solid answer describes proactively clarifying requirements with the product owner or stakeholders, breaking ambiguity into assumptions, documenting them, and validating early with a draft or demo. The candidate should avoid building extensively on guesses and instead seek the fastest feedback loop. Look for initiative and communication over silent assumption-making. A weak answer is either passively waiting or charging ahead and building the wrong thing."
+      },
+      {
+        "questionText": "Describe how you approach estimating the effort for a development task you are assigned.",
+        "idealAnswer": "A good answer involves breaking the task into smaller subtasks, accounting for testing, code review, and unknowns, and adding buffer for risk or unfamiliar areas. The candidate should mention comparing to similar past work and communicating uncertainty rather than giving a single false-precision number. Look for the habit of revisiting estimates as understanding improves and flagging slippage early. A weak answer gives arbitrary numbers without decomposition or ignores hidden work like testing and review."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "General",
+    "difficulty": "Senior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "Explain how React's concurrent rendering and features like useTransition change the rendering model.",
+        "idealAnswer": "Concurrent rendering lets React interrupt, pause, and resume rendering work so high-priority updates like typing stay responsive while lower-priority updates render in the background. useTransition marks state updates as non-urgent transitions, keeping the previous UI interactive and exposing an isPending flag for feedback, while useDeferredValue lets a value lag behind to avoid blocking. Because rendering can be interrupted and restarted, render functions must be pure and side-effect-free. The pitfall is putting side effects in render or relying on render running exactly once, which concurrent mode can break."
+      },
+      {
+        "questionText": "What are the trade-offs between local component state, React Context, and an external store like Redux or Zustand for managing application state?",
+        "idealAnswer": "Local state is simplest and best for data used by one component or its close children. Context is good for low-frequency, widely-read values like theme or auth, but any context value change re-renders all consumers, so it is poor for high-frequency updates. External stores provide selector-based subscriptions that re-render only components reading changed slices, plus devtools, middleware, and predictable updates, at the cost of more boilerplate and indirection. The decision hinges on update frequency, breadth of consumers, and tooling needs; over-globalizing state is a common anti-pattern."
+      },
+      {
+        "questionText": "How would you design a custom hook to handle data fetching with loading, error, and cancellation, and what edge cases matter?",
+        "idealAnswer": "The hook would manage status state (idle/loading/success/error), data, and error, fire the request in useEffect keyed on inputs, and use an AbortController to cancel in-flight requests on unmount or input change. It must guard against setting state after unmount and against race conditions where a stale response resolves after a newer one, typically by checking an ignore flag or aborting. Returning a stable refetch function and memoizing the result helps consumers. Pitfalls include missing dependencies, not handling the abort error specially, and triggering waterfalls; a library like React Query often handles these better."
+      },
+      {
+        "questionText": "What are the performance and correctness considerations when choosing between useMemo, useCallback, and React.memo?",
+        "idealAnswer": "useMemo caches a computed value, useCallback caches a function reference, and React.memo skips re-rendering a component when its props are shallowly equal. They only help when the memoized value is expensive to compute or when stable references prevent downstream re-renders of memoized children; otherwise they add overhead and memory for no gain. Correctness depends on accurate dependency arrays and on referential stability flowing all the way down. The pitfall is cargo-cult memoization everywhere, which obscures code and can even slow things; measure with the Profiler before optimizing."
+      },
+      {
+        "questionText": "Tell me about a time you led the resolution of a significant production incident. What was your role and the outcome?",
+        "idealAnswer": "A strong answer follows a clear arc: detection, triage, mitigation to stop bleeding, root cause analysis, and a durable fix, with the candidate coordinating communication and decisions under pressure. They should describe prioritizing customer impact, rolling back or feature-flagging when appropriate, and running a blameless postmortem with action items. Look for calm ownership, structured thinking, and follow-through to prevent recurrence. A weak answer is chaotic, blames others, or omits the prevention step."
+      },
+      {
+        "questionText": "Describe how you have influenced the technical direction of a project without having formal authority over the team.",
+        "idealAnswer": "A good answer describes building credibility through prototypes, data, and clear written proposals (such as an RFC), then aligning stakeholders by framing the change in terms of their goals. The candidate should show they listened to objections, iterated, and earned buy-in rather than mandating. Look for influence through persuasion, evidence, and relationship-building. A weak answer relies on seniority alone or describes failing to bring others along."
+      },
+      {
+        "questionText": "How do you mentor more junior engineers while still delivering your own work?",
+        "idealAnswer": "A solid answer balances delegation and teaching: pairing on hard problems, giving thorough but kind code reviews, scoping tasks to stretch without overwhelming, and creating space for the mentee to struggle productively. The candidate should mention protecting some focus time and viewing mentoring as a force multiplier rather than a distraction. Look for patience, intentional growth of others, and time management. A weak answer either neglects mentoring under deadline pressure or solves everything for the junior."
+      },
+      {
+        "questionText": "Tell me about a technical decision you made that turned out to be wrong. How did you recognize and correct it?",
+        "idealAnswer": "A strong answer names a concrete decision, the signals that revealed it was wrong (metrics, incidents, developer friction), and how the candidate owned it and led a correction or migration. They should reflect on what they would do differently and any process change to catch such issues earlier. Look for intellectual honesty, learning, and willingness to reverse course rather than defend a sunk cost. A weak answer cannot identify any mistake or blames external factors entirely."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "General",
+    "difficulty": "Lead",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you architect a large React application shared across multiple teams to maximize autonomy while maintaining consistency?",
+        "idealAnswer": "I would establish clear module or domain boundaries, possibly using a monorepo with enforced ownership (CODEOWNERS) or micro-frontends for independent deployability, and a shared design system and component library to keep UX consistent. Cross-cutting concerns like auth, routing, telemetry, and data fetching would be standardized through shared packages and conventions, with versioning and contracts between teams. Governance via linting, CI gates, and an architecture review process prevents drift. The trade-off is balancing team autonomy against duplication and integration overhead; micro-frontends add runtime and operational complexity that must be justified by scale."
+      },
+      {
+        "questionText": "What strategy would you use to migrate a large legacy class-component codebase to modern hooks and concurrent React without halting feature work?",
+        "idealAnswer": "I would pursue an incremental strangler-fig approach: upgrade React versions first to maintain compatibility, then convert components opportunistically as they are touched, prioritizing high-churn or buggy areas. I would introduce codemods, lint rules, and a shared hook library to standardize patterns, and add tests around components before refactoring to prevent regressions. Concurrent features would be adopted gradually behind the new root API and verified with profiling. The key trade-offs are migration speed versus delivery risk; a big-bang rewrite is almost always riskier and should be avoided."
+      },
+      {
+        "questionText": "How do you define and enforce frontend performance budgets across an organization, and how do you keep regressions from creeping in?",
+        "idealAnswer": "I would set measurable budgets tied to user-centric metrics like Core Web Vitals (LCP, INP, CLS) and bundle size limits per route, agreed with product based on business impact. Enforcement comes from CI checks that fail builds exceeding budgets, automated Lighthouse or bundle-analysis gates, and real-user monitoring to catch field regressions. I would make the data visible via dashboards and tie ownership to teams. The challenge is balancing strict budgets against developer velocity and avoiding gaming the metrics; budgets should be revisited as the product and device landscape change."
+      },
+      {
+        "questionText": "Describe how you would evaluate adopting a new framework or major architectural change, such as moving to a server-components-based or SSR architecture.",
+        "idealAnswer": "I would start from the problems to solve (SEO, time-to-interactive, data-fetching complexity, infra cost) and define success criteria, then run a time-boxed spike on a representative slice to surface real constraints. I would weigh ecosystem maturity, team learning curve, hiring, operational cost, hosting requirements, and migration risk, and document the analysis in an RFC for stakeholder review. A pilot behind a flag de-risks the rollout before commitment. The pitfall is adopting technology for novelty; the decision must be reversible enough and justified by measurable benefit over the status quo."
+      },
+      {
+        "questionText": "Tell me about how you have built or improved the engineering culture and standards on a team you led.",
+        "idealAnswer": "A strong answer cites concrete initiatives such as establishing code review norms, testing standards, on-call practices, RFC processes, or blameless postmortems, and explains the problem each addressed and the measured outcome. The candidate should describe getting buy-in rather than imposing rules, and iterating based on team feedback. Look for sustained, systemic improvement and modeling the behavior themselves. A weak answer is vague, claims credit for others' work, or describes mandates without adoption."
+      },
+      {
+        "questionText": "How do you handle a situation where leadership demands a deadline you believe is unrealistic for the engineering work required?",
+        "idealAnswer": "A good answer describes surfacing the conflict early with data, presenting trade-off options such as reduced scope, added resources, or phased delivery rather than just saying no, and being transparent about risks of quality and burnout. The candidate should negotiate based on shared goals and document agreed decisions. Look for managing up, protecting the team, and balancing business pressure with engineering reality. A weak answer either silently accepts and overworks the team or refuses without offering alternatives."
+      },
+      {
+        "questionText": "How do you approach growing engineers on your team toward the next level and identifying who is ready for more responsibility?",
+        "idealAnswer": "A solid answer describes understanding each person's goals, giving stretch assignments aligned to a leveling rubric, providing regular feedback, and creating visible opportunities like leading a project or design. The candidate should evaluate readiness through demonstrated impact and consistency rather than tenure, and sponsor people for promotion with evidence. Look for individualized development plans and fairness. A weak answer treats everyone identically or promotes based on likability rather than demonstrated scope."
+      },
+      {
+        "questionText": "Describe a cross-team or cross-organization technical initiative you drove. How did you align stakeholders and measure success?",
+        "idealAnswer": "A strong answer describes a clear goal, mapping stakeholders and their incentives, building a coalition, and establishing a shared roadmap with defined metrics and milestones. The candidate should explain handling competing priorities, dependencies, and communication cadence across teams, and how they tracked outcomes against the original objectives. Look for influence at scale, conflict navigation, and accountability for results. A weak answer lacks measurable outcomes or shows the candidate working in isolation rather than aligning others."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Frontend",
+    "difficulty": "Junior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How do you handle a button click event in React, and how does it differ from adding an onclick in plain HTML?",
+        "idealAnswer": "In React you pass a function to the onClick prop, for example onClick={handleClick}, using camelCase and a function reference rather than a string of code. React attaches a single delegated listener and wraps the native event in a SyntheticEvent for cross-browser consistency. Unlike HTML's onclick attribute, you pass the function itself, not call it, so onClick={handleClick()} would incorrectly invoke it during render. You can access event details via the event argument and call preventDefault when needed."
+      },
+      {
+        "questionText": "How would you conditionally render an element in React based on a boolean value?",
+        "idealAnswer": "You can use a ternary expression like {isLoggedIn ? <Dashboard /> : <Login />} inside JSX, or the logical AND pattern {isVisible && <Banner />} to render something only when true. For more complex cases you can compute the element in a variable before the return or use early returns. A common pitfall is using && with a value like 0, which renders 0 instead of nothing, so it is safer to coerce to a boolean or use a ternary."
+      },
+      {
+        "questionText": "What is the purpose of the className attribute and how do you apply CSS classes dynamically in React?",
+        "idealAnswer": "className is React's equivalent of the HTML class attribute, used because class is a reserved word in JavaScript. To apply classes dynamically you build the string with template literals or a ternary, for example className={isActive ? 'btn active' : 'btn'}, or use a helper like the clsx/classnames library to combine conditional classes cleanly. The pitfall is using class instead of className, which logs a warning, and forgetting that the value is just a string you compose with normal JavaScript."
+      },
+      {
+        "questionText": "How do you pass data from a parent component down to a child component?",
+        "idealAnswer": "You pass data as props by adding attributes to the child element in the parent's JSX, for example <Child name={userName} />, and the child reads them from its props object. Data flows one way, parent to child, so the child treats props as read-only. To let a child communicate back, the parent passes a callback function as a prop that the child calls. A pitfall is trying to mutate received props or expecting two-way binding, which React does not provide."
+      },
+      {
+        "questionText": "Describe a time you were stuck on a frontend bug. How did you go about finding the cause?",
+        "idealAnswer": "A good answer describes a systematic approach: reproducing the bug reliably, using browser devtools and console logs or breakpoints, isolating the failing piece, and checking recent changes. The candidate should mention forming a hypothesis and testing it rather than randomly changing code. Look for persistence and methodical reasoning even at a junior level. A weak answer describes random trial-and-error without a strategy or giving up quickly."
+      },
+      {
+        "questionText": "How do you make sure the UI you build looks correct across different screen sizes?",
+        "idealAnswer": "A good answer mentions testing in the browser's responsive/device mode at various widths, using flexible layouts (flexbox or grid), relative units, and CSS media queries or a framework's responsive utilities. The candidate should describe checking on real or emulated mobile and desktop and verifying against the design. Look for awareness that frontends are viewed on many devices. A weak answer assumes one screen size or only checks on their own machine."
+      },
+      {
+        "questionText": "Tell me about how you collaborate with a designer when implementing a UI from a mockup.",
+        "idealAnswer": "A solid answer describes reviewing the design, asking clarifying questions about spacing, states, and edge cases, using the design tool's inspect features for exact values, and showing early progress to catch mismatches. The candidate should value the designer's intent while raising technical constraints constructively. Look for communication and attention to detail. A weak answer either blindly pixel-copies without understanding interactions or ignores the design and improvises."
+      },
+      {
+        "questionText": "How do you keep your frontend work organized when juggling several small UI tasks at once?",
+        "idealAnswer": "A good answer describes prioritizing tasks, using a task tracker, making small focused commits or branches, and finishing one piece before context-switching when possible. The candidate should mention communicating status and asking which task matters most if unsure. Look for basic time management and clear communication. A weak answer describes leaving many things half done or losing track of work."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Frontend",
+    "difficulty": "Mid",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you implement an accessible modal dialog in React, and what accessibility concerns must you address?",
+        "idealAnswer": "I would render the modal in a portal so it sits at the document root, set role=\"dialog\" with aria-modal=\"true\" and an aria-labelledby pointing to the title. Focus management is critical: move focus into the modal on open, trap focus within it, restore focus to the trigger on close, and support closing with the Escape key. I would also prevent background scroll and mark background content as inert or aria-hidden. Pitfalls include forgetting focus trapping, leaving the background interactive to screen readers, and not returning focus, all of which harm keyboard and assistive-tech users."
+      },
+      {
+        "questionText": "What approaches can you use to manage form state and validation in React, and what are their trade-offs?",
+        "idealAnswer": "Options range from manual useState with handlers, to useReducer for complex interdependent fields, to libraries like React Hook Form or Formik. React Hook Form uses uncontrolled inputs with refs to minimize re-renders and offers built-in validation and schema integration (e.g., Zod/Yup), which scales better for large forms; controlled state gives fine-grained control but more re-renders and boilerplate. Validation can run on change, blur, or submit, balancing responsiveness against noise. Pitfalls include validating too aggressively, not handling async validation race conditions, and poor error-message accessibility."
+      },
+      {
+        "questionText": "How does CSS-in-JS compare to CSS Modules and utility-first frameworks like Tailwind for styling React components?",
+        "idealAnswer": "CSS-in-JS (e.g., styled-components, Emotion) colocates styles with components and supports dynamic theming but can add runtime cost and complicate SSR; many teams now prefer zero-runtime solutions. CSS Modules give locally scoped class names with plain CSS and good build-time performance but less dynamic flexibility. Utility-first frameworks like Tailwind speed up development and enforce consistency via design tokens but can make markup verbose and require discipline. The choice depends on team preference, performance needs, theming requirements, and tolerance for markup verbosity versus separate style files."
+      },
+      {
+        "questionText": "A list of thousands of items is causing janky scrolling in a React app. How would you diagnose and fix it?",
+        "idealAnswer": "I would profile with React DevTools and the browser performance panel to confirm the bottleneck is rendering all rows. The primary fix is list virtualization (windowing) with a library like react-window or TanStack Virtual so only visible rows render. I would also ensure stable keys, memoize row components, avoid heavy work in render, and debounce or throttle scroll-driven updates. Pitfalls include forgetting to handle variable row heights, breaking accessibility/find-in-page with virtualization, and over-rendering due to unstable props passed to rows."
+      },
+      {
+        "questionText": "Tell me about a time you had to refactor a messy or hard-to-maintain frontend component. How did you approach it?",
+        "idealAnswer": "A strong answer describes identifying the pain (duplication, tangled state, poor naming), adding or relying on tests to lock behavior, then refactoring incrementally in small reviewable steps. The candidate should explain extracting hooks or subcomponents, clarifying props, and verifying nothing broke along the way. Look for risk management and not changing behavior while refactoring. A weak answer describes a risky big-bang rewrite without tests or unclear motivation."
+      },
+      {
+        "questionText": "Describe how you handle a situation where a stakeholder requests a UI change you believe will hurt usability.",
+        "idealAnswer": "A good answer describes understanding the underlying goal behind the request, voicing the usability concern with evidence such as heuristics, data, or a quick prototype, and proposing alternatives that meet the goal. The candidate should ultimately respect the decision-maker while ensuring the trade-off is understood and documented. Look for advocacy backed by reasoning rather than stubbornness. A weak answer either silently implements something harmful or refuses to engage with the stakeholder's actual need."
+      },
+      {
+        "questionText": "How do you ensure the frontend features you build are reliably tested before they reach production?",
+        "idealAnswer": "A solid answer describes a layered approach: unit tests for logic and hooks, component tests with React Testing Library focused on user-visible behavior, and end-to-end tests for critical flows, plus manual checks for visual and accessibility issues. The candidate should mention testing edge cases, error states, and running tests in CI. Look for testing behavior rather than implementation details and balancing coverage with effort. A weak answer relies only on manual clicking or tests implementation internals that break on refactor."
+      },
+      {
+        "questionText": "Tell me about a time you had to learn an unfamiliar part of a frontend codebase quickly to fix or extend it.",
+        "idealAnswer": "A good answer describes a strategy: reading the relevant code and tests, tracing data flow, using git history or asking the original author, and making a small safe change first to validate understanding. The candidate should show they built a mental model before modifying and verified the change. Look for efficient ramp-up and caution in unfamiliar code. A weak answer describes guessing and making sweeping changes without understanding the existing patterns."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Frontend",
+    "difficulty": "Senior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you design a reusable, composable component API for a complex widget like a multi-select dropdown?",
+        "idealAnswer": "I would favor composition using compound components (e.g., Select, Select.Trigger, Select.Option) sharing state via context, which keeps the API flexible and self-documenting. For maximum flexibility I might expose a headless/hook-based core that handles logic, keyboard nav, and a11y while letting consumers control markup and styling. I would support both controlled and uncontrolled modes, sensible defaults, and forward refs. Trade-offs include API surface complexity versus flexibility; pitfalls are leaking implementation details, poor TypeScript types, and baking in styling that prevents reuse."
+      },
+      {
+        "questionText": "Explain how you would optimize the initial load performance of a large client-side React application.",
+        "idealAnswer": "I would code-split by route and lazy-load heavy components with React.lazy/Suspense, analyze the bundle to remove or defer large dependencies, and tree-shake unused code. Beyond bundling, I would prioritize critical resources, preload key chunks, defer non-critical scripts, use server-side rendering or static generation for faster first paint where appropriate, and optimize images and fonts. Measuring via Core Web Vitals and the Performance panel guides the work. Pitfalls include over-splitting causing request waterfalls, hydration cost in SSR, and optimizing without measuring real-user impact."
+      },
+      {
+        "questionText": "What are the challenges of state synchronization between client cache and server, and how do tools like React Query address them?",
+        "idealAnswer": "Server state is asynchronous, shared, and can become stale, so naively storing it in local state leads to duplication, stale data, and race conditions. React Query (TanStack Query) treats server data as a cache with query keys, handling caching, deduplication, background refetching, stale-while-revalidate, retries, and invalidation after mutations. This separates server cache from client UI state and reduces boilerplate. Considerations include choosing correct query keys, configuring stale and cache times, handling optimistic updates and rollback, and avoiding treating it as a general client-state store."
+      },
+      {
+        "questionText": "How do you ensure a complex interactive component is accessible to keyboard and screen-reader users?",
+        "idealAnswer": "I follow the WAI-ARIA Authoring Practices for the relevant pattern, implementing correct roles, states, and properties, full keyboard support (tab order, arrow keys, Escape, activation), and proper focus management. I prefer semantic HTML first and add ARIA only when needed, manage focus on open/close, announce dynamic changes with live regions, and ensure visible focus indicators and sufficient contrast. I verify with keyboard-only navigation, screen readers, and automated tools like axe. Pitfalls include adding ARIA that contradicts native semantics, missing focus management, and relying solely on automated checks which miss many real issues."
+      },
+      {
+        "questionText": "Tell me about a time you identified and championed a significant improvement to your team's frontend tooling or developer experience.",
+        "idealAnswer": "A strong answer describes recognizing a pain point (slow builds, flaky tests, inconsistent components), quantifying the cost, and proposing and driving a concrete improvement such as adopting a faster bundler, a design system, or better linting. The candidate should explain getting buy-in, rolling it out incrementally, and measuring the impact on velocity or quality. Look for initiative beyond assigned tickets and measurable outcomes. A weak answer is vague or describes a change with no adoption or measured benefit."
+      },
+      {
+        "questionText": "Describe how you handle technical debt in a frontend codebase while still delivering features.",
+        "idealAnswer": "A good answer describes making debt visible (tracking it, tagging it), prioritizing debt that slows delivery or causes bugs, and addressing it incrementally via the boy-scout rule and dedicated allocation negotiated with product. The candidate should distinguish debt worth paying from debt to accept and communicate trade-offs to stakeholders in business terms. Look for pragmatism and strategic prioritization rather than either ignoring debt or endlessly refactoring. A weak answer treats all debt as equally urgent or never addresses it."
+      },
+      {
+        "questionText": "How do you approach reviewing another engineer's frontend pull request to give high-value feedback?",
+        "idealAnswer": "A strong answer prioritizes correctness, accessibility, performance, and maintainability over style nits that tooling should catch, and frames comments as questions or suggestions with reasoning. The candidate should check edge cases, error and loading states, test coverage, and adherence to patterns, while being respectful and timely. Look for distinguishing blocking issues from preferences and teaching through reviews. A weak answer focuses only on cosmetic nitpicks or rubber-stamps without real scrutiny."
+      },
+      {
+        "questionText": "Tell me about a situation where you had to make a frontend design decision with incomplete information or shifting requirements.",
+        "idealAnswer": "A good answer describes identifying the riskiest unknowns, choosing a flexible or reversible approach, documenting assumptions, and validating with the smallest experiment that reduces uncertainty. The candidate should show they avoided over-engineering for unknown futures while keeping the design adaptable. Look for judgment under ambiguity and clear communication of trade-offs. A weak answer either freezes waiting for certainty or commits to a rigid design that breaks when requirements change."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Frontend",
+    "difficulty": "Lead",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you design and govern a company-wide design system and component library used by many React teams?",
+        "idealAnswer": "I would build the library on accessible, well-tested headless or styled primitives with design tokens for theming, documented in a living catalog like Storybook, and published as versioned packages with semantic versioning. Governance includes contribution guidelines, a review process, deprecation policy, visual regression testing, and clear ownership, plus channels for consumer feedback. Adoption is driven by making the library genuinely easier than rolling your own and providing migration codemods. Trade-offs include centralized control versus team flexibility and the cost of maintaining backward compatibility as the system evolves."
+      },
+      {
+        "questionText": "What architectural options exist for rendering React apps (CSR, SSR, SSG, ISR, server components) and how do you choose among them?",
+        "idealAnswer": "Client-side rendering is simplest but slow to first content and weak for SEO; SSR improves first paint and SEO at server cost and hydration complexity; SSG is fastest and cacheable but unsuitable for highly dynamic data; ISR blends static with periodic revalidation; React Server Components reduce client bundle by rendering on the server and streaming. The choice depends on SEO needs, content dynamism, personalization, infrastructure, and team capability, often mixing strategies per route. Pitfalls include hydration mismatches, over-fetching, and adopting complex server architectures without the operational maturity to run them."
+      },
+      {
+        "questionText": "How would you establish a frontend testing and quality strategy across multiple teams to balance confidence and speed?",
+        "idealAnswer": "I would define a testing pyramid weighted toward fast unit and component tests, reserve end-to-end tests for critical user journeys, and add visual regression and accessibility checks in CI. I would standardize tooling and shared utilities, set realistic coverage expectations focused on risk rather than a blanket percentage, and address flakiness aggressively since flaky tests erode trust. Quality gates run in CI with fast feedback. The trade-off is thoroughness versus pipeline speed and maintenance cost; over-investing in brittle end-to-end tests is a common organizational failure mode."
+      },
+      {
+        "questionText": "How do you approach a micro-frontend architecture, and when is it the wrong choice?",
+        "idealAnswer": "Micro-frontends split a UI into independently developed and deployed pieces, useful when multiple teams need autonomy, independent release cadences, or incremental migration of a legacy app. They can be composed via module federation, build-time integration, or iframes, with shared contracts for routing, auth, and design tokens. The costs are significant: runtime overhead, dependency duplication, versioning complexity, cross-cutting consistency, and harder debugging. They are the wrong choice for small teams or apps where a well-structured monolith with clear module boundaries delivers the same benefits with far less operational complexity."
+      },
+      {
+        "questionText": "Tell me about how you have driven adoption of a major frontend standard or pattern across an organization that initially resisted it.",
+        "idealAnswer": "A strong answer describes understanding the resistance, piloting the change to produce evidence, providing tooling, documentation, and migration support to lower the cost of adoption, and recruiting influential engineers as champions. The candidate should explain measuring impact and iterating based on feedback rather than mandating top-down. Look for change management skill and empathy for adopters. A weak answer relies on authority, ignores valid objections, or claims a rollout that never achieved real adoption."
+      },
+      {
+        "questionText": "How do you balance investing in frontend platform and infrastructure work against shipping user-facing features when both compete for the same engineers?",
+        "idealAnswer": "A good answer frames platform work in terms of its leverage: how it accelerates future feature delivery, reduces incidents, or unblocks teams, and quantifies that against feature value. The candidate should describe allocating a sustainable percentage of capacity to platform work, sequencing the highest-leverage investments, and communicating the trade-offs to leadership in business terms. Look for strategic portfolio thinking rather than reactive firefighting or endless platform polishing. A weak answer always prioritizes features and lets the platform rot, or vice versa."
+      },
+      {
+        "questionText": "How do you handle a situation where two senior frontend engineers on your team are in a prolonged disagreement that is blocking progress?",
+        "idealAnswer": "A strong answer describes first ensuring both feel heard, separating facts from preferences, and reframing around shared goals and decision criteria. If consensus is not reached, the candidate makes or facilitates a timely decision, often via a spike or data, documents the rationale, and asks both to disagree-and-commit. They should address any underlying interpersonal friction separately. Look for decisiveness balanced with respect and preventing recurrence. A weak answer lets the stalemate drag on or imposes a decision without addressing the people involved."
+      },
+      {
+        "questionText": "How do you measure and improve the productivity and health of a frontend engineering team you lead?",
+        "idealAnswer": "A good answer uses balanced signals such as DORA-style delivery metrics, cycle time, incident rates, and developer-experience surveys rather than vanity metrics like lines of code or velocity points. The candidate should identify bottlenecks (slow builds, review delays, flaky tests, unclear requirements) and address them, while attending to sustainable pace and morale. Look for using metrics to find systemic improvements rather than to rank individuals. A weak answer relies on output counting or ignores team health entirely."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Backend",
+    "difficulty": "Junior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How does a React app typically fetch data from a backend API, and what does the fetch function return?",
+        "idealAnswer": "A React app usually calls a backend over HTTP using the fetch API or a library like axios, commonly inside a useEffect hook or an event handler. fetch returns a Promise that resolves to a Response object; you then call response.json() (which also returns a Promise) to parse the body. You should check response.ok or the status code before parsing and handle errors. A pitfall is forgetting that fetch does not reject on HTTP error statuses like 404 or 500, so you must check the status yourself."
+      },
+      {
+        "questionText": "What is a REST API and what do the common HTTP methods GET, POST, PUT, and DELETE mean?",
+        "idealAnswer": "A REST API exposes resources over HTTP using URLs, where each method conveys an intent: GET retrieves data, POST creates a new resource, PUT updates or replaces a resource, and DELETE removes one. GET should be safe and not change server state, and GET/PUT/DELETE are idempotent while POST is not. Responses use status codes to indicate outcome, such as 200, 201, 404, and 500. A pitfall is using GET to change data or ignoring proper status codes."
+      },
+      {
+        "questionText": "What is JSON and why is it commonly used for communication between a frontend and backend?",
+        "idealAnswer": "JSON (JavaScript Object Notation) is a lightweight, text-based data format using key-value pairs and arrays that is easy for both humans and machines to read. It is popular because it maps naturally to JavaScript objects, is language-agnostic, and is less verbose than XML. In JavaScript you convert between JSON strings and objects with JSON.parse and JSON.stringify. A pitfall is that JSON only supports a limited set of types, so values like dates are sent as strings and must be parsed."
+      },
+      {
+        "questionText": "What is the difference between synchronous and asynchronous code, and why does it matter when calling an API?",
+        "idealAnswer": "Synchronous code runs line by line, blocking until each operation completes, while asynchronous code lets long operations like network requests run without freezing the rest of the program. API calls are asynchronous because waiting for a server response can take time, so JavaScript uses callbacks, Promises, or async/await to handle the result when it arrives. This keeps the UI responsive. A pitfall is trying to use the result of an async call immediately as if it were already available, instead of awaiting it or handling the Promise."
+      },
+      {
+        "questionText": "Tell me about a time you had to coordinate with a backend developer to get a feature working end to end.",
+        "idealAnswer": "A good answer describes clear communication about the API contract (endpoints, request/response shapes), agreeing on it early, and using tools or mock data to work in parallel. The candidate should describe testing the integration together and resolving mismatches collaboratively. Look for proactive communication and shared ownership of the integration. A weak answer describes working in isolation and discovering integration problems late."
+      },
+      {
+        "questionText": "How do you handle and communicate an error when an API request fails in the UI?",
+        "idealAnswer": "A good answer describes catching the error, showing the user a clear and friendly message rather than a raw error, and possibly offering a retry. The candidate should mention logging the error for debugging and not leaving the UI stuck in a loading state. Look for awareness that failures happen and should be handled gracefully. A weak answer ignores errors or shows technical stack traces to users."
+      },
+      {
+        "questionText": "Describe how you would ask for clarification when an API does not behave the way you expected.",
+        "idealAnswer": "A good answer describes first checking the documentation and inspecting the actual request and response in the network tab to gather concrete evidence, then bringing specific details (request, expected vs actual response) to the backend developer. The candidate should frame it as a question, not an accusation. Look for self-investigation before escalating and clear, evidence-based communication. A weak answer immediately blames the backend without checking or provides no useful details."
+      },
+      {
+        "questionText": "How do you keep sensitive information like API keys out of your frontend code?",
+        "idealAnswer": "A good answer recognizes that anything shipped to the browser is visible to users, so secret keys must not live in frontend code; they belong on a backend or server that the frontend calls. The candidate should mention using environment variables for build-time config while understanding that public env vars are still exposed, and routing privileged calls through a backend. Look for awareness that the client is not a secure place for secrets. A weak answer suggests hiding keys in frontend env files thinking that makes them secret."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Backend",
+    "difficulty": "Mid",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you implement authentication in a React app that talks to a backend, and where should tokens be stored?",
+        "idealAnswer": "The backend authenticates credentials and issues a token, commonly a JWT or a session. For storage, httpOnly secure cookies are generally preferred because they are not readable by JavaScript, mitigating XSS token theft, though they require CSRF protection; localStorage is convenient but vulnerable to XSS. The React app sends the token (via cookie or Authorization header) on requests and handles 401s by redirecting to login or refreshing. Pitfalls include storing long-lived tokens in localStorage, not handling token expiry/refresh, and trusting client-side auth checks instead of enforcing authorization on the server."
+      },
+      {
+        "questionText": "What is CORS, why does it block some requests, and how is it resolved?",
+        "idealAnswer": "CORS (Cross-Origin Resource Sharing) is a browser security mechanism that restricts requests to a different origin unless the server explicitly allows it via response headers like Access-Control-Allow-Origin. The browser may send a preflight OPTIONS request for non-simple requests to check permissions. The resolution is to configure the server to send the correct CORS headers for the allowed origins, methods, and headers, not to disable browser security. A common pitfall is trying to fix CORS purely on the frontend, which is impossible since the server must grant permission, and using a wildcard origin with credentials, which is disallowed."
+      },
+      {
+        "questionText": "How would you handle pagination of a large dataset between a React frontend and an API?",
+        "idealAnswer": "Common approaches are offset/limit (page-based) pagination, which is simple but degrades and can skip or duplicate items on large or changing datasets, and cursor-based pagination, which uses a stable pointer and performs better for large or real-time data. The frontend requests pages or next-cursors and renders incrementally or with infinite scroll, ideally caching pages with a tool like React Query. I would show loading and end states and avoid refetching already-loaded pages. Pitfalls include heavy offsets on huge tables, inconsistent results when data changes between pages, and not handling the empty or final page."
+      },
+      {
+        "questionText": "Describe how you would debug an intermittent failure where an API call sometimes returns stale or incorrect data in a React app.",
+        "idealAnswer": "I would reproduce and inspect the network requests to determine whether the issue is client caching, server caching, or a race condition between concurrent requests. On the client I would check for missing cache invalidation, stale closures in effects, or out-of-order responses where an older request resolves last, and add request cancellation or response ordering guards. I would inspect cache headers and CDN behavior on the server side. Pitfalls include assuming it is purely a frontend bug, not logging request/response correlation, and fixing symptoms rather than the race or caching root cause."
+      },
+      {
+        "questionText": "Tell me about a time you had to integrate with a poorly documented or unreliable third-party API. How did you handle it?",
+        "idealAnswer": "A strong answer describes reverse-engineering behavior through experimentation, capturing real responses, and building a thin abstraction layer to isolate the unreliable dependency. The candidate should mention adding defensive handling like retries, timeouts, validation, and fallbacks, and documenting findings for the team. Look for resilience engineering and not letting a flaky dependency destabilize the whole app. A weak answer describes trusting the API blindly or giving up when docs were lacking."
+      },
+      {
+        "questionText": "How do you decide what data shaping or aggregation should happen on the backend versus in the React client?",
+        "idealAnswer": "A good answer weighs payload size, performance, security, and reuse: heavy aggregation, joins, filtering of large datasets, and anything involving sensitive logic or data should happen on the backend to reduce transfer and keep logic authoritative, while light, display-specific formatting can live on the client. The candidate should consider that backend shaping reduces over-fetching but couples the API to UI needs, which patterns like BFF or GraphQL address. Look for trade-off reasoning. A weak answer dumps raw data to the client or hardcodes UI concerns into core APIs."
+      },
+      {
+        "questionText": "Describe a time when an API contract changed unexpectedly and broke the frontend. How did you respond and prevent recurrence?",
+        "idealAnswer": "A strong answer describes quickly identifying the breaking change, coordinating with the backend team for a fix or rollback, and shipping a mitigation. For prevention the candidate should mention contract testing, API versioning, shared schemas or types (e.g., OpenAPI or generated types), and better communication and deprecation processes. Look for both incident response and systemic prevention. A weak answer just patches the frontend reactively without addressing the coordination gap."
+      },
+      {
+        "questionText": "How do you approach validating data received from an API before using it in your React components?",
+        "idealAnswer": "A good answer treats external data as untrusted and validates its shape, ideally with a runtime schema validator like Zod and corresponding TypeScript types, rather than assuming the contract holds. The candidate should handle missing, null, or unexpected fields gracefully with defaults or error states to avoid runtime crashes. Look for defensive programming and awareness that types alone do not guarantee runtime safety. A weak answer trusts the response blindly and accesses nested fields without guards."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Backend",
+    "difficulty": "Senior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you design the data-fetching layer for a React app to handle caching, deduplication, and optimistic updates?",
+        "idealAnswer": "I would centralize server-state in a library like React Query or SWR, using query keys for caching and automatic request deduplication, with configured stale and cache times and background revalidation. For mutations I would implement optimistic updates by writing the expected result to the cache immediately, then rolling back on error and invalidating related queries on success to reconcile with the server. I would handle retries, error boundaries, and prefetching for perceived performance. Pitfalls include incorrect query keys causing cache leaks, optimistic updates without rollback, and treating server cache as client UI state."
+      },
+      {
+        "questionText": "Compare REST and GraphQL from the perspective of a React frontend, including their trade-offs.",
+        "idealAnswer": "REST exposes fixed endpoints and can lead to over-fetching or under-fetching, sometimes requiring multiple round trips, but benefits from simple HTTP caching and ubiquity. GraphQL lets the client request exactly the fields it needs from a single endpoint, eliminating over-fetching and reducing round trips, with a strong typed schema, but adds complexity in caching, query cost control, and server setup, and risks N+1 problems and expensive nested queries. The choice depends on data-shape variability, number of clients, caching needs, and team expertise. Pitfalls include unbounded GraphQL queries and reinventing client caching that REST gets for free at the HTTP layer."
+      },
+      {
+        "questionText": "How would you implement real-time updates in a React application, and what are the trade-offs of the available transport options?",
+        "idealAnswer": "Options include WebSockets for full-duplex low-latency communication, Server-Sent Events for simple server-to-client streams over HTTP, and polling/long-polling as a fallback. WebSockets suit chat or collaborative features but need connection management, reconnection, scaling via a pub/sub backend, and auth handling; SSE is simpler and auto-reconnects but is unidirectional and has connection limits over HTTP/1. On the client I would manage subscription lifecycle in effects, reconcile real-time data with the cache, and handle backpressure. Pitfalls include leaking connections on unmount, missing reconnection/auth logic, and not deduping updates against existing cached state."
+      },
+      {
+        "questionText": "What strategies would you use to make a React frontend resilient to backend failures and slow responses?",
+        "idealAnswer": "I would implement timeouts, retries with exponential backoff and jitter for idempotent requests, and circuit-breaker-like behavior to stop hammering a failing service. The UI should degrade gracefully with skeletons, cached data, error boundaries, and clear retry affordances, and avoid blocking the whole app on one failing call. I would also surface partial data where possible and log failures for observability. Pitfalls include retrying non-idempotent requests, retry storms that worsen an outage, and leaving users stuck in indefinite loading states with no feedback or recovery path."
+      },
+      {
+        "questionText": "Tell me about a time you made a significant change to how the frontend communicated with backend services to improve performance or reliability.",
+        "idealAnswer": "A strong answer describes identifying a concrete problem (chatty requests, N+1 calls, slow waterfalls, frequent failures), measuring it, and implementing a change such as batching, a BFF layer, caching, or request coalescing, with before/after metrics. The candidate should explain coordinating with backend teams and de-risking the rollout. Look for measurable impact and cross-team collaboration. A weak answer is vague, lacks metrics, or describes a change made without understanding the real bottleneck."
+      },
+      {
+        "questionText": "How do you approach defining and maintaining the contract between frontend and backend teams to minimize integration friction?",
+        "idealAnswer": "A good answer advocates a shared, source-of-truth schema such as OpenAPI or GraphQL SDL, generating types and mocks from it so both sides build against the same contract, plus contract or consumer-driven tests in CI. The candidate should describe versioning, deprecation policies, and early collaborative design of endpoints rather than throwing them over the wall. Look for systemic process thinking and prevention of drift. A weak answer relies on informal communication and discovers mismatches only at integration time."
+      },
+      {
+        "questionText": "Describe how you balance pushing logic into a backend-for-frontend layer versus keeping the frontend thin or the backend generic.",
+        "idealAnswer": "A good answer explains that a BFF can tailor responses to UI needs, aggregate multiple services, and hide complexity, improving client performance and decoupling the UI from generic backend APIs, at the cost of an extra service to own and maintain. The candidate should weigh ownership, latency, duplication across multiple frontends, and team boundaries, recommending a BFF when the UI's data needs diverge significantly from generic APIs. Look for nuanced trade-off reasoning and clear ownership thinking. A weak answer dogmatically favors one layer without considering the context."
+      },
+      {
+        "questionText": "Tell me about a time you had to make an architectural decision about frontend-backend boundaries under disagreement with the backend team.",
+        "idealAnswer": "A strong answer describes the technical substance of the disagreement, how the candidate sought to understand the backend team's constraints, and how they reached a decision through shared criteria, prototypes, or data rather than territorial argument. The candidate should show they optimized for the overall system and product, documented the decision, and committed to it. Look for collaboration across team boundaries and system-level thinking. A weak answer frames it as winning a turf war or ignoring the other team's valid constraints."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "focusArea": "Backend",
+    "difficulty": "Lead",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you architect the API and data-fetching strategy for a React frontend serving millions of users across web and mobile?",
+        "idealAnswer": "I would likely introduce a BFF or GraphQL gateway to tailor and aggregate data per client, with aggressive multi-layer caching (CDN, edge, HTTP, and client cache) and pagination to bound payloads. I would design for resilience with timeouts, retries, circuit breakers, and graceful degradation, and for observability with tracing across the stack. Scaling concerns include cache invalidation strategy, rate limiting, query cost control for GraphQL, and consistency versus latency trade-offs. The key is bounding load on origin services and minimizing round trips while keeping the contract maintainable as the org and traffic grow."
+      },
+      {
+        "questionText": "How do you approach versioning and evolving public-facing or shared APIs without breaking existing React clients?",
+        "idealAnswer": "I would favor backward-compatible additive changes, use explicit versioning (URI or header) only when breaking changes are unavoidable, and maintain old versions during a clear deprecation window with telemetry on usage. Communication, migration guides, and contract tests protect consumers, and feature flags or expand-then-contract migrations let changes roll out safely. For many independent clients, especially mobile that cannot be force-updated, long support windows matter. Pitfalls include silent breaking changes, deprecating before usage drops to zero, and an explosion of unmaintained versions; the strategy must balance evolution speed against consumer stability."
+      },
+      {
+        "questionText": "How would you design observability and monitoring spanning the React frontend and its backend services to diagnose issues end to end?",
+        "idealAnswer": "I would implement distributed tracing that propagates a correlation/trace id from the browser through the gateway and downstream services, combined with structured logging, RUM for frontend metrics (Core Web Vitals, errors), and backend metrics and alerts. Frontend error tracking and session replay help reproduce issues, while SLOs and dashboards tie technical signals to user impact. The hard parts are correlating client and server events, sampling to control cost, and protecting PII. The goal is to answer 'where is the latency or error coming from' quickly; pitfalls include siloed frontend/backend monitoring and noisy alerts that erode trust."
+      },
+      {
+        "questionText": "How do you decide between adopting GraphQL, a BFF pattern, or tRPC-style typed APIs at an organizational level for React clients?",
+        "idealAnswer": "I would base the decision on client diversity, data-shape variability, team topology, and type-safety needs. GraphQL fits many heterogeneous clients with varied data needs but adds caching and cost-control complexity; a BFF per client suits diverging UIs and clear team ownership; tRPC-style typed RPC gives end-to-end TypeScript safety with low overhead but assumes a TypeScript monorepo and tighter coupling. I would weigh operational cost, hiring, ecosystem maturity, and reversibility, and pilot before committing org-wide. The pitfall is choosing based on hype rather than the actual client/server topology and team capabilities."
+      },
+      {
+        "questionText": "Tell me about a time you led an initiative to improve the reliability or scalability of how frontend and backend systems interact.",
+        "idealAnswer": "A strong answer describes a concrete reliability or scale problem (cascading failures, origin overload, latency at peak), the diagnosis with data, and a coordinated solution such as caching layers, circuit breakers, load shedding, or a gateway, delivered across teams. The candidate should cite measurable outcomes like reduced error rates or latency and describe de-risking the rollout. Look for cross-team leadership, systems thinking, and accountability for results. A weak answer lacks metrics or describes a solo fix to a localized symptom rather than a systemic improvement."
+      },
+      {
+        "questionText": "How do you align frontend and backend teams around shared ownership of performance and reliability service-level objectives?",
+        "idealAnswer": "A good answer describes defining user-centric SLOs that both teams contribute to, making each team's impact on the end-to-end experience visible, and creating shared rituals like joint reviews and incident retros. The candidate should align incentives so neither side optimizes locally at the other's expense, and use error budgets to balance feature work against reliability. Look for breaking down silos and shared accountability. A weak answer keeps responsibility fragmented or blames the other side when objectives are missed."
+      },
+      {
+        "questionText": "How do you handle a strategic disagreement with a backend or platform leader about API ownership, contracts, or technical direction?",
+        "idealAnswer": "A strong answer describes grounding the discussion in shared business and user outcomes, understanding the other leader's constraints and incentives, and seeking a decision via clear criteria, data, or a time-boxed spike rather than positional bargaining. The candidate should be willing to escalate to a common decision-maker when needed, document the outcome, and commit fully once decided. Look for mature cross-functional leadership and optimizing for the whole organization. A weak answer is territorial, avoids the conflict, or undermines the agreed direction afterward."
+      },
+      {
+        "questionText": "How do you build and develop a team's capability to reason about full-stack concerns rather than treating the backend as a black box?",
+        "idealAnswer": "A good answer describes investing in shared context through cross-team pairing, accessible documentation and diagrams, rotations or embedded backend support, and teaching engineers to read traces, understand data flow, and consider latency, caching, and failure modes. The candidate should foster curiosity and shared ownership of the end-to-end experience while respecting specialization. Look for deliberate capability-building and cultural change. A weak answer keeps the wall between frontend and backend intact or expects individuals to learn osmotically without support."
+      }
+    ]
+  }
+]

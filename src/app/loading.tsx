@@ -1,9 +1,12 @@
-import { LoadingState } from "@/components/ui/LoadingState";
+import { Loader2 } from "lucide-react";
 
 /**
- * Route-level loading UI.
- * Next.js shows this automatically while a route segment's data resolves.
+ * Route-level loading UI shown while a segment resolves.
  */
 export default function Loading() {
-  return <LoadingState message="Loading page…" />;
+  return (
+    <div className="flex min-h-[50vh] items-center justify-center">
+      <Loader2 className="size-8 animate-spin text-[var(--primary)]" />
+    </div>
+  );
 }

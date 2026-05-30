@@ -1,0 +1,494 @@
+[
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Junior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "What is React Native and how does it differ from building a native iOS or Android app directly?",
+        "idealAnswer": "React Native is a framework for building mobile apps using JavaScript and React, where UI is described with React components that map to real native platform widgets rather than web views. Unlike a pure native app written in Swift/Kotlin, you write most logic once in JavaScript and a bridge (or the newer JSI) communicates with native modules. The benefit is code sharing across iOS and Android and faster iteration; the trade-off is some performance overhead and occasional need to drop into native code. A common pitfall is assuming it renders HTML like a web page, when in fact it uses native components such as View and Text."
+      },
+      {
+        "questionText": "Explain the difference between state and props in a React Native component.",
+        "idealAnswer": "Props are read-only inputs passed from a parent component to configure a child, while state is data owned and managed internally by a component that can change over time. Props flow down the tree and should not be mutated by the receiver; state changes via setState or the useState setter and trigger a re-render. A key pitfall is mutating state directly instead of using the setter, which prevents React from re-rendering. Calibrated understanding includes knowing that lifting state up is how sibling components share data."
+      },
+      {
+        "questionText": "Walk me through a recent time you had to learn a new tool or technology quickly. How did you approach it?",
+        "idealAnswer": "A strong answer describes a concrete situation, the learning strategy used (official docs, small experiments, asking teammates, building a throwaway prototype), and the outcome. It should show self-direction and humility about not knowing everything. Good candidates mention validating understanding by actually building something rather than only reading. Red flags are vague generalities or claiming they never need to learn."
+      },
+      {
+        "questionText": "What is the purpose of the package.json file and the node_modules folder in a React Native project?",
+        "idealAnswer": "package.json declares the project's dependencies, scripts, and metadata, acting as the manifest for npm or yarn. node_modules is where the actual installed dependency code lives after running install. The lockfile pins exact versions for reproducible installs. A common pitfall is committing node_modules to version control or editing files inside it directly, since it is regenerated and should be gitignored."
+      },
+      {
+        "questionText": "Describe how you handle receiving critical feedback on your code during a review.",
+        "idealAnswer": "A good answer frames feedback as a path to better code rather than a personal attack, and describes asking clarifying questions, separating opinion from correctness, and updating the code or discussing respectfully when disagreeing. It shows the candidate values team standards and learning. Strong candidates give a concrete example and reflect on what they changed. Red flags are defensiveness or dismissing reviewers' input."
+      },
+      {
+        "questionText": "What does the useEffect hook do in a React Native component, and when does it run?",
+        "idealAnswer": "useEffect lets you perform side effects such as data fetching, subscriptions, or timers after render, keeping them out of the render body. It runs after the component commits to the screen, and its dependency array controls when it re-runs: empty array means once on mount, listed dependencies mean it runs when those change, and no array means after every render. You return a cleanup function to tear down subscriptions or timers to avoid leaks. A common pitfall is omitting dependencies and causing stale closures or infinite loops."
+      },
+      {
+        "questionText": "How do you decide when to ask a teammate for help versus continuing to debug on your own?",
+        "idealAnswer": "A balanced answer describes timeboxing independent investigation, gathering context first so the question is specific, and recognizing when being blocked is costing the team more than a quick ask. It shows respect for others' time while not silently spinning for hours. Strong candidates mention documenting what they already tried. Red flags are either never asking or asking before any independent effort."
+      },
+      {
+        "questionText": "What is the difference between a View and a ScrollView in React Native?",
+        "idealAnswer": "A View is a basic non-scrolling container for layout, analogous to a div, that holds and arranges child components. A ScrollView wraps content so it can scroll when it overflows the screen, rendering all children at once. For long or unbounded lists you should prefer FlatList over ScrollView because ScrollView keeps everything mounted, which hurts performance and memory. The pitfall is putting a large list inside a ScrollView and causing jank."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Mid",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you debug a React Native app that crashes only on a physical Android device but works fine in the simulator?",
+        "idealAnswer": "Start by reproducing and capturing logs via adb logcat or Flipper to find the native stack trace, since device-only crashes often involve native modules, permissions, or hardware. Check for differences like missing runtime permissions, ProGuard/R8 stripping in release builds, or 64-bit ABI issues. Reproduce in a release build if the crash is build-config related, and bisect recent changes. The pitfall is only checking the JS console, which misses native-level errors."
+      },
+      {
+        "questionText": "Explain the trade-offs between using Context API and a dedicated state library like Redux or Zustand for app-wide state.",
+        "idealAnswer": "Context is built in and great for low-frequency global values like theme or auth, but it re-renders all consumers when the value changes, which can hurt performance for frequently updated state. Redux/Zustand add structure, selectors, middleware, and fine-grained subscriptions that avoid unnecessary re-renders, at the cost of boilerplate and a dependency. The decision hinges on update frequency, app size, and team familiarity. A pitfall is putting rapidly changing state in a single Context and causing widespread re-renders."
+      },
+      {
+        "questionText": "Tell me about a time you disagreed with a technical decision made by your team. How did you handle it?",
+        "idealAnswer": "A strong answer shows the candidate voiced concerns with evidence and reasoning, listened to other viewpoints, and ultimately committed to the team decision even if it differed from their preference. It demonstrates the disagree-and-commit principle and constructive communication. Good candidates reflect on whether the outcome validated either side. Red flags are undermining the decision afterward or never speaking up."
+      },
+      {
+        "questionText": "What are the differences between development, staging, and production builds in a React Native app, and how do you manage configuration per environment?",
+        "idealAnswer": "Different environments point to different API endpoints, keys, and feature flags, and differ in optimizations like minification and the absence of dev tooling in release. Configuration is typically managed with environment files, build variants/schemes, or libraries like react-native-config, injected at build time rather than hardcoded. Secrets should not be committed and ideally not shipped in the bundle when avoidable. A pitfall is shipping a debug build or leaking a staging endpoint to production."
+      },
+      {
+        "questionText": "Describe how you would onboard yourself into an unfamiliar, large React Native codebase.",
+        "idealAnswer": "A good answer includes running the app first, reading the README and architecture docs, tracing a single feature end to end, and mapping the navigation and state layers. The candidate would lean on tests, talk to maintainers, and make a small low-risk change early to validate understanding. It shows curiosity and systematic exploration over guessing. Red flags are rewriting code before understanding it."
+      },
+      {
+        "questionText": "How do you handle and surface errors gracefully in a React Native app so the user is not left with a blank or frozen screen?",
+        "idealAnswer": "Use error boundaries to catch render-time errors in component subtrees and show a fallback UI, and wrap async calls in try/catch with user-friendly messaging and retry options. Log errors to a service like Sentry with context for diagnosis. Distinguish recoverable errors from fatal ones and avoid swallowing errors silently. A pitfall is relying only on error boundaries, which do not catch errors in event handlers or async code."
+      },
+      {
+        "questionText": "Give an example of a time you had to balance shipping a feature on a deadline against code quality or technical debt.",
+        "idealAnswer": "A strong answer describes a concrete trade-off, how the candidate communicated the risk and debt to stakeholders, and a plan to address shortcuts later. It shows pragmatism without recklessness and ownership of the consequences. Good candidates mention writing a follow-up ticket or guarding the shortcut with tests. Red flags are either gold-plating past the deadline or hiding debt from the team."
+      },
+      {
+        "questionText": "What strategies do you use to keep a React Native app's JavaScript bundle size reasonable, and why does it matter?",
+        "idealAnswer": "Bundle size affects startup time and memory, so strategies include avoiding heavy dependencies, using tree-shakeable imports, removing unused code, and enabling Hermes which precompiles to bytecode. You can analyze the bundle to find large modules and lazy-load rarely used screens. Images and assets should be optimized separately. A pitfall is importing an entire utility library when only one function is needed."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Senior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "Explain the React Native New Architecture: what are the JSI, Fabric, and TurboModules, and what problems do they solve versus the old bridge?",
+        "idealAnswer": "The old architecture serialized all JS-to-native calls as asynchronous JSON messages over a single bridge, which was a bottleneck and caused frame drops. JSI (JavaScript Interface) lets JS hold direct references to C++ host objects and call native synchronously without serialization. Fabric is the new rendering system that builds the shadow tree in C++ and enables concurrent React features and synchronous layout, while TurboModules lazy-load native modules and expose them via JSI. Together they reduce overhead, enable synchronous calls where needed, and improve startup. The pitfall is assuming all libraries are compatible without checking for New Architecture support."
+      },
+      {
+        "questionText": "How would you design an offline-first React Native app that syncs data when connectivity returns?",
+        "idealAnswer": "Use a local source of truth such as SQLite, WatermelonDB, or Realm, write to it immediately for optimistic UX, and queue mutations for later sync. On reconnect, replay the queue with conflict resolution (last-write-wins, version vectors, or server-authoritative merges) and handle idempotency so retries do not duplicate. Monitor connectivity with NetInfo and surface sync status to the user. Pitfalls include ignoring conflict resolution, unbounded queues, and not handling partial sync failures atomically."
+      },
+      {
+        "questionText": "Describe a significant production incident you helped diagnose and resolve, and what you changed to prevent recurrence.",
+        "idealAnswer": "A strong answer follows a clear narrative: detection, impact assessment, hypothesis-driven investigation, mitigation, and root-cause fix. It emphasizes data (logs, metrics, crash reports) over guessing and describes a durable preventive measure like a test, alert, or process change. Senior candidates discuss communication with stakeholders during the incident and a blameless retrospective. Red flags are blaming others or only describing a one-off patch."
+      },
+      {
+        "questionText": "What edge cases and performance concerns arise when rendering very large or infinite lists in React Native, and how do you address them?",
+        "idealAnswer": "FlatList virtualizes rows but you must provide stable keyExtractor, getItemLayout when possible, and memoized renderItem to avoid re-renders, plus tune windowSize, initialNumToRender, and maxToRenderPerBatch. For complex cells, FlashList offers better recycling. Edge cases include variable-height rows breaking scroll position, images causing layout shift, and memory growth from not recycling. The pitfall is rendering all items eagerly or recreating inline functions and styles on each render, which defeats memoization."
+      },
+      {
+        "questionText": "How do you approach mentoring a junior engineer who keeps producing code that works but is hard to maintain?",
+        "idealAnswer": "A strong answer focuses on teaching principles through code review and pairing rather than just rewriting their work, giving specific actionable feedback tied to readability and maintainability. The mentor sets clear standards, explains the why behind patterns, and gradually increases the junior's autonomy. Good candidates measure progress and adjust their approach to the individual. Red flags are doing the work for them or vague criticism without guidance."
+      },
+      {
+        "questionText": "What are the key security considerations specific to a React Native mobile app, and how do you mitigate them?",
+        "idealAnswer": "Concerns include insecure local storage of tokens, secrets bundled in the JS, man-in-the-middle attacks, reverse engineering, and insecure deep links. Mitigations include using Keychain/Keystore via secure storage libraries, certificate pinning, not embedding sensitive secrets in the client, validating deep link inputs, and obfuscation plus jailbreak/root detection where warranted. Server-side authorization must never trust the client. The pitfall is treating AsyncStorage as secure storage for tokens."
+      },
+      {
+        "questionText": "Tell me about a time you had to make a major architectural decision with incomplete information. How did you reduce risk?",
+        "idealAnswer": "A good answer describes gathering the available data, identifying assumptions and reversible versus irreversible choices, prototyping or running a spike, and choosing an option that preserves optionality. The candidate communicates the uncertainty and sets checkpoints to revisit the decision. Senior signal is distinguishing one-way from two-way doors and de-risking the expensive parts first. Red flags are analysis paralysis or committing blindly without validation."
+      },
+      {
+        "questionText": "How would you set up a robust crash reporting and observability strategy for a React Native app in production?",
+        "idealAnswer": "Combine JS error capture (error boundaries, global handlers) with native crash reporting via tools like Sentry, Firebase Crashlytics, or Bugsnag, and ensure source maps and symbolication so stack traces are readable. Add breadcrumbs, release/version tagging, user context, and performance tracing to correlate crashes with rollouts. Set alerting thresholds and dashboards, and tie crashes to specific app versions for staged rollback. A pitfall is shipping without source maps, leaving JS stack traces minified and useless."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "General",
+    "difficulty": "Lead",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you architect a React Native codebase shared across multiple product teams to maximize reuse while preserving team autonomy?",
+        "idealAnswer": "Establish a shared design system and core library (networking, auth, navigation primitives) in a monorepo or versioned packages, with clear public APIs and ownership boundaries so teams can move independently. Use feature modules and dependency inversion so teams consume shared infrastructure without tight coupling, and enforce contracts through types and CI checks. Govern with an architecture group and RFC process to avoid divergence. Trade-offs include monorepo tooling complexity versus versioning overhead, and the risk of a shared layer becoming a bottleneck if not staffed and governed well."
+      },
+      {
+        "questionText": "Describe how you would plan and execute a migration of a large React Native app to the New Architecture without halting feature work.",
+        "idealAnswer": "Start with an audit of native module and third-party library compatibility, enable interop layers, and adopt incrementally behind flags so old and new can coexist. Prioritize migrating high-impact modules, add performance and crash baselines to detect regressions, and roll out via staged releases. Keep feature teams unblocked by sequencing the migration and providing shims and documentation. The biggest risks are incompatible libraries and subtle behavioral differences, so investing in regression testing and gradual rollout is essential."
+      },
+      {
+        "questionText": "How do you align engineering priorities with product and business stakeholders when there is tension between new features and platform health?",
+        "idealAnswer": "A strong answer describes quantifying technical health in business terms (crash rate, retention impact, velocity, on-call load), proposing a sustainable allocation such as a fixed percentage for platform work, and negotiating with data rather than opinion. The leader builds trust by delivering predictably and tying platform investment to outcomes stakeholders care about. They make trade-offs explicit and revisit them regularly. Red flags are either ignoring debt or unilaterally blocking features without business justification."
+      },
+      {
+        "questionText": "What is your strategy for managing app size, startup time, and performance budgets as a React Native app and team scale over years?",
+        "idealAnswer": "Define explicit budgets (cold start time, bundle size, frame rate) with automated CI gates and dashboards so regressions are caught per PR. Use Hermes, code splitting/lazy screens, asset optimization, and periodic dependency audits, and attribute regressions to owning teams. Treat performance as a shared, measured responsibility rather than a one-time effort. The pitfall is performance becoming everyone's and therefore no one's job, with no guardrails until users complain."
+      },
+      {
+        "questionText": "How would you decide whether a new capability should be built in JavaScript, as a native module, or by adopting a third-party library?",
+        "idealAnswer": "Evaluate performance needs, platform-API access, maintenance burden, team expertise, and the maturity and licensing of available libraries. Pure JS is fastest to build and share but limited for heavy compute or device APIs; native modules offer power and performance at the cost of platform-specific maintenance; third-party libraries trade control for speed but add supply-chain and upgrade risk. The leader weighs total cost of ownership and aligns with long-term architecture. The pitfall is adopting an unmaintained library or building bespoke native code that duplicates a solved problem."
+      },
+      {
+        "questionText": "Tell me about a time you had to lead a team through a difficult technical decision that some members strongly opposed.",
+        "idealAnswer": "A strong answer shows the leader created space for dissent, gathered evidence, made the reasoning transparent, and built commitment even from those who disagreed. It highlights communication, addressing concerns directly, and following up to validate the decision. Lead signal is owning the outcome and adjusting if data later contradicted the choice. Red flags are steamrolling the team or avoiding the decision to dodge conflict."
+      },
+      {
+        "questionText": "How do you establish code quality, testing, and release standards across multiple React Native teams without creating excessive bureaucracy?",
+        "idealAnswer": "Encode standards as automation wherever possible (linting, type checks, test coverage gates, CI/CD pipelines, automated release tooling) so they are enforced cheaply rather than via manual gatekeeping. Provide templates, shared configs, and clear lightweight guidelines, and reserve human review for design and judgment. Measure outcomes like escaped defects and lead time, and iterate on the process. The pitfall is heavy manual processes that slow teams and get bypassed, or standards that exist only as documents no one follows."
+      },
+      {
+        "questionText": "How would you approach scaling a React Native team's hiring, onboarding, and knowledge sharing to keep velocity high as headcount grows?",
+        "idealAnswer": "A strong answer covers defining role expectations and a competency framework, structured onboarding with starter tasks and mentors, and documented architecture and runbooks to reduce bus-factor risk. The leader invests in internal tooling, brown-bag sessions, and clear ownership maps so knowledge does not silo. They monitor onboarding time and team health as signals. Red flags are hiring fast without onboarding capacity or letting critical knowledge stay in one person's head."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Junior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How does Flexbox layout work in React Native, and what are the defaults that differ from web CSS?",
+        "idealAnswer": "React Native uses Flexbox for layout via the Yoga engine, with properties like flexDirection, justifyContent, and alignItems. A key difference from the web is that flexDirection defaults to column instead of row, and all dimensions are unitless density-independent numbers. flex: 1 makes a component fill available space along the main axis. A common pitfall is expecting row layout by default or using CSS units like px or percentages where numbers are expected."
+      },
+      {
+        "questionText": "What is the difference between the Text and View components, and why must text be wrapped in a Text component?",
+        "idealAnswer": "View is a generic container for layout, while Text is specifically for displaying and styling strings. In React Native you cannot place raw text directly inside a View; it must be inside a Text component or you get an error. Text components can nest to inherit styling. The pitfall is trying to render a string as a direct child of a View, which throws."
+      },
+      {
+        "questionText": "Tell me about a UI bug you fixed and how you tracked down the cause.",
+        "idealAnswer": "A good answer describes a specific visual or interaction bug, the steps to reproduce, and how the candidate isolated the cause using tools like the inspector, console logs, or commenting out code. It shows methodical narrowing rather than random changes. Strong candidates explain how they verified the fix. Red flags are vague descriptions or trial-and-error without understanding the root cause."
+      },
+      {
+        "questionText": "How do you apply styles in React Native, and what is StyleSheet.create used for?",
+        "idealAnswer": "Styles are JavaScript objects with camelCase properties, applied via the style prop, and StyleSheet.create groups them into a named stylesheet. StyleSheet.create can validate styles and historically optimized them by referencing IDs, and it improves readability by separating styles from JSX. You can also pass an array of styles to merge them, with later entries overriding earlier ones. A pitfall is using web CSS syntax like hyphenated property names or string values where numbers are needed."
+      },
+      {
+        "questionText": "How do you handle user input from a TextInput component and keep it in sync with state?",
+        "idealAnswer": "Use a controlled component by setting the value prop from state and updating that state in onChangeText. This keeps React as the single source of truth so the UI reflects state changes. You can configure keyboardType, secureTextEntry, and autoCapitalize for the input type. A common pitfall is setting value without onChangeText, which freezes the input, or relying on uncontrolled refs unnecessarily."
+      },
+      {
+        "questionText": "Describe a time you received design or product requirements that were unclear. What did you do?",
+        "idealAnswer": "A strong answer shows the candidate asked clarifying questions, looked at existing patterns or mockups, and confirmed assumptions before building rather than guessing and reworking. It demonstrates communication with designers or PMs. Good candidates mention validating with a quick prototype or screenshot. Red flags are building blindly on assumptions or staying blocked without reaching out."
+      },
+      {
+        "questionText": "What is the purpose of the key prop when rendering a list of components, and what happens if you omit it?",
+        "idealAnswer": "Keys give React a stable identity for each list item so it can efficiently track additions, removals, and reorders during reconciliation. Without keys, React warns and may re-render or reuse components incorrectly, causing visual glitches or lost input state. Keys should be stable unique IDs from the data, not array indexes when the list can reorder. The pitfall is using the array index as a key for a dynamic list, which causes incorrect updates."
+      },
+      {
+        "questionText": "How would you make a button respond to a tap, and what components are available for handling touches?",
+        "idealAnswer": "You can use the built-in Button component for simple cases or Touchable components like TouchableOpacity and Pressable for custom styling and feedback, attaching an onPress handler. Pressable is the modern recommended choice because it exposes press states for richer feedback. The handler is a function called when the user taps. A pitfall is wrapping content in a plain View and expecting onPress to work, since View does not handle touches by itself."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Mid",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How do you implement navigation in a React Native app, and what are the differences between stack, tab, and drawer navigators?",
+        "idealAnswer": "React Navigation is the standard library; you wrap the app in a NavigationContainer and compose navigators. A stack navigator manages a push/pop history for drill-down flows, a tab navigator switches between sibling screens via a bottom or top bar, and a drawer navigator slides in a side menu. You nest navigators to build complex flows and pass params between screens. A pitfall is deeply nesting navigators without understanding how params and the back behavior propagate."
+      },
+      {
+        "questionText": "How would you diagnose and fix dropped frames or jank during animations or scrolling in a React Native app?",
+        "idealAnswer": "Profile with the performance monitor and Flipper to see if the JS thread or UI thread is the bottleneck, since heavy JS work blocks the bridge and causes jank. Move animations to the native driver via useNativeDriver or use Reanimated to run them off the JS thread, memoize expensive components, and avoid heavy work in render or scroll handlers. For lists, virtualize and memoize cells. The pitfall is running animations on the JS thread or doing synchronous heavy computation during interactions."
+      },
+      {
+        "questionText": "Tell me about a time you had to collaborate closely with a designer to get a UI implementation right.",
+        "idealAnswer": "A strong answer describes specific collaboration: clarifying intent, raising technical constraints early, iterating on spacing or interaction details, and using shared tools to reduce ambiguity. It shows respect for design while bringing engineering reality to the conversation. Good candidates mention pixel-level review and handling platform differences. Red flags are implementing in isolation and ignoring feedback."
+      },
+      {
+        "questionText": "How do you handle responsive layouts and different screen sizes, orientations, and notches across devices in React Native?",
+        "idealAnswer": "Use flexbox-based relative layouts, the Dimensions API or useWindowDimensions for responsive values, and percentage or flex sizing instead of hardcoded pixels. Handle safe areas with react-native-safe-area-context to avoid notches and system bars, and test across multiple devices and orientations. PixelRatio helps with density-aware sizing. A pitfall is hardcoding absolute dimensions that break on small or large screens, or ignoring safe-area insets."
+      },
+      {
+        "questionText": "How do useMemo and useCallback help with React Native rendering performance, and when do they actually matter?",
+        "idealAnswer": "useMemo caches an expensive computed value and useCallback caches a function reference between renders, both keyed on a dependency array, preventing unnecessary recomputation or breaking referential equality that triggers child re-renders. They matter most when passing callbacks or objects to memoized children or to list renderItem, where new references would defeat memoization. Overusing them adds overhead and complexity for negligible gain. The pitfall is wrapping everything prematurely or forgetting dependencies, causing stale values."
+      },
+      {
+        "questionText": "How would you implement a form with validation in React Native, including showing errors and disabling submit?",
+        "idealAnswer": "Manage field values in state or use a library like React Hook Form for performance and less boilerplate, validate on change or submit with a schema (e.g., Yup/Zod), and display per-field error messages. Disable the submit button while invalid or while a request is in flight to prevent double submission. Handle keyboard avoidance so inputs stay visible. A pitfall is re-rendering the whole form on every keystroke or not debouncing/disabling submission, leading to duplicate requests."
+      },
+      {
+        "questionText": "Describe a situation where you had to refactor messy frontend code while keeping the app working.",
+        "idealAnswer": "A strong answer describes identifying the pain (duplication, tangled state, untestable components), making incremental safe changes behind tests, and verifying behavior at each step rather than a risky big-bang rewrite. It shows the candidate balanced improvement against delivery and communicated scope. Good candidates mention extracting reusable components or hooks. Red flags are rewriting everything at once or refactoring without any safety net."
+      },
+      {
+        "questionText": "How do you handle images efficiently in React Native, including caching, sizing, and avoiding layout shift?",
+        "idealAnswer": "Provide explicit dimensions to reserve space and avoid layout shift, choose appropriate resolutions with @2x/@3x assets or remote sizing, and use resizeMode to control fit. For remote images use a caching solution like FastImage or the newer Image component with caching to avoid re-downloads. Lazy-load offscreen images in lists. A pitfall is loading full-resolution images for small thumbnails, causing memory spikes and slow scrolling."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Senior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "Explain how the React Native rendering pipeline turns a component tree into native views, and where bottlenecks typically occur.",
+        "idealAnswer": "React reconciles the component tree and produces a shadow tree; Yoga computes layout, and the result is committed to native view mounting on the main thread. In the old architecture this crosses the async bridge, while Fabric does layout in C++ for synchronous, concurrent rendering. Bottlenecks occur from excessive re-renders, heavy JS-thread work blocking updates, large bridge payloads, and main-thread layout thrash. The pitfall is treating React Native like the web and ignoring the cost of crossing the JS/native boundary."
+      },
+      {
+        "questionText": "How would you architect a complex animation, like a gesture-driven bottom sheet, that stays smooth at 60fps?",
+        "idealAnswer": "Use Reanimated worklets and the Gesture Handler so animation and gesture logic run on the UI thread, avoiding round-trips to the JS thread that cause dropped frames. Drive position with shared values, interpolate for derived styles, and use spring/decay physics for natural feel, with snap points for the sheet. Keep JS-thread work out of the gesture path. The pitfall is using the Animated API without the native driver or updating React state on every gesture frame, which janks."
+      },
+      {
+        "questionText": "What is your approach to building an accessible React Native UI, and what are the common gaps teams miss?",
+        "idealAnswer": "Use accessibility props like accessibilityLabel, accessibilityRole, accessibilityState, and accessible to expose semantics to VoiceOver and TalkBack, ensure focus order and announcements are logical, and meet contrast and touch-target size guidelines. Test with real screen readers on both platforms and support dynamic font scaling. Common gaps include unlabeled icon buttons, custom controls without roles, ignoring font scaling, and decorative images not hidden. The pitfall is treating accessibility as an afterthought rather than building it into components."
+      },
+      {
+        "questionText": "How do you design a reusable, themeable component library for a React Native app, and what edge cases matter?",
+        "idealAnswer": "Define design tokens (colors, spacing, typography) and expose them via a theme provider, build composable components with sensible defaults and a controlled/uncontrolled API, and document props clearly. Account for dark mode, RTL layouts, dynamic font scaling, and platform differences. Keep components presentational and avoid leaking business logic. The pitfall is over-coupling components to a single use case or hardcoding colors and spacing instead of using tokens, which blocks theming."
+      },
+      {
+        "questionText": "Tell me about a time you led the frontend design for a major feature and had to weigh competing technical approaches.",
+        "idealAnswer": "A strong answer describes the options considered (e.g., state management approach, rendering strategy, library choice), the criteria used, and how the candidate prototyped or measured to decide. It shows ownership, communication of trade-offs, and accounting for maintainability and performance. Senior signal is anticipating edge cases and future change. Red flags are choosing based on novelty or not validating assumptions."
+      },
+      {
+        "questionText": "How do you prevent and diagnose memory leaks in a long-lived React Native screen with subscriptions, timers, and listeners?",
+        "idealAnswer": "Always clean up in useEffect return functions: clear timers, remove event listeners, unsubscribe from stores, and cancel in-flight requests, and avoid retaining large objects in closures or refs. Diagnose with the memory profiler and by watching heap growth on navigation cycles, and check for retained native views or images. Be careful with stale closures capturing old state. The pitfall is forgetting cleanup, so subscriptions accumulate each time the screen mounts and the app slowly degrades."
+      },
+      {
+        "questionText": "How would you implement consistent theming including dark mode that responds to system changes and user override?",
+        "idealAnswer": "Centralize a theme with tokens and provide it via context, read the system scheme with useColorScheme, and let a user preference override it persisted in storage. Components consume tokens rather than hardcoded values so switching is instant, and you handle the case where the system theme changes while the app runs. Animate or avoid flashes during the switch. The pitfall is scattering color literals throughout the UI, making a coherent dark mode impossible without a large rewrite."
+      },
+      {
+        "questionText": "Describe how you would mentor a team to adopt better frontend performance practices across an existing app.",
+        "idealAnswer": "A strong answer combines establishing measurable goals (frame rate, render counts), teaching profiling tools, and codifying patterns like memoization, list virtualization, and native-driven animation through reviews and shared examples. The candidate would tackle a high-visibility win first to build buy-in and document guidelines. Senior signal is changing team habits, not just fixing code once. Red flags are optimizing in isolation without spreading knowledge or measuring impact."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Frontend",
+    "difficulty": "Lead",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you establish and govern a cross-platform design system used by many React Native teams, including versioning and adoption?",
+        "idealAnswer": "Build a tokenized, well-documented component library as a versioned package with semantic versioning, clear contribution guidelines, and visual regression testing, and pair it with shared design tokens that sync with the design tool. Drive adoption through migration tooling, deprecation policies, and a dedicated owning team that supports consumers. Govern changes via RFCs to balance consistency with team needs. Trade-offs include the cost of breaking changes versus stagnation, and ensuring the system does not become a bottleneck that slows product teams."
+      },
+      {
+        "questionText": "What strategy would you use to enforce frontend performance budgets across many teams and prevent regressions over time?",
+        "idealAnswer": "Define concrete budgets (cold start, time-to-interactive, list scroll FPS, bundle size) and enforce them with automated CI checks and dashboards that attribute regressions to owning teams. Combine synthetic measurement with real-user monitoring, run on representative low-end devices, and gate releases on thresholds. Make performance a continuous, owned responsibility rather than periodic cleanup. The pitfall is measuring only on high-end devices or relying on manual audits that lag behind regressions."
+      },
+      {
+        "questionText": "How do you decide between sharing UI code with a web React app versus keeping React Native UI separate, at an organizational level?",
+        "idealAnswer": "Share business logic, types, and state via platform-agnostic packages, but be cautious sharing UI since React Native and web primitives differ; tools like React Native Web enable sharing at the cost of abstraction leaks and compromises. The leader weighs team structure, divergence of UX, performance, and maintenance burden against the duplication cost. Often sharing logic broadly and UI selectively is the pragmatic answer. The pitfall is forcing a universal UI layer that satisfies neither platform well."
+      },
+      {
+        "questionText": "Tell me about a time you drove adoption of a major frontend standard or framework change across multiple teams.",
+        "idealAnswer": "A strong answer describes building the case with data, piloting with a friendly team, providing tooling, migration guides, and support, and sequencing rollout to avoid blocking delivery. The leader managed resistance through communication and quick wins and tracked adoption metrics. Lead signal is changing organizational behavior, not just shipping code. Red flags are mandating change top-down without support or letting adoption stall after the initial push."
+      },
+      {
+        "questionText": "How would you architect a white-label React Native app that ships multiple branded variants from one codebase?",
+        "idealAnswer": "Centralize a theming and configuration layer with brand tokens, feature flags, and per-brand assets injected at build time, and keep brand-specific code isolated behind a clear interface so the core stays shared. Use build variants/flavors and a config pipeline to produce each app, with automated CI per brand. Govern feature divergence to prevent the codebase from forking in practice. Trade-offs include the complexity of conditional logic versus duplication, and the risk of one brand's needs degrading the shared core."
+      },
+      {
+        "questionText": "How do you build a culture and process around accessibility so it is consistent across all frontend teams rather than ad hoc?",
+        "idealAnswer": "Embed accessibility into the design system components so correct semantics come by default, add automated and manual accessibility checks to CI and QA, and set clear standards with training and screen-reader testing on real devices. Track accessibility as a measurable quality bar and assign ownership. Make it part of definition-of-done rather than a separate project. The pitfall is treating accessibility as a one-off audit, which decays as new features ship without guardrails."
+      },
+      {
+        "questionText": "What is your approach to handling breaking changes in React Native and major dependency upgrades across a large frontend organization?",
+        "idealAnswer": "Maintain a regular upgrade cadence to avoid large painful jumps, test upgrades in a staging app or canary, read changelogs for breaking changes, and provide codemods or migration guides for teams. Coordinate timing to minimize disruption, automate where possible, and keep a compatibility matrix for native dependencies. Budget time explicitly so upgrades do not perpetually slip. The pitfall is letting the version drift years behind, making the eventual upgrade enormous and risky."
+      },
+      {
+        "questionText": "How would you grow frontend engineering depth on a team that relies too heavily on a few senior people for complex UI work?",
+        "idealAnswer": "A strong answer covers identifying knowledge silos, deliberately pairing and rotating ownership of complex areas, documenting patterns, and creating stretch opportunities with mentorship and safety nets. The leader builds a competency ladder and reusable abstractions so complex work is approachable. Lead signal is reducing bus-factor risk and raising the whole team's level, not concentrating heroics. Red flags are letting experts hoard work or onboarding without follow-through."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Junior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How do you fetch data from a REST API in a React Native app, and how do you handle the loading and error states?",
+        "idealAnswer": "Use fetch or a library like axios inside useEffect or an event handler, typically with async/await, and track loading, data, and error in state to render the right UI for each. You show a spinner while loading, the data on success, and a message with retry on error. Always handle non-2xx responses and network failures. A common pitfall is not handling the error case or setting state after the component unmounts."
+      },
+      {
+        "questionText": "What is the difference between synchronous and asynchronous code in JavaScript, and why does it matter for network calls?",
+        "idealAnswer": "Synchronous code runs line by line and blocks until each step finishes, while asynchronous code lets long operations like network requests run without freezing the app, completing later via callbacks, promises, or async/await. Network calls are async because they take unpredictable time and blocking the single JS thread would freeze the UI. You await the promise to get the result when it resolves. The pitfall is treating an async call as if it returns immediately, leading to undefined values."
+      },
+      {
+        "questionText": "Tell me about a time you had to debug an issue that turned out to be in the API or backend rather than your code.",
+        "idealAnswer": "A good answer describes inspecting the actual request and response, checking status codes and payloads, and using tools like network logs or Postman to isolate where the problem was. It shows the candidate verified assumptions before blaming either side and communicated clearly with backend teammates. Strong candidates mention reproducing the call independently. Red flags are guessing without inspecting the actual traffic."
+      },
+      {
+        "questionText": "What is JSON and how is it used when communicating between a React Native app and a server?",
+        "idealAnswer": "JSON is a lightweight text format for structured data using key-value pairs and arrays, and it is the common format for sending and receiving data over HTTP APIs. In JavaScript you parse incoming JSON with JSON.parse (or response.json()) and serialize outgoing data with JSON.stringify. It maps naturally to JavaScript objects. A pitfall is forgetting to parse the response or assuming the structure without checking, leading to runtime errors."
+      },
+      {
+        "questionText": "How would you send data to a server when a user submits a form, and what HTTP method would you use?",
+        "idealAnswer": "Use a POST request (or PUT/PATCH for updates) with the form data serialized as JSON in the body and appropriate headers like Content-Type: application/json. Include any auth token, await the response, and handle success and error states for the user. Validate inputs before sending. A pitfall is using GET for data that modifies server state or forgetting to set the Content-Type header."
+      },
+      {
+        "questionText": "Describe a time you had to ask clarifying questions about an API contract before building a feature.",
+        "idealAnswer": "A strong answer shows the candidate reviewed API documentation, identified ambiguities like field names, error formats, or auth requirements, and asked the backend team specific questions before coding. It demonstrates communication and avoiding rework from wrong assumptions. Good candidates mention confirming with example payloads. Red flags are building against guessed contracts and discovering mismatches late."
+      },
+      {
+        "questionText": "What is the purpose of HTTP status codes, and what do 200, 401, 404, and 500 mean?",
+        "idealAnswer": "Status codes tell the client the outcome of a request: 200 means success, 401 means unauthorized (missing or invalid authentication), 404 means the resource was not found, and 500 means a server-side error. The app should branch on these to show the right UI, such as redirecting to login on 401 or showing not-found messaging on 404. The 2xx range is success, 4xx is client error, and 5xx is server error. A pitfall is treating any response as success without checking the status."
+      },
+      {
+        "questionText": "How might you store small pieces of data locally on the device in a React Native app?",
+        "idealAnswer": "AsyncStorage provides a simple key-value store for small non-sensitive data like preferences or a cached flag, with an async API. For sensitive data like tokens you should use secure storage backed by Keychain/Keystore instead. Data is stored as strings, so objects must be serialized to JSON. The pitfall is storing large datasets or sensitive secrets in AsyncStorage, which is neither performant for big data nor secure."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Mid",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you implement token-based authentication in a React Native app, including storing and refreshing tokens?",
+        "idealAnswer": "On login, the server returns an access token (often short-lived) and a refresh token; store them securely in Keychain/Keystore via a secure storage library rather than AsyncStorage. Attach the access token to requests via an Authorization header, and use an interceptor to refresh transparently on 401 using the refresh token, queuing pending requests during refresh. Clear tokens on logout and handle refresh failure by forcing re-login. The pitfall is storing tokens in plain storage or not handling concurrent refreshes, causing race conditions."
+      },
+      {
+        "questionText": "How do you handle caching and avoid redundant network requests when data is fetched in a React Native app?",
+        "idealAnswer": "Use a data-fetching library like React Query or SWR that caches by key, deduplicates concurrent requests, and revalidates in the background with stale-while-revalidate semantics. Configure cache time and staleness per query, and invalidate or update the cache after mutations. This avoids manual state juggling and reduces network load. The pitfall is fetching the same data in multiple components without a shared cache, causing duplicate requests and inconsistent state."
+      },
+      {
+        "questionText": "Tell me about a time you had to coordinate with a backend engineer to design or change an API for a mobile feature.",
+        "idealAnswer": "A strong answer describes collaborating on the contract, advocating for mobile-friendly responses (pagination, minimal payloads, clear error formats), and agreeing on versioning so changes did not break the app. It shows communication, empathy for backend constraints, and documenting the agreement. Good candidates mention mocking the API to unblock parallel work. Red flags are dictating requirements without collaboration or proceeding without an agreed contract."
+      },
+      {
+        "questionText": "How would you debug a request that works in Postman but fails from the React Native app?",
+        "idealAnswer": "Compare the exact requests: headers, body serialization, content type, auth token, and base URL, since differences there are common causes. Capture the app's actual traffic with a proxy like Charles or Flipper, check for HTTPS/cleartext or certificate issues, and verify timeouts and platform networking config (e.g., ATS on iOS, cleartext on Android). Confirm the environment and that the token is fresh. The pitfall is assuming the app sends the same request as Postman without inspecting the real traffic."
+      },
+      {
+        "questionText": "What is the difference between optimistic and pessimistic UI updates when calling an API, and when would you use each?",
+        "idealAnswer": "Optimistic updates apply the expected change to the UI immediately before the server confirms, then roll back on failure, giving a snappy feel for high-confidence actions like likes or toggles. Pessimistic updates wait for the server response before updating, which is safer for critical operations like payments where showing unconfirmed state is risky. The choice balances responsiveness against correctness and the cost of being wrong. The pitfall is using optimistic updates without proper rollback and error handling, leaving the UI inconsistent with the server."
+      },
+      {
+        "questionText": "How would you implement pagination or infinite scroll backed by an API in a React Native list?",
+        "idealAnswer": "Use FlatList's onEndReached to fetch the next page, tracking the current cursor or page number and a hasMore/loading flag to avoid duplicate fetches. Prefer cursor-based pagination over offset for stable results when data changes, append results to existing state, and show a footer loader. Handle errors and the end of the list gracefully. The pitfall is firing onEndReached repeatedly without guarding the in-flight state, causing duplicate or out-of-order pages."
+      },
+      {
+        "questionText": "Describe a time a backend change unexpectedly broke the mobile app, and how you handled it.",
+        "idealAnswer": "A strong answer describes detecting the breakage (crash reports, errors), quickly diagnosing the contract change, communicating with the backend team, and applying a mitigation such as a hotfix, defensive parsing, or coordinating a rollback. It emphasizes preventing recurrence through versioning, contract tests, or alerting. Good candidates note the lesson learned. Red flags are blaming without collaboration or having no detection until users complained widely."
+      },
+      {
+        "questionText": "How do you handle network timeouts, retries, and flaky connectivity when calling APIs from a mobile app?",
+        "idealAnswer": "Set sensible timeouts, implement retries with exponential backoff and jitter for idempotent requests, and detect connectivity with NetInfo to defer or queue requests when offline. Make retries safe with idempotency keys for mutations, cap retry counts, and surface clear feedback to the user. Distinguish transient from permanent errors. The pitfall is blindly retrying non-idempotent requests, causing duplicates, or retrying forever and hammering a failing server."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Senior",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you design the data and sync layer for a React Native app that must handle conflicts between local edits and server state?",
+        "idealAnswer": "Maintain a local store as source of truth for UX, track per-record versions or timestamps, and define a conflict-resolution policy such as last-write-wins, field-level merge, or CRDTs depending on data semantics. Sync via an outbox/queue with idempotent operations, reconcile on reconnect, and make the server authoritative for critical fields. Surface conflicts to the user when automatic merge is unsafe. Pitfalls include ignoring conflicts, non-idempotent retries causing duplicates, and unbounded queues growing during long offline periods."
+      },
+      {
+        "questionText": "What are the trade-offs of using GraphQL versus REST for a React Native client, and when would you choose each?",
+        "idealAnswer": "GraphQL lets the client request exactly the fields it needs in one round trip, reducing over- and under-fetching and pairing well with normalized caches like Apollo, but adds server complexity, caching nuance, and potential for expensive queries. REST is simpler, cache-friendly at the HTTP layer, and well understood, but may require multiple requests or custom endpoints for mobile views. The choice depends on data graph complexity, team expertise, and existing infrastructure. The pitfall is adopting GraphQL for its hype without handling query cost, caching, and persisted queries."
+      },
+      {
+        "questionText": "How would you implement secure communication and protect against man-in-the-middle attacks in a React Native app's networking layer?",
+        "idealAnswer": "Enforce HTTPS everywhere, disable cleartext traffic, and consider certificate or public-key pinning for high-value APIs to prevent interception with a forged CA. Keep secrets off the client, validate server identity, and rotate pinned keys carefully to avoid bricking clients. Combine with secure token storage and short-lived credentials. The pitfall is hardcoding a single pinned certificate with no rotation plan, which causes outages when the cert renews, or assuming TLS alone defends against a compromised device trust store."
+      },
+      {
+        "questionText": "How do you design push notification handling end to end, including token lifecycle, delivery, and deep linking into the app?",
+        "idealAnswer": "Register the device with APNs/FCM, send the device token to your backend, and handle token refresh and invalidation so notifications target valid devices. The backend sends through the platform services with payloads that the app handles in foreground, background, and killed states, routing taps to the correct screen via deep links. Handle permissions, opt-out, and idempotency for duplicate deliveries. Pitfalls include not updating stale tokens, mishandling the killed-state cold start, and trusting payload data without validation."
+      },
+      {
+        "questionText": "Tell me about a complex integration with a third-party service or SDK that you designed, and the reliability concerns you addressed.",
+        "idealAnswer": "A strong answer describes the integration, isolating the third-party behind an abstraction, handling failures gracefully with timeouts, retries, and fallbacks, and monitoring its health. It covers versioning, rate limits, and not letting a flaky dependency take down the app. Senior signal is treating external services as unreliable and designing for degradation. Red flags are tight coupling to a vendor SDK or no handling for its outages."
+      },
+      {
+        "questionText": "How would you architect data fetching and state to keep a React Native app consistent across many screens that share server data?",
+        "idealAnswer": "Use a normalized cache (React Query, Apollo, or RTK Query) keyed by entity so updates propagate everywhere, separate server cache from local UI state, and invalidate or optimistically update after mutations to keep views in sync. Define clear cache keys and staleness policies and avoid duplicating server data in multiple bespoke stores. This prevents one screen showing stale data after another mutates it. The pitfall is scattering ad-hoc fetches and local copies, leading to inconsistent state and hard-to-trace bugs."
+      },
+      {
+        "questionText": "How do you approach API versioning and backward compatibility so mobile clients on old app versions keep working?",
+        "idealAnswer": "Because users may not update for weeks, the backend must support older clients via versioned endpoints or additive, non-breaking changes, and the app should parse responses defensively, ignoring unknown fields. Use feature flags and minimum-supported-version gates with forced-upgrade prompts for truly breaking changes. Contract tests catch regressions. The pitfall is making a breaking change assuming all clients update immediately, which crashes the long tail of older installs."
+      },
+      {
+        "questionText": "Describe how you would diagnose intermittent API failures affecting only a subset of mobile users.",
+        "idealAnswer": "A strong answer combines correlating crash/error telemetry with dimensions like app version, OS, region, and network type, adding request IDs to trace specific calls across client and server logs, and reproducing under the suspected conditions. It distinguishes client-side (connectivity, token, config) from server-side (specific shards, rate limits) causes and uses staged data to narrow scope. Senior signal is hypothesis-driven, data-backed investigation. Red flags are random changes without instrumentation or assuming it is purely backend without client correlation."
+      }
+    ]
+  },
+  {
+    "role": "Software Developer",
+    "techStack": "React Native",
+    "focusArea": "Backend",
+    "difficulty": "Lead",
+    "interviewType": "mixed",
+    "questions": [
+      {
+        "questionText": "How would you design the backend-for-frontend (BFF) strategy for multiple React Native apps to optimize mobile data needs?",
+        "idealAnswer": "Introduce a BFF layer per client (or shared mobile BFF) that aggregates and shapes data from downstream services into mobile-optimized payloads, reducing round trips, over-fetching, and chatty calls over high-latency mobile networks. It centralizes auth, versioning, and response shaping while keeping core services generic. Trade-offs include the added service to own and deploy versus simpler clients and decoupling from backend changes. The pitfall is the BFF becoming a god-service with business logic that should live in domain services, or duplicating it inconsistently per platform."
+      },
+      {
+        "questionText": "What is your strategy for rolling out backend API changes safely given that mobile clients update slowly and unevenly?",
+        "idealAnswer": "Treat the mobile client population as a long tail you cannot force-update, so use additive non-breaking changes, versioned APIs, feature flags, and server-side gating keyed to app version. Roll out gradually with monitoring and the ability to disable a path, support a minimum version with forced-upgrade prompts only when necessary, and validate with contract tests. Coordinate release timing across app store review delays. The pitfall is coupling a backend deploy to an app release and breaking everyone who has not updated."
+      },
+      {
+        "questionText": "How would you architect observability across the mobile client and backend so you can trace a user-reported issue end to end?",
+        "idealAnswer": "Propagate correlation/trace IDs from the mobile client through the API gateway and downstream services, collect client telemetry (crashes, network errors, performance) and backend traces/metrics/logs into unified tooling, and tag by app version, OS, and user/session. This enables following a single request across tiers and slicing issues by client dimensions. Establish SLOs and alerting. The pitfall is siloed client and server observability with no shared identifiers, making cross-tier diagnosis guesswork."
+      },
+      {
+        "questionText": "Tell me about a time you led the design of a system spanning mobile and backend teams with conflicting constraints.",
+        "idealAnswer": "A strong answer describes surfacing each side's constraints (mobile offline/latency/update-cadence versus backend consistency/scale), facilitating a shared contract, and making trade-offs explicit with documented decisions. The leader aligned teams around shared goals, prototyped risky parts, and set up contracts and monitoring. Lead signal is brokering across teams and owning the cross-cutting outcome. Red flags are optimizing one side at the other's expense or failing to get cross-team alignment."
+      },
+      {
+        "questionText": "How do you architect authentication and authorization across a React Native app and a microservices backend at scale?",
+        "idealAnswer": "Use a centralized identity provider issuing short-lived access tokens (e.g., JWT/OAuth2) with refresh tokens, validate tokens at the gateway and within services, and never trust client-side authorization. Store tokens securely on device, handle refresh and revocation, and propagate identity/scopes to downstream services, considering token size and rotation. Plan for logout, session invalidation, and key rotation. The pitfall is doing authorization on the client, long-lived tokens with no revocation, or each service re-implementing auth inconsistently."
+      },
+      {
+        "questionText": "How would you design for graceful degradation so the mobile app stays usable during partial backend outages?",
+        "idealAnswer": "Isolate dependencies with timeouts, circuit breakers, and fallbacks; cache critical data on device for read availability; and design features so non-essential services failing degrade rather than crash the app. Use feature flags to disable failing paths remotely and prioritize core flows. Communicate degraded state to users clearly. The pitfall is tight coupling where one failing downstream service blocks the whole app, or no remote kill switch to mitigate an incident without an app release."
+      },
+      {
+        "questionText": "How do you establish API contracts and prevent breaking changes across many backend services and multiple mobile app versions?",
+        "idealAnswer": "Adopt schema-driven contracts (OpenAPI/GraphQL schema) with consumer-driven contract testing in CI, enforce additive-only evolution with deprecation policies, and maintain a compatibility matrix of app versions to API versions. Automate contract verification so a service cannot ship a breaking change unnoticed, and coordinate deprecations against client adoption data. The pitfall is relying on documentation and manual coordination, which inevitably drifts and breaks older clients in production."
+      },
+      {
+        "questionText": "How would you guide teams on deciding what logic belongs on the device versus the backend in a mobile-heavy product?",
+        "idealAnswer": "A strong answer weighs security (never trust the client for authorization or sensitive computation), update cadence (logic likely to change belongs server-side or behind flags since clients update slowly), performance/offline needs, and data sensitivity. Put validation and business rules authoritatively on the server while caching results on device for responsiveness, and use server-driven config for changeable behavior. Lead signal is articulating these trade-offs as reusable principles. The pitfall is hardcoding business rules in the app that then cannot be changed without a slow app release."
+      }
+    ]
+  }
+]
