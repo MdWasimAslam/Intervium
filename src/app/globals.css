@@ -1,10 +1,11 @@
 @import "tailwindcss";
 
 /**
- * Global styles.
- * Tailwind v4 is configured entirely in CSS via the @import above.
- * Use the @theme block to expose design tokens if you need custom values.
+ * Enable class-based dark mode (Tailwind v4).
+ * `next-themes` toggles the `.dark` class on <html>, and this variant makes
+ * `dark:` utilities respond to that class instead of the OS preference.
  */
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   color-scheme: light dark;

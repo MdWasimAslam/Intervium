@@ -1,28 +1,14 @@
 /**
  * Application-wide constants.
- * Centralising these avoids magic strings scattered across the codebase.
  */
 
 /** App metadata used in layout, navbar and footer. */
-export const APP_NAME = "Next SaaS Starter";
+export const APP_NAME = "Intervium";
 export const APP_DESCRIPTION =
-  "A production-ready Next.js (App Router) + TypeScript + Tailwind starter template.";
+  "A minimal, secure starter app with JWT authentication.";
 
-/**
- * Base URL for API calls.
- * Falls back to a relative "/api" path so the app works even when the
- * environment variable is not set (e.g. on a fresh clone).
- */
-export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3000/api";
+/** Name of the httpOnly cookie that stores the JWT session token. */
+export const SESSION_COOKIE = "intervium_token";
 
-/** Primary navigation links rendered by the Navbar. */
-export const NAV_LINKS = [
-  { label: "Home", href: "/" },
-  { label: "About", href: "/about" },
-  { label: "Contact", href: "/contact" },
-  { label: "Dashboard", href: "/dashboard" },
-] as const;
-
-/** Selectable roles for the user form. */
-export const USER_ROLES = ["admin", "member", "guest"] as const;
+/** How long an issued session token stays valid. */
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
