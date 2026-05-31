@@ -13,7 +13,7 @@ import { computeSignature } from "../src/lib/signature";
 /**
  * Load HAND-AUTHORED questions into `questions_cache` from a JSON file.
  *
- * This is the companion to `db/seed-questions.ts` (which uses Gemini): instead
+ * This is the companion to `db/seed-questions.ts` (which uses Groq): instead
  * of generating, it ingests questions you wrote yourself. Each row gets the
  * deterministic `signature` computed with the SAME algorithm the interview
  * engine uses, `source = 'admin'`, modality `'either'`, and `is_active = true`.

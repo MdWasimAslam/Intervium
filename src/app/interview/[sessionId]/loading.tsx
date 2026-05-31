@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 /**
  * Shown while the session page prepares questions. On first visit this covers
- * the Gemini generation call (a few seconds); on later visits it's a brief
+ * the Groq generation call (a few seconds); on later visits it's a brief
  * flash while cached questions load. Replaces a bare spinner with a meaningful,
  * progress-y message.
  */

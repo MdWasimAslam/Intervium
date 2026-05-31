@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { Check, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { QuestionPrompt } from "@/components/interview/QuestionPrompt";
 import { cn } from "@/lib/utils";
 
 export interface QuestionResult {
@@ -51,9 +52,10 @@ export function QuestionResults({ results }: { results: QuestionResult[] }) {
             <Card>
               <CardContent className="space-y-4 p-6">
                 <div className="flex items-start justify-between gap-4">
-                  <p className="font-semibold leading-relaxed">
-                    {r.position + 1}. {r.questionText}
-                  </p>
+                  <QuestionPrompt
+                    text={`${r.position + 1}. ${r.questionText}`}
+                    className="min-w-0 font-semibold leading-relaxed"
+                  />
                   <span
                     className={cn(
                       "shrink-0 text-lg font-bold tabular-nums",

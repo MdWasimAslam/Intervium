@@ -1,7 +1,7 @@
 /**
  * Tiny in-memory, per-key sliding-window rate limiter.
  *
- * Good enough to throttle expensive Gemini generation per user during a
+ * Good enough to throttle expensive Groq generation per user during a
  * single server instance's lifetime. For multi-instance production you'd back
  * this with Redis/Upstash, but that's out of scope here.
  */

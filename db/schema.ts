@@ -309,7 +309,7 @@ export const appSettings = pgTable("app_settings", {
 /* -------------------------------------------------------------------------- */
 export const aiUsage = pgTable("ai_usage", {
   // UTC calendar day, "YYYY-MM-DD". Survives serverless cold starts, so the
-  // count is a real running total against Gemini's per-day free-tier cap.
+  // count is a real running total against Groq's per-day free-tier cap.
   day: text("day").primaryKey(),
   count: integer("count").notNull().default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true })

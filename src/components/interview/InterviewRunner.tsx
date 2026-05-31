@@ -11,6 +11,7 @@ import { FormError } from "@/components/auth/FormError";
 import { QuestionTimer } from "@/components/interview/QuestionTimer";
 import { SaveStatus } from "@/components/interview/SaveStatus";
 import { CodeEditor } from "@/components/interview/CodeEditor";
+import { QuestionPrompt } from "@/components/interview/QuestionPrompt";
 import { useAnswerQueue } from "@/components/interview/useAnswerQueue";
 import { completeSession } from "@/lib/actions/interview";
 
@@ -172,9 +173,10 @@ export function InterviewRunner({
         >
           <Card>
             <CardContent className="space-y-4 p-6">
-              <p className="whitespace-pre-wrap text-lg font-semibold leading-relaxed">
-                {q.questionText}
-              </p>
+              <QuestionPrompt
+                text={q.questionText}
+                className="text-lg font-semibold leading-relaxed"
+              />
               {isCoding ? (
                 <CodeEditor
                   key={q.position}

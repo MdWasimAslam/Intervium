@@ -15,7 +15,7 @@ import {
   type AnswerScore,
   type BatchCodeItem,
   type BatchScoreItem,
-} from "@/lib/gemini";
+} from "@/lib/groq";
 import { AiBudgetError, reserveAiCalls } from "@/lib/ai-budget";
 
 const MAX_PER_QUESTION = 10;
@@ -67,7 +67,7 @@ export async function scoreSession(sessionId: string): Promise<void> {
 
   // Resolve a score for every pending row, keyed by row id. Coding questions
   // go to a code-aware rubric; everything else to the text rubric — each is a
-  // separate single Gemini call.
+  // separate single Groq call.
   const results = new Map<string, AnswerScore>();
   const answered: BatchScoreItem[] = [];
   const codeAnswered: BatchCodeItem[] = [];
@@ -117,7 +117,7 @@ export async function scoreSession(sessionId: string): Promise<void> {
     improvements: [],
   };
 
-  // Text / behavioral answers — ONE Gemini call.
+  // Text / behavioral answers — ONE Groq call.
   if (answered.length > 0) {
     try {
       const scores = await scoreAnswersBatch(
@@ -135,7 +135,7 @@ export async function scoreSession(sessionId: string): Promise<void> {
     }
   }
 
-  // Coding submissions — ONE Gemini call with the code-aware rubric.
+  // Coding submissions — ONE Groq call with the code-aware rubric.
   if (codeAnswered.length > 0) {
     try {
       const scores = await scoreCodeBatch(

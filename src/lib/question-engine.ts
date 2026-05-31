@@ -15,7 +15,7 @@ import {
   generateQuestions,
   QuestionGenerationError,
   type GenerationContext,
-} from "@/lib/gemini";
+} from "@/lib/groq";
 import { allowAction } from "@/lib/rate-limit";
 import { reserveAiCalls } from "@/lib/ai-budget";
 import { cvPlainText } from "@/lib/cv/parse";
@@ -55,7 +55,7 @@ function shuffle<T>(arr: T[]): T[] {
  *
  * - Idempotent: if the session already has questions, returns them in order.
  * - Otherwise selects unseen cached questions for the config's signature,
- *   tops up from Gemini if the pool is short, persists the selection as
+ *   tops up from Groq if the pool is short, persists the selection as
  *   session_questions rows, and returns them.
  */
 export async function getQuestionsForSession(
@@ -135,7 +135,7 @@ export async function getQuestionsForSession(
     }
 
     // Daily AI budget — when spent, degrade gracefully instead of calling
-    // Gemini (and 429-ing): refill from the cache by relaxing the "unseen"
+    // Groq (and 429-ing): refill from the cache by relaxing the "unseen"
     // rule, repeating questions the user has seen before.
     if (await reserveAiCalls(1)) {
       const ctx = await buildContext(session, shortfall + GENERATION_BUFFER);
@@ -219,7 +219,7 @@ export async function getQuestionsForSession(
   return ordered;
 }
 
-/** Assemble the Gemini prompt context from the session + the user's profile. */
+/** Assemble the Groq prompt context from the session + the user's profile. */
 async function buildContext(
   session: SessionConfig,
   count: number,

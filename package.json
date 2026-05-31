@@ -19,7 +19,6 @@
     "db:demo": "tsx db/demo-seed.ts"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
     "@monaco-editor/react": "^4.7.0",
     "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-dialog": "^1.1.15",

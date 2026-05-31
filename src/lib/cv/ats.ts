@@ -3,7 +3,7 @@
  *
  * We extract the meaningful keywords from a job description, check which appear
  * in the CV, and report a percentage plus matched/missing lists. This is the
- * "free" half of the ATS feature; Gemini is only used for qualitative advice.
+ * "free" half of the ATS feature; Groq is only used for qualitative advice.
  */
 import { type CvData } from "./types";
 import { cvToPlainText } from "./parse";

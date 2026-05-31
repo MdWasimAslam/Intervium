@@ -1,14 +1,22 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import { z } from "zod";
 import { type CvData } from "@/lib/cv/types";
 
 /** A clean, UI-safe error for any generation failure. */
 export class QuestionGenerationError extends Error {}
 
-// gemini-2.5-flash-lite carries the most generous free-tier daily cap of the
-// 2.5 family. Google no longer publishes a static free-tier table (as of 2026),
-// so verify your project's live limit at https://aistudio.google.com/rate-limit.
-const MODEL = "gemini-2.5-flash-lite";
+// Fast is for cheap/high-volume generation. Smart is for judgment-heavy tasks.
+const FAST_MODEL =
+  process.env.GROQ_FAST_MODEL?.trim() || "llama-3.1-8b-instant";
+const SMART_MODEL =
+  process.env.GROQ_SMART_MODEL?.trim() || "llama-3.3-70b-versatile";
+const GROQ_CHAT_COMPLETIONS_URL =
+  "https://api.groq.com/openai/v1/chat/completions";
+type GroqModelTier = "fast" | "smart";
+
+interface GroqChatResponse {
+  choices?: Array<{ message?: { content?: string | null } }>;
+  error?: { message?: string };
+}
 
 /** Interview type — drives question content (and the cache signature). */
 export type InterviewType = "technical" | "behavioral" | "mixed" | "coding";
@@ -49,21 +57,60 @@ export interface GenerationContext {
 }
 
 /** Lazily create the client so the build never needs the key. */
-function getModel(opts: { json?: boolean; temperature?: number } = {}) {
-  const apiKey = process.env.GEMINI_API_KEY;
+function getModel(
+  opts: {
+    json?: boolean;
+    temperature?: number;
+    tier?: GroqModelTier;
+  } = {},
+) {
+  const apiKey = process.env.GROQ_API_KEY;
   if (!apiKey) {
     throw new QuestionGenerationError(
-      "Gemini is not configured (missing GEMINI_API_KEY).",
+      "Groq is not configured (missing GROQ_API_KEY).",
     );
   }
-  const { json = true, temperature = 0.9 } = opts;
-  return new GoogleGenerativeAI(apiKey).getGenerativeModel({
-    model: MODEL,
-    generationConfig: {
-      ...(json ? { responseMimeType: "application/json" } : {}),
-      temperature,
+  const { json = true, temperature = 0.9, tier = "fast" } = opts;
+  const model = tier === "smart" ? SMART_MODEL : FAST_MODEL;
+
+  return {
+    async generateContent(prompt: string): Promise<string> {
+      const systemPrompt = json
+        ? "Return only valid JSON matching the user's requested shape. Do not include markdown, code fences, or explanatory prose."
+        : "Follow the user's output instructions exactly. Keep the response concise.";
+
+      const res = await fetch(GROQ_CHAT_COMPLETIONS_URL, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          model,
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: prompt },
+          ],
+          temperature,
+          stream: false,
+        }),
+      });
+
+      if (!res.ok) {
+        const detail = await res.text().catch(() => "");
+        throw new Error(`Groq ${res.status}: ${detail.slice(0, 500)}`);
+      }
+
+      const data = (await res.json()) as GroqChatResponse;
+      const text = data.choices?.[0]?.message?.content?.trim();
+      if (!text) {
+        throw new Error(
+          data.error?.message ?? "Groq returned an empty response.",
+        );
+      }
+      return text;
     },
-  });
+  };
 }
 
 function typeInstruction(type: InterviewType): string {
@@ -142,41 +189,142 @@ function stripFences(text: string): string {
     .trim();
 }
 
+function extractJsonCandidate(text: string): string {
+  const stripped = stripFences(text);
+  const start = stripped.search(/[\[{]/);
+  if (start < 0) return stripped;
+
+  const opener = stripped[start];
+  const closer = opener === "[" ? "]" : "}";
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < stripped.length; i++) {
+    const ch = stripped[i];
+    if (inString) {
+      if (escaped) {
+        escaped = false;
+      } else if (ch === "\\") {
+        escaped = true;
+      } else if (ch === '"') {
+        inString = false;
+      }
+      continue;
+    }
+
+    if (ch === '"') {
+      inString = true;
+    } else if (ch === opener) {
+      depth++;
+    } else if (ch === closer) {
+      depth--;
+      if (depth === 0) return stripped.slice(start, i + 1);
+    }
+  }
+
+  return stripped.slice(start);
+}
+
+function escapeControlCharsInJsonStrings(text: string): string {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+
+  for (const ch of text) {
+    if (inString) {
+      if (escaped) {
+        out += ch;
+        escaped = false;
+        continue;
+      }
+
+      if (ch === "\\") {
+        out += ch;
+        escaped = true;
+        continue;
+      }
+
+      if (ch === '"') {
+        out += ch;
+        inString = false;
+        continue;
+      }
+
+      const code = ch.charCodeAt(0);
+      if (code >= 0x00 && code <= 0x1f) {
+        switch (ch) {
+          case "\b":
+            out += "\\b";
+            break;
+          case "\f":
+            out += "\\f";
+            break;
+          case "\n":
+            out += "\\n";
+            break;
+          case "\r":
+            out += "\\r";
+            break;
+          case "\t":
+            out += "\\t";
+            break;
+          default:
+            out += `\\u${code.toString(16).padStart(4, "0")}`;
+        }
+        continue;
+      }
+    } else if (ch === '"') {
+      inString = true;
+    }
+
+    out += ch;
+  }
+
+  return out;
+}
+
+function parseModelJson(raw: string): unknown {
+  const candidate = extractJsonCandidate(raw);
+  try {
+    return JSON.parse(candidate);
+  } catch {
+    return JSON.parse(escapeControlCharsInJsonStrings(candidate));
+  }
+}
+
 /**
- * Generate questions via Gemini. Retries once with a stricter instruction if
+ * Generate questions via Groq. Retries once with a stricter instruction if
  * the output fails JSON/zod validation. Throws QuestionGenerationError on
  * network/quota errors or repeated invalid output.
  */
 export async function generateQuestions(
   ctx: GenerationContext,
 ): Promise<GeneratedQuestion[]> {
-  const model = getModel();
+  const model = getModel({ tier: "fast" });
   let lastIssue: unknown;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     let raw: string;
     try {
-      const result = await model.generateContent(
-        buildPrompt(ctx, attempt === 2),
-      );
-      raw = result.response.text();
+      raw = await model.generateContent(buildPrompt(ctx, attempt === 2));
     } catch (error) {
       // Network / quota / auth failures — surface a clean message.
-      console.error("[gemini] request failed:", error);
+      console.error("[groq] request failed:", error);
       throw new QuestionGenerationError(
         "We couldn't generate questions right now. Please try again.",
       );
     }
 
     try {
-      return questionsSchema.parse(JSON.parse(stripFences(raw)));
+      return questionsSchema.parse(parseModelJson(raw));
     } catch (error) {
       lastIssue = error;
-      console.warn(`[gemini] invalid output on attempt ${attempt}, retrying…`);
+      console.warn(`[groq] invalid output on attempt ${attempt}, retrying...`);
     }
   }
 
-  console.error("[gemini] giving up after retries:", lastIssue);
+  console.error("[groq] giving up after retries:", lastIssue);
   throw new QuestionGenerationError(
     "We couldn't generate questions right now. Please try again.",
   );
@@ -243,32 +391,31 @@ function buildBankPrompt(ctx: BankGenContext, strict: boolean): string {
 export async function generateQuestionBatch(
   ctx: BankGenContext,
 ): Promise<GeneratedQuestion[]> {
-  const model = getModel({ json: true, temperature: 0.95 });
+  const model = getModel({ json: true, temperature: 0.95, tier: "fast" });
   let lastIssue: unknown;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     let raw: string;
     try {
-      const result = await model.generateContent(
-        buildBankPrompt(ctx, attempt === 2),
-      );
-      raw = result.response.text();
+      raw = await model.generateContent(buildBankPrompt(ctx, attempt === 2));
     } catch (error) {
-      console.error("[gemini:bank] request failed:", error);
+      console.error("[groq:bank] request failed:", error);
       throw new QuestionGenerationError(
         "We couldn't generate bank questions right now. Please try again.",
       );
     }
 
     try {
-      return questionsSchema.parse(JSON.parse(stripFences(raw)));
+      return questionsSchema.parse(parseModelJson(raw));
     } catch (error) {
       lastIssue = error;
-      console.warn(`[gemini:bank] invalid output on attempt ${attempt}, retrying…`);
+      console.warn(
+        `[groq:bank] invalid output on attempt ${attempt}, retrying...`,
+      );
     }
   }
 
-  console.error("[gemini:bank] giving up after retries:", lastIssue);
+  console.error("[groq:bank] giving up after retries:", lastIssue);
   throw new QuestionGenerationError(
     "We couldn't generate bank questions right now. Please try again.",
   );
@@ -323,33 +470,30 @@ function scorePrompt(ctx: ScoreContext, strict: boolean): string {
 
 /** Score one answer. Throws ScoringError on network/quota or repeated bad output. */
 export async function scoreAnswer(ctx: ScoreContext): Promise<AnswerScore> {
-  const model = getModel({ json: true, temperature: 0.3 });
+  const model = getModel({ json: true, temperature: 0.3, tier: "smart" });
   let lastIssue: unknown;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     let raw: string;
     try {
-      const result = await model.generateContent(
-        scorePrompt(ctx, attempt === 2),
-      );
-      raw = result.response.text();
+      raw = await model.generateContent(scorePrompt(ctx, attempt === 2));
     } catch (error) {
-      console.error("[gemini:score] request failed:", error);
+      console.error("[groq:score] request failed:", error);
       throw new ScoringError("Scoring request failed.");
     }
     try {
-      return scoreSchema.parse(JSON.parse(stripFences(raw)));
+      return scoreSchema.parse(parseModelJson(raw));
     } catch (error) {
       lastIssue = error;
-      console.warn(`[gemini:score] invalid output on attempt ${attempt}`);
+      console.warn(`[groq:score] invalid output on attempt ${attempt}`);
     }
   }
-  console.error("[gemini:score] giving up:", lastIssue);
+  console.error("[groq:score] giving up:", lastIssue);
   throw new ScoringError("Scoring produced invalid output.");
 }
 
 /* -------------------------------------------------------------------------- */
-/* Batch scoring — one Gemini call for a whole session's answers.             */
+/* Batch scoring — one Groq call for a whole session's answers.               */
 /* -------------------------------------------------------------------------- */
 
 /** One answered question to grade, identified by its session_questions row id. */
@@ -408,7 +552,7 @@ function batchScorePrompt(
 }
 
 /**
- * Score every answered question in a session with a SINGLE Gemini call
+ * Score every answered question in a session with a SINGLE Groq call
  * (replacing one-call-per-answer — the dominant free-tier quota cost).
  * Returns a map of row id → score. Throws ScoringError on network/quota
  * failure or if the model can't return one valid object per id after a retry.
@@ -420,42 +564,41 @@ export async function scoreAnswersBatch(
 ): Promise<Map<string, AnswerScore>> {
   if (items.length === 0) return new Map();
 
-  const model = getModel({ json: true, temperature: 0.3 });
+  const model = getModel({ json: true, temperature: 0.3, tier: "smart" });
   let lastIssue: unknown;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     let raw: string;
     try {
-      const result = await model.generateContent(
+      raw = await model.generateContent(
         batchScorePrompt(roleName, difficulty, items, attempt === 2),
       );
-      raw = result.response.text();
     } catch (error) {
-      console.error("[gemini:score-batch] request failed:", error);
+      console.error("[groq:score-batch] request failed:", error);
       throw new ScoringError("Batch scoring request failed.");
     }
 
     try {
-      const parsed = batchScoreSchema.parse(JSON.parse(stripFences(raw)));
+      const parsed = batchScoreSchema.parse(parseModelJson(raw));
       const map = new Map<string, AnswerScore>();
       for (const { id, ...score } of parsed) map.set(id, score);
 
       // Every requested id must come back, else the mapping is unsafe — retry.
       if (items.every((it) => map.has(it.id))) return map;
       lastIssue = new Error("batch response missing one or more ids");
-      console.warn(`[gemini:score-batch] missing ids on attempt ${attempt}`);
+      console.warn(`[groq:score-batch] missing ids on attempt ${attempt}`);
     } catch (error) {
       lastIssue = error;
-      console.warn(`[gemini:score-batch] invalid output on attempt ${attempt}`);
+      console.warn(`[groq:score-batch] invalid output on attempt ${attempt}`);
     }
   }
 
-  console.error("[gemini:score-batch] giving up:", lastIssue);
+  console.error("[groq:score-batch] giving up:", lastIssue);
   throw new ScoringError("Batch scoring produced invalid output.");
 }
 
 /* -------------------------------------------------------------------------- */
-/* Code scoring — one Gemini call for a session's coding submissions.         */
+/* Code scoring — one Groq call for a session's coding submissions.           */
 /* -------------------------------------------------------------------------- */
 
 /** One coding submission to grade, identified by its session_questions row id. */
@@ -525,7 +668,7 @@ function batchCodePrompt(
 }
 
 /**
- * Score every coding submission in a session with a SINGLE Gemini call, using
+ * Score every coding submission in a session with a SINGLE Groq call, using
  * a code-aware rubric. Returns the SAME shape as {@link scoreAnswersBatch}
  * (a map of row id → AnswerScore) so the scoring pipeline is unchanged.
  * Throws ScoringError on network/quota failure or if the model can't return
@@ -538,36 +681,35 @@ export async function scoreCodeBatch(
 ): Promise<Map<string, AnswerScore>> {
   if (items.length === 0) return new Map();
 
-  const model = getModel({ json: true, temperature: 0.2 });
+  const model = getModel({ json: true, temperature: 0.2, tier: "smart" });
   let lastIssue: unknown;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     let raw: string;
     try {
-      const result = await model.generateContent(
+      raw = await model.generateContent(
         batchCodePrompt(roleName, difficulty, items, attempt === 2),
       );
-      raw = result.response.text();
     } catch (error) {
-      console.error("[gemini:score-code] request failed:", error);
+      console.error("[groq:score-code] request failed:", error);
       throw new ScoringError("Code scoring request failed.");
     }
 
     try {
-      const parsed = batchScoreSchema.parse(JSON.parse(stripFences(raw)));
+      const parsed = batchScoreSchema.parse(parseModelJson(raw));
       const map = new Map<string, AnswerScore>();
       for (const { id, ...score } of parsed) map.set(id, score);
 
       if (items.every((it) => map.has(it.id))) return map;
       lastIssue = new Error("code-batch response missing one or more ids");
-      console.warn(`[gemini:score-code] missing ids on attempt ${attempt}`);
+      console.warn(`[groq:score-code] missing ids on attempt ${attempt}`);
     } catch (error) {
       lastIssue = error;
-      console.warn(`[gemini:score-code] invalid output on attempt ${attempt}`);
+      console.warn(`[groq:score-code] invalid output on attempt ${attempt}`);
     }
   }
 
-  console.error("[gemini:score-code] giving up:", lastIssue);
+  console.error("[groq:score-code] giving up:", lastIssue);
   throw new ScoringError("Code scoring produced invalid output.");
 }
 
@@ -586,21 +728,19 @@ export interface SummaryContext {
 export async function generateSummary(ctx: SummaryContext): Promise<string> {
   const fallback = `You scored ${ctx.totalScore}/${ctx.maxScore} on this ${ctx.difficulty} ${ctx.roleName} interview.`;
   try {
-    const model = getModel({ json: false, temperature: 0.4 });
+    const model = getModel({ json: false, temperature: 0.4, tier: "smart" });
     const prompt = [
       `Summarise this candidate's overall interview performance in ONE concise, encouraging-but-honest sentence.`,
       `Role: ${ctx.roleName}. Difficulty: ${ctx.difficulty}. Total: ${ctx.totalScore}/${ctx.maxScore}.`,
       `Per-question scores: ${ctx.perQuestion.map((p) => p.score).join(", ")}.`,
       `Respond with a single plain-text sentence. No JSON, no markdown, no quotes.`,
     ].join("\n");
-    const result = await model.generateContent(prompt);
-    const text = result.response
-      .text()
+    const text = (await model.generateContent(prompt))
       .trim()
       .replace(/^["']|["']$/g, "");
     return text || fallback;
   } catch (error) {
-    console.warn("[gemini:summary] failed, using fallback:", error);
+    console.warn("[groq:summary] failed, using fallback:", error);
     return fallback;
   }
 }
@@ -612,34 +752,41 @@ export async function generateSummary(ctx: SummaryContext): Promise<string> {
 /** Clean error for any CV generation failure. */
 export class CvAiError extends Error {}
 
-/** Run a JSON-returning Gemini prompt with the standard retry-strict loop. */
+/** Run a JSON-returning Groq prompt with the standard retry-strict loop. */
 async function generateJson<T>(
   schema: z.ZodType<T>,
   buildPrompt: (strict: boolean) => string,
   opts: { temperature?: number; label: string },
 ): Promise<T> {
-  const model = getModel({ json: true, temperature: opts.temperature ?? 0.5 });
+  const model = getModel({
+    json: true,
+    temperature: opts.temperature ?? 0.5,
+    tier: "smart",
+  });
   let lastIssue: unknown;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
     let raw: string;
     try {
-      const result = await model.generateContent(buildPrompt(attempt === 2));
-      raw = result.response.text();
+      raw = await model.generateContent(buildPrompt(attempt === 2));
     } catch (error) {
-      console.error(`[gemini:${opts.label}] request failed:`, error);
-      throw new CvAiError("We couldn't reach the AI right now. Please try again.");
+      console.error(`[groq:${opts.label}] request failed:`, error);
+      throw new CvAiError(
+        "We couldn't reach the AI right now. Please try again.",
+      );
     }
     try {
-      return schema.parse(JSON.parse(stripFences(raw)));
+      return schema.parse(parseModelJson(raw));
     } catch (error) {
       lastIssue = error;
-      console.warn(`[gemini:${opts.label}] invalid output on attempt ${attempt}`);
+      console.warn(`[groq:${opts.label}] invalid output on attempt ${attempt}`);
     }
   }
 
-  console.error(`[gemini:${opts.label}] giving up:`, lastIssue);
-  throw new CvAiError("The AI returned an unexpected response. Please try again.");
+  console.error(`[groq:${opts.label}] giving up:`, lastIssue);
+  throw new CvAiError(
+    "The AI returned an unexpected response. Please try again.",
+  );
 }
 
 /* --- (b) AI job-match analysis ------------------------------------------- */
@@ -666,7 +813,7 @@ export interface MatchAnalysisContext {
 }
 
 /**
- * ONE Gemini call: a holistic, semantic analysis of how well the CV matches
+ * ONE Groq call: a holistic, semantic analysis of how well the CV matches
  * the job — beyond literal keyword overlap. Returns an AI fit estimate, a
  * verdict, aligned strengths, genuine gaps, and actionable suggestions.
  */
@@ -687,8 +834,12 @@ export async function analyzeJobMatch(
         `"""${ctx.cvText.slice(0, 4000)}"""`,
         ``,
         `For context, an in-app keyword-overlap score is ${ctx.keywordScore}%.`,
-        ctx.matched.length ? `Keywords already covered: ${ctx.matched.join(", ")}` : ``,
-        ctx.missing.length ? `JD keywords missing from the CV: ${ctx.missing.join(", ")}` : ``,
+        ctx.matched.length
+          ? `Keywords already covered: ${ctx.matched.join(", ")}`
+          : ``,
+        ctx.missing.length
+          ? `JD keywords missing from the CV: ${ctx.missing.join(", ")}`
+          : ``,
         `Use these only as hints — your fitScore should reflect real suitability, and may reasonably differ from the keyword score.`,
         ``,
         `Return a JSON object with:`,
@@ -763,7 +914,7 @@ export interface OptimizeContext {
 }
 
 /**
- * ONE Gemini call: rewrite the CV to be more ATS-friendly for the JD.
+ * ONE Groq call: rewrite the CV to be more ATS-friendly for the JD.
  * Returns a full structured CV (same shape as `CvData`). Truthful — it
  * rephrases and surfaces relevant keywords, it does not fabricate experience.
  */

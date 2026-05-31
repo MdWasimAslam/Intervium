@@ -17,6 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { FormError } from "@/components/auth/FormError";
 import { QuestionTimer } from "@/components/interview/QuestionTimer";
 import { SaveStatus } from "@/components/interview/SaveStatus";
+import { QuestionPrompt } from "@/components/interview/QuestionPrompt";
 import { useAnswerQueue } from "@/components/interview/useAnswerQueue";
 import { completeSession } from "@/lib/actions/interview";
 import {
@@ -179,9 +180,10 @@ export function VoiceRunner({
         >
           <Card>
             <CardContent className="space-y-4 p-6">
-              <p className="text-lg font-semibold leading-relaxed">
-                {q.questionText}
-              </p>
+              <QuestionPrompt
+                text={q.questionText}
+                className="text-lg font-semibold leading-relaxed"
+              />
 
               {/* Mic controls */}
               <div className="flex flex-wrap items-center gap-3">

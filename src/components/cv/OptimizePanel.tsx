@@ -11,7 +11,7 @@ import { optimizeCvAction } from "@/lib/actions/cv";
 import { type CvData } from "@/lib/cv/types";
 
 /**
- * "Improve my CV for this job" — one Gemini call produces an ATS-friendlier
+ * "Improve my CV for this job" — one Groq call produces an ATS-friendlier
  * rewrite, shown as a preview with the new (in-app) score and the added
  * keywords. Accepting swaps it into the live CV and persists it.
  */
@@ -58,15 +58,15 @@ export function OptimizePanel({
   };
 
   return (
-    <Card>
+    <Card className="border-[var(--primary)]/40 bg-[var(--accent)]/30">
       <CardHeader className="flex-row items-center justify-between">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Sparkles className="h-4 w-4 text-[var(--primary)]" /> Optimize for this job
+          <Sparkles className="h-4 w-4 text-[var(--primary)]" /> Optimize CV for this job
         </CardTitle>
         {!optimized && (
-          <Button onClick={() => void optimize()} disabled={loading}>
+          <Button size="lg" onClick={() => void optimize()} disabled={loading}>
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            Improve my CV
+            {loading ? "Optimizing…" : "Optimize my CV"}
           </Button>
         )}
       </CardHeader>
@@ -75,9 +75,10 @@ export function OptimizePanel({
 
         {!optimized && !error && (
           <p className="text-sm text-[var(--muted-foreground)]">
-            One AI call rewrites your CV to weave in the missing keywords and sharpen
-            phrasing — truthfully, without inventing experience. You preview it before
-            anything changes.
+            Let AI rewrite your CV for this exact role — weaving in the missing keywords
+            and sharpening every bullet with strong action verbs, truthfully and without
+            inventing experience. You preview the result and the new score before
+            anything is saved.
           </p>
         )}
 

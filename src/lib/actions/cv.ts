@@ -13,7 +13,7 @@ import {
   type CvMatchAnalysis,
   CvAiError,
   optimizeCvForJob,
-} from "@/lib/gemini";
+} from "@/lib/groq";
 
 /* -------------------------------------------------------------------------- */
 /* Validation                                                                 */
@@ -109,7 +109,7 @@ export async function saveCv(data: CvData): Promise<Result<true>> {
   }
 }
 
-/** (b) ONE Gemini call: holistic AI analysis of the CV↔JD match. */
+/** (b) ONE Groq call: holistic AI analysis of the CV↔JD match. */
 export async function analyzeJobMatchAction(
   jobDescription: string,
   cv: CvData,
@@ -146,7 +146,7 @@ export async function analyzeJobMatchAction(
   }
 }
 
-/** (c) ONE Gemini call: an ATS-friendlier rewrite of the CV for this JD. */
+/** (c) ONE Groq call: an ATS-friendlier rewrite of the CV for this JD. */
 export async function optimizeCvAction(
   jobDescription: string,
   cv: CvData,

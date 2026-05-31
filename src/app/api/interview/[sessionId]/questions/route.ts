@@ -7,7 +7,7 @@ import {
   QuestionGenerationError,
 } from "@/lib/question-engine";
 
-// A single Gemini generation call can take several seconds; give it headroom
+// A single Groq generation call can take several seconds; give it headroom
 // while staying within Vercel's Hobby function limit.
 export const maxDuration = 60;
 

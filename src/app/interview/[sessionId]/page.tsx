@@ -15,7 +15,7 @@ import { VoiceRunner } from "@/components/interview/VoiceRunner";
 
 export const metadata: Metadata = { title: "Interview" };
 
-// First visit may generate questions via Gemini (one call); give it headroom
+// First visit may generate questions via Groq (one call); give it headroom
 // within Vercel's Hobby function limit.
 export const maxDuration = 60;
 

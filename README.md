@@ -5,7 +5,7 @@ bcrypt hash stored: $2b$10$ts4vF/5KpkRqjdJwQwUL/.c1Zhp6wBsE59O/TzGouesXn4pPHMubG
 
 AI-powered mock interviews with instant, actionable feedback. Pick a role, tech
 stack, focus area and difficulty; answer by **text or voice**; get per-question
-scoring and a results breakdown — all powered by **Gemini 2.5 Flash**.
+scoring and a results breakdown — all powered by **Groq model routing**.
 
 Built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS v4**,
 **Drizzle ORM + Neon Postgres**, **Auth.js (NextAuth v5)**, and **shadcn/ui**.
@@ -17,7 +17,7 @@ Built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS v4**,
 - 🔐 **Access-code gated registration** + email/password auth (JWT sessions, bcrypt)
 - 🧭 **Onboarding wizard** that builds the candidate profile
 - ⚙️ **Interview setup** wired entirely to admin-managed DB content
-- 🤖 **Cache-first question engine** — reuses past questions, generates with Gemini only when needed
+- 🤖 **Cache-first question engine** — reuses past questions, generates with Groq only when needed
 - ⌨️ **Text** and 🎙️ **voice** interviews (Web Speech by default; Groq Whisper drop-in)
 - 📊 **AI scoring** with per-question feedback, strengths/improvements, and an overall summary
 - 🛠️ **Admin panel** — full CRUD for roles, focus areas, tech stacks, difficulty bands, access codes, questions, settings, and users
@@ -29,7 +29,8 @@ Built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS v4**,
 
 | Concern | Choice | Why |
 | --- | --- | --- |
-| Question generation & scoring | **Gemini 2.5 Flash** (`@google/generative-ai`) | Fast, cheap, strong JSON output; server-side only |
+| Question generation | **Groq llama-3.1-8b-instant** | Fast, generous free-tier request budget, cache-friendly |
+| Scoring, result summaries & CV AI | **Groq llama-3.3-70b-versatile** | Stronger judgment for feedback, code review, ATS analysis, and rewrites |
 | Voice transcription | **Web Speech API** (default), **Groq Whisper-large-v3** (optional) | Web Speech is free & client-side; Groq behind one interface for later |
 | DB | **Neon Postgres** + **Drizzle ORM** | Serverless-friendly; HTTP driver for queries, WS pool for the registration transaction |
 | Auth | **Auth.js v5** Credentials + JWT | JWT strategy required for credentials; role on the session |
@@ -58,8 +59,9 @@ See [`.env.example`](.env.example). Summary:
 | --- | --- | --- |
 | `DATABASE_URL` | ✅ | Neon Postgres connection string |
 | `AUTH_SECRET` | ✅ | Signs Auth.js JWT sessions (`openssl rand -base64 32`) |
-| `GEMINI_API_KEY` | ✅ | Question generation + scoring (server-only) |
-| `GROQ_API_KEY` | ⬜ | Only if transcription provider = `groq` |
+| `GROQ_API_KEY` | ✅ | Question generation, scoring, CV AI, and optional Groq Whisper |
+| `GROQ_FAST_MODEL` | ⬜ | Question generation model; defaults to `llama-3.1-8b-instant` |
+| `GROQ_SMART_MODEL` | ⬜ | Scoring/CV model; defaults to `llama-3.3-70b-versatile` |
 | `NEXT_PUBLIC_SITE_URL` | ⬜ | Absolute URL for OG/social images |
 
 ### Database (Drizzle + Neon)
@@ -90,8 +92,7 @@ the password after first login.**
 
 1. Import the repo at [vercel.com/new](https://vercel.com/new).
 2. Add the **Neon** integration (auto-sets `DATABASE_URL` / `POSTGRES_*`).
-3. Set `AUTH_SECRET`, `GEMINI_API_KEY`, and `NEXT_PUBLIC_SITE_URL`
-   (and `GROQ_API_KEY` if using Groq).
+3. Set `AUTH_SECRET`, `GROQ_API_KEY`, and `NEXT_PUBLIC_SITE_URL`.
 4. Deploy. Run `npm run db:migrate && npm run db:seed` against the production DB once.
 
 ---
@@ -103,7 +104,7 @@ db/                     Drizzle schema, client, migrations, seed
 src/
   app/                  App Router pages, route handlers, admin panel
   components/           UI (shadcn-style), interview, onboarding, admin, brand
-  lib/                  auth, session, gemini, scoring, question-engine,
+  lib/                  auth, session, groq, scoring, question-engine,
                         signature, rate-limit, settings, transcription, actions
 ```
 

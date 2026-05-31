@@ -15,16 +15,16 @@ export class AiBudgetError extends Error {}
  * The per-action rate limiter (`allowAction`) lives in process memory and
  * resets on every serverless cold start, so it can't protect a *daily* cap.
  * This counter lives in Postgres (`ai_usage`, one row per UTC day), so it is a
- * real running total against Gemini's free-tier per-day limit — across every
+ * real running total against Groq's free-tier per-day limit — across every
  * cold start and function invocation.
  *
- * Callers reserve *before* hitting Gemini and degrade gracefully when the
+ * Callers reserve *before* hitting Groq and degrade gracefully when the
  * budget is spent (serve from cache / store a "try later" note) instead of
- * letting the request reach Gemini and 429.
+ * letting the request reach Groq and 429.
  */
 
 /**
- * Soft ceiling, kept comfortably below Gemini's free-tier daily cap so a burst
+ * Soft ceiling, kept comfortably below Groq's free-tier daily cap so a burst
  * of retries can't blow past the real limit. Override via env if your project's
  * live limit differs (see https://aistudio.google.com/rate-limit).
  */
@@ -43,7 +43,7 @@ function today(): string {
  *
  * Returns `true` if the reservation fits within the daily budget (and records
  * it), `false` if it would exceed the cap. On a DB error we fail OPEN (return
- * `true`) — the in-memory per-user rate limiter and Gemini's own 429 remain as
+ * `true`) — the in-memory per-user rate limiter and Groq's own 429 remain as
  * backstops, and we'd rather not block a legitimate interview because the
  * counter table hiccuped.
  */

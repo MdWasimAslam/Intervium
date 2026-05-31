@@ -26,7 +26,7 @@ import {
 export const metadata: Metadata = { title: "Results" };
 
 // Scoring (the scoreSessionAction server action) runs in this route segment and
-// makes Gemini calls; give it headroom within Vercel's Hobby function limit.
+// makes Groq calls; give it headroom within Vercel's Hobby function limit.
 export const maxDuration = 60;
 
 const TYPE_LABEL: Record<string, string> = {

@@ -9,7 +9,7 @@ import { Chip } from "@/components/ui/chip";
 import { ScoreRing } from "@/components/interview/ScoreRing";
 import { analyzeMatch, type AtsResult } from "@/lib/cv/ats";
 import { analyzeJobMatchAction } from "@/lib/actions/cv";
-import { type CvMatchAnalysis } from "@/lib/gemini";
+import { type CvMatchAnalysis } from "@/lib/groq";
 import { type CvData } from "@/lib/cv/types";
 import { OptimizePanel } from "./OptimizePanel";
 

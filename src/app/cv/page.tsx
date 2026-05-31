@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "My CV" };
 /**
  * /cv — render the stored CV, edit it, ATS-match against a job description,
  * and optimize it for that job. CV parsing & ATS scoring are in-app (no AI);
- * Gemini is used only for qualitative suggestions and the rewrite.
+ * Groq is used only for qualitative suggestions and the rewrite.
  */
 export default async function CvPage() {
   const user = await requireAuth();

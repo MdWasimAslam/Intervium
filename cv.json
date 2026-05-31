@@ -1,0 +1,154 @@
+{
+  "name": "MD WASIM ASLAM",
+  "title": "Software Developer",
+  "contact": {
+    "email": "wasimaslam2897@gmail.com",
+    "phone": "+91 91636 70431",
+    "github": "https://github.com/MdWasimAslam",
+    "linkedin": "https://www.linkedin.com/in/md-wasim-aslam/"
+  },
+  "summary": "Full-stack developer with 4 years of experience in building scalable web applications across recruitment, healthcare, and customer support domains. Proficient in developing and integrating APIs, optimizing system performance, and creating responsive user interfaces using React and Node.js. Seeking to leverage strong technical skills to contribute to innovative teams and impactful solutions in backend or full-stack roles.",
+  "workExperience": [
+    {
+      "company": "Entiovi Technologies Private Limited",
+      "position": "React Native (Expo) Developer",
+      "project": "Live Commerce Platform",
+      "website": "https://try.commentsold.com",
+      "duration": "April 2025 - Present",
+      "description": "Built an e-commerce live selling mobile application with live comments, instant add-to-cart, checkout flow, inventory views, order management, WebSockets, authentication, payments, push notifications, and deep linking."
+    },
+    {
+      "company": "Entiovi Technologies Private Limited",
+      "position": "React.js Developer",
+      "project": "Creator-driven Social Commerce Platform",
+      "website": "https://get.pop.store/",
+      "duration": "April 2025 - Present",
+      "description": "Developed creator storefronts, digital content listings, subscriptions, affiliate links, checkout flows, dashboards, analytics integration, and performance optimizations using React.js and TypeScript."
+    },
+    {
+      "company": "NLB Technology Services PVT LTD",
+      "position": "Full Stack Developer",
+      "project": "Applicant Tracking System (ATS)",
+      "website": "https://www.clearedtalent.com/",
+      "duration": "Feb 2022 - Dec 2024",
+      "description": "Built an ATS with interview scheduling, candidate tracking, resume parsing, RBAC, MongoDB integration, React frontend, Node.js backend, and REST APIs."
+    },
+    {
+      "company": "Healthcare Analytics Project",
+      "website": "https://acturealfrontenddev.z13.web.core.windows.net",
+      "description": "Developed backend data pipelines with Node.js and Express, integrated MongoDB, and built React + D3.js dashboards for healthcare analytics."
+    },
+    {
+      "company": "Support System with LLM-based Chatbot",
+      "description": "Built a support system integrating OpenAI-powered chatbot with React frontend and Node.js backend for requisition-related queries."
+    }
+  ],
+  "projects": [
+    {
+      "name": "Customer Management System - Automotive",
+      "url": "https://crm.flywheelcars.com/",
+      "description": "Customer management and lead tracking system with IVR integration, purchased by an automotive dealership."
+    },
+    {
+      "name": "AniMash",
+      "url": "https://github.com/MdWasimAslam/AnimeMatch_Frontend",
+      "description": "Anime character comparison and rating platform inspired by Facemash."
+    },
+    {
+      "name": "DocuVerse",
+      "url": "https://github.com/MdWasimAslam/DocuVerse",
+      "description": "AI-powered chat-with-PDF application."
+    }
+  ],
+  "skills": {
+    "frontend": [
+      "React JS",
+      "React Native",
+      "HTML5",
+      "CSS3",
+      "JavaScript",
+      "TypeScript",
+      "Redux",
+      "Tailwind CSS",
+      "Material UI",
+      "Ant Design",
+      "Bootstrap",
+      "Responsive Web Design"
+    ],
+    "backend": [
+      "Node.js",
+      "Express.js",
+      "API Development",
+      "Authentication & Middleware"
+    ],
+    "databases": [
+      "MongoDB",
+      "PostgreSQL",
+      "MySQL",
+      "SQLite",
+      "Redis",
+      "Cosmos DB",
+      "PhpMyAdmin"
+    ],
+    "devops": [
+      "Docker",
+      "Git",
+      "GitHub",
+      "Azure DevOps",
+      "Vercel",
+      "Netlify",
+      "Heroku",
+      "Hostinger"
+    ],
+    "ai": [
+      "LLM",
+      "LangChain"
+    ]
+  },
+  "education": [
+    {
+      "degree": "Master of Computer Applications",
+      "institution": "University of Engineering & Management, Kolkata",
+      "duration": "2020-2022",
+      "cgpa": "8.94"
+    },
+    {
+      "degree": "Bachelor of Computer Applications",
+      "institution": "Techno India Institute of Technology",
+      "duration": "2017-2020",
+      "cgpa": "7.48"
+    },
+    {
+      "degree": "Class XII",
+      "board": "BSEB",
+      "institution": "Chandra Shekhar Janta College",
+      "year": "2017",
+      "percentage": "58%"
+    },
+    {
+      "degree": "Class X",
+      "board": "ICSE",
+      "institution": "Saifee Golden Jubilee English Public School",
+      "year": "2015",
+      "percentage": "61%"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "Software Development Trainee Certificate",
+      "issuer": "Amcat",
+      "url": "https://www.myamcat.com/certificate/19266569/software-development-trainee/166"
+    },
+    {
+      "name": "Fundamentals of Cloud Computing",
+      "issuer": "UpGrad",
+      "url": "https://upgrad.certificate.givemycertificate.com/c/31a44763-b0c8-4057-a8e3-c162911bfb07"
+    }
+  ],
+  "languages": [
+    "English (Full Professional Proficiency)",
+    "Hindi (Full Professional Proficiency)",
+    "Bengali (Conversational, Understanding)",
+    "Urdu (Conversational, Understanding)"
+  ]
+}

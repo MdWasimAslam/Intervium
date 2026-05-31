@@ -18,7 +18,7 @@ import {
   DEFAULT_CODING_LANGUAGE,
   generateQuestionBatch,
   QuestionGenerationError,
-} from "@/lib/gemini";
+} from "@/lib/groq";
 import { zodError, type AdminResult } from "./util";
 
 /** Normalise question text for duplicate detection (matches the seed script). */

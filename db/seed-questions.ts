@@ -12,7 +12,7 @@ import {
   QuestionGenerationError,
   type BankGenContext,
   type GeneratedQuestion,
-} from "../src/lib/gemini";
+} from "../src/lib/groq";
 
 /**
  * Deep question-bank seeder.
@@ -37,12 +37,12 @@ import {
  *
  * Options (flags or env vars):
  *   --per-config N     target questions per config       (env SEED_PER_CONFIG, default 10)
- *   --delay-ms M       pause between Gemini calls in ms   (env SEED_DELAY_MS,   default 3000)
+ *   --delay-ms M       pause between Groq calls in ms   (env SEED_DELAY_MS,   default 3000)
  *   --batch B          max questions requested per call   (env SEED_BATCH,      default 10)
  *   --role <slug>      restrict to a single job role slug (default: all roles)
- *   --dry-run          plan only — no Gemini calls, no writes
+ *   --dry-run          plan only — no Groq calls, no writes
  *
- * Requires GEMINI_API_KEY (unless --dry-run) and DATABASE_URL.
+ * Requires GROQ_API_KEY (unless --dry-run) and DATABASE_URL.
  */
 
 const INTERVIEW_TYPES = [
@@ -77,7 +77,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Normalise question text for duplicate detection. */
 const norm = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 
-/** Call Gemini with exponential backoff so transient quota/network errors don't abort the run. */
+/** Call Groq with exponential backoff so transient quota/network errors don't abort the run. */
 async function generateWithRetry(
   ctx: BankGenContext,
   configLabel: string,
@@ -107,8 +107,8 @@ async function generateWithRetry(
 async function main() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error("DATABASE_URL is not set.");
-  if (!DRY_RUN && !process.env.GEMINI_API_KEY) {
-    throw new Error("GEMINI_API_KEY is not set (use --dry-run to plan without it).");
+  if (!DRY_RUN && !process.env.GROQ_API_KEY) {
+    throw new Error("GROQ_API_KEY is not set (use --dry-run to plan without it).");
   }
 
   const db = drizzle(neon(databaseUrl), { schema });
@@ -270,7 +270,7 @@ async function main() {
               roleInserted += take.length;
               totalInserted += take.length;
 
-              // Rate-limit-friendly pacing between Gemini calls.
+              // Rate-limit-friendly pacing between Groq calls.
               await sleep(DELAY_MS);
             }
 
@@ -285,7 +285,7 @@ async function main() {
 
   console.log(
     `\n✅ Done. configs=${configsTotal} touched=${configsTouched} ` +
-      `gemini_calls=${totalCalls} ${DRY_RUN ? "would_insert" : "inserted"}=${totalInserted}`,
+      `groq_calls=${totalCalls} ${DRY_RUN ? "would_insert" : "inserted"}=${totalInserted}`,
   );
   if (DRY_RUN) console.log("   (dry run — no questions were written.)");
 }

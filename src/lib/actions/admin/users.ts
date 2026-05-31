@@ -5,6 +5,7 @@ import { eq, inArray } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import {
+  accessCodes,
   db,
   interviewSessions,
   profiles,
@@ -251,6 +252,76 @@ export async function resetUserAccountData(
   } catch (error) {
     console.error("[resetUserAccountData]", error);
     return { ok: false, error: "Could not reset the account." };
+  }
+
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Delete                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/**
+ * Permanently delete a user and everything they own.
+ *
+ * Removes their session questions, interview sessions and profile, then the
+ * account itself — all in one transaction. Access codes are kept (they're
+ * shared inventory), so the user's `used_by`/`created_by` references are
+ * cleared first to satisfy the foreign keys. Admin accounts can't be deleted —
+ * demote them to a regular user first.
+ */
+export async function deleteUser(input: unknown): Promise<AdminResult> {
+  await requireAdmin();
+  const p = z.object({ id: z.string().uuid() }).safeParse(input);
+  if (!p.success) return { ok: false, error: "Invalid input." };
+  const { id } = p.data;
+
+  const [target] = await db
+    .select({ id: users.id, role: users.role })
+    .from(users)
+    .where(eq(users.id, id));
+  if (!target) return { ok: false, error: "User not found." };
+
+  if (target.role === "admin") {
+    return {
+      ok: false,
+      error: "Admin accounts can't be deleted. Demote to a user first.",
+    };
+  }
+
+  try {
+    await withTransaction(async (tx) => {
+      // Children first, then up the chain to the user row.
+      await tx.delete(sessionQuestions).where(
+        inArray(
+          sessionQuestions.sessionId,
+          tx
+            .select({ id: interviewSessions.id })
+            .from(interviewSessions)
+            .where(eq(interviewSessions.userId, id)),
+        ),
+      );
+      await tx
+        .delete(interviewSessions)
+        .where(eq(interviewSessions.userId, id));
+      await tx.delete(profiles).where(eq(profiles.userId, id));
+
+      // Keep the access codes but detach this user from them.
+      await tx
+        .update(accessCodes)
+        .set({ usedBy: null })
+        .where(eq(accessCodes.usedBy, id));
+      await tx
+        .update(accessCodes)
+        .set({ createdBy: null })
+        .where(eq(accessCodes.createdBy, id));
+
+      await tx.delete(users).where(eq(users.id, id));
+    });
+  } catch (error) {
+    console.error("[deleteUser]", error);
+    return { ok: false, error: "Could not delete the user." };
   }
 
   revalidatePath("/admin/users");
