@@ -11,7 +11,6 @@ import {
   Code2,
   FileText,
   Loader2,
-  MessageSquare,
   Plus,
   Sparkles,
   Target,
@@ -46,31 +45,9 @@ const STEP_TITLES = [
   "Experience",
   "Skills",
   "Goal",
-  "Interview style",
   "CV",
   "Review",
 ];
-
-const STYLE_OPTIONS = [
-  {
-    value: "text",
-    label: "Text",
-    hint: "Type your answers at your own pace.",
-    icon: FileText,
-  },
-  {
-    value: "voice",
-    label: "Voice",
-    hint: "Speak out loud, like a real interview.",
-    icon: MessageSquare,
-  },
-  {
-    value: "both",
-    label: "A bit of both",
-    hint: "Mix typing and speaking freely.",
-    icon: Sparkles,
-  },
-] as const;
 
 const MAX_YEARS = 20;
 // Tap-friendly shortcuts for the experience step.
@@ -101,11 +78,6 @@ const STEP_META: { icon: LucideIcon; title: string; subtitle: string }[] = [
     icon: Target,
     title: "What are you working towards?",
     subtitle: "Optional, but it helps us focus your practice.",
-  },
-  {
-    icon: MessageSquare,
-    title: "How would you like to practice?",
-    subtitle: "You can change this anytime. Tap to choose.",
   },
   {
     icon: FileText,
@@ -187,8 +159,8 @@ export function OnboardingWizard({
   const firstName = values.displayName.trim().split(/\s+/)[0] || "there";
 
   const isLast = step === STEP_TITLES.length - 1;
-  // Role (1) and interview style (5) advance on tap, so they hide Next.
-  const autoAdvances = step === 1 || step === 5;
+  // Role (1) advances on tap, so it hides Next.
+  const autoAdvances = step === 1;
 
   /** Client-side gate + the partial payload to persist for the current step. */
   function validateStep(): { ok: boolean; partial?: Partial<OnboardingDraft> } {
@@ -218,20 +190,6 @@ export function OnboardingWizard({
       case 4:
         return { ok: true, partial: { targetRole: values.targetRole.trim() } };
       case 5:
-        if (!values.interviewStyle) {
-          setError("Please pick an interview style.");
-          return { ok: false };
-        }
-        return {
-          ok: true,
-          partial: {
-            interviewStyle: values.interviewStyle as Exclude<
-              WizardValues["interviewStyle"],
-              ""
-            >,
-          },
-        };
-      case 6:
         return { ok: true, partial: { cvText: values.cvText } };
       default:
         return { ok: true };
@@ -285,7 +243,6 @@ export function OnboardingWizard({
           yearsExperience: values.yearsExperience,
           skills: values.skills,
           targetRole: values.targetRole.trim(),
-          interviewStyle: values.interviewStyle,
           cvText: values.cvText,
         });
         // On success the action redirects; only errors return here.
@@ -603,54 +560,8 @@ export function OnboardingWizard({
               </div>
             )}
 
-            {/* Step 5 — Interview style */}
+            {/* Step 5 — CV */}
             {step === 5 && (
-              <div className="grid gap-3">
-                {STYLE_OPTIONS.map((opt) => {
-                  const selected = values.interviewStyle === opt.value;
-                  return (
-                    <motion.button
-                      key={opt.value}
-                      type="button"
-                      whileTap={{ scale: 0.98 }}
-                      onClick={() => {
-                        set("interviewStyle", opt.value);
-                        chooseAndAdvance({ interviewStyle: opt.value });
-                      }}
-                      className={cn(
-                        "flex items-center gap-4 rounded-2xl border p-4 text-left transition-colors",
-                        selected
-                          ? "border-[var(--primary)] bg-[var(--accent)]"
-                          : "border-[var(--border)] hover:border-[var(--primary)]/40 hover:bg-[var(--muted)]",
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors",
-                          selected
-                            ? "bg-[var(--primary)] text-[var(--primary-foreground)]"
-                            : "bg-[var(--secondary)] text-[var(--muted-foreground)]",
-                        )}
-                      >
-                        <opt.icon className="h-5 w-5" />
-                      </span>
-                      <span className="flex-1">
-                        <span className="block font-semibold">{opt.label}</span>
-                        <span className="block text-sm text-[var(--muted-foreground)]">
-                          {opt.hint}
-                        </span>
-                      </span>
-                      {selected && (
-                        <Check className="h-5 w-5 shrink-0 text-[var(--primary)]" />
-                      )}
-                    </motion.button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Step 6 — CV */}
-            {step === 6 && (
               <div>
                 <Textarea
                   rows={9}
@@ -669,8 +580,8 @@ export function OnboardingWizard({
               </div>
             )}
 
-            {/* Step 7 — Review */}
-            {step === 7 && (
+            {/* Step 6 — Review */}
+            {step === 6 && (
               <div className="overflow-hidden rounded-2xl border border-[var(--border)] bg-[var(--card)]">
                 <ReviewRow label="Name" onEdit={() => jumpTo(0)}>
                   {values.displayName || "—"}
@@ -689,13 +600,7 @@ export function OnboardingWizard({
                 <ReviewRow label="Goal" onEdit={() => jumpTo(4)}>
                   {values.targetRole || "—"}
                 </ReviewRow>
-                <ReviewRow label="Interview style" onEdit={() => jumpTo(5)}>
-                  {values.interviewStyle
-                    ? values.interviewStyle[0].toUpperCase() +
-                      values.interviewStyle.slice(1)
-                    : "—"}
-                </ReviewRow>
-                <ReviewRow label="CV" onEdit={() => jumpTo(6)}>
+                <ReviewRow label="CV" onEdit={() => jumpTo(5)}>
                   {values.cvText
                     ? `${values.cvText.trim().slice(0, 60)}${values.cvText.trim().length > 60 ? "…" : ""}`
                     : "Not provided"}

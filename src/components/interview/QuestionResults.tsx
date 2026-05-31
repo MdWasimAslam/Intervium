@@ -6,6 +6,20 @@ import { Card, CardContent } from "@/components/ui/card";
 import { QuestionPrompt } from "@/components/interview/QuestionPrompt";
 import { cn } from "@/lib/utils";
 
+export interface TextRubric {
+  technicalAccuracy: number;
+  completeness: number;
+  communicationClarity: number;
+  interviewReadiness: number;
+}
+
+export interface CodeRubric {
+  correctness: number;
+  approach: number;
+  edgeCases: number;
+  readability: number;
+}
+
 export interface QuestionResult {
   position: number;
   questionText: string;
@@ -15,6 +29,9 @@ export interface QuestionResult {
   feedback: string;
   strengths: string[];
   improvements: string[];
+  /** Interviewer rubric breakdown — one of these is set per question type. */
+  rubric?: TextRubric | null;
+  codeRubric?: CodeRubric | null;
   /** Coding questions render the answer as code and show the ideal solution. */
   isCoding?: boolean;
   language?: string | null;
@@ -36,6 +53,96 @@ function scoreColor(pct: number): string {
   return "text-[var(--destructive)]";
 }
 
+function barColor(pct: number): string {
+  if (pct >= 70) return "bg-[var(--primary)]";
+  if (pct >= 40) return "bg-amber-500";
+  return "bg-[var(--destructive)]";
+}
+
+/** One rubric component shown as a labelled, colour-coded mini-bar. */
+function RubricPill({
+  label,
+  value,
+  max,
+  weight,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  weight?: string;
+}) {
+  const pct = max > 0 ? (value / max) * 100 : 0;
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--muted)] px-2.5 py-1.5">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-[11px] font-medium leading-tight text-[var(--muted-foreground)]">
+          {label}
+          {weight && <span className="ml-1 opacity-60">{weight}</span>}
+        </span>
+        <span className={cn("text-xs font-bold tabular-nums", scoreColor(pct))}>
+          {value}/{max}
+        </span>
+      </div>
+      <div className="mt-1 h-1 overflow-hidden rounded-full bg-[var(--border)]">
+        <div
+          className={cn("h-full rounded-full", barColor(pct))}
+          style={{ width: `${pct}%` }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Structured rubric breakdown — text (4/3/2/1) or weighted coding (each /10). */
+function RubricBreakdown({ result }: { result: QuestionResult }) {
+  if (result.codeRubric) {
+    const c = result.codeRubric;
+    return (
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <RubricPill
+          label="Correctness"
+          value={c.correctness}
+          max={10}
+          weight="40%"
+        />
+        <RubricPill label="Approach" value={c.approach} max={10} weight="25%" />
+        <RubricPill
+          label="Edge cases"
+          value={c.edgeCases}
+          max={10}
+          weight="20%"
+        />
+        <RubricPill
+          label="Readability"
+          value={c.readability}
+          max={10}
+          weight="15%"
+        />
+      </div>
+    );
+  }
+  if (result.rubric) {
+    const r = result.rubric;
+    return (
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <RubricPill
+          label="Technical accuracy"
+          value={r.technicalAccuracy}
+          max={4}
+        />
+        <RubricPill label="Completeness" value={r.completeness} max={3} />
+        <RubricPill label="Clarity" value={r.communicationClarity} max={2} />
+        <RubricPill
+          label="Interview ready"
+          value={r.interviewReadiness}
+          max={1}
+        />
+      </div>
+    );
+  }
+  return null;
+}
+
 /** Animated per-question breakdown cards. */
 export function QuestionResults({ results }: { results: QuestionResult[] }) {
   const reduced = useReducedMotion() ?? false;
@@ -51,7 +158,11 @@ export function QuestionResults({ results }: { results: QuestionResult[] }) {
             transition={
               reduced
                 ? { duration: 0 }
-                : { duration: 0.3, delay: Math.min(i, 8) * 0.06, ease: "easeOut" }
+                : {
+                    duration: 0.3,
+                    delay: Math.min(i, 8) * 0.06,
+                    ease: "easeOut",
+                  }
             }
           >
             <Card>
@@ -94,6 +205,8 @@ export function QuestionResults({ results }: { results: QuestionResult[] }) {
                     </p>
                   )}
                 </div>
+
+                <RubricBreakdown result={r} />
 
                 <div className="rounded-xl bg-[var(--muted)] p-3 text-sm">
                   {r.feedback}

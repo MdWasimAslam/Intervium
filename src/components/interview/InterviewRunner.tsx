@@ -19,7 +19,7 @@ export interface RunnerQuestion {
   position: number;
   questionText: string;
   /** Answering modality. "coding" renders the code editor instead of a textarea. */
-  type?: "text" | "voice" | "either" | "coding";
+  type?: "text" | "coding";
   /** Editor language for coding questions (e.g. "javascript"). */
   language?: string | null;
 }

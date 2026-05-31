@@ -12,7 +12,6 @@ const schema = z.object({
     .array(z.number().int().min(1).max(50))
     .min(1, "At least one question count is required.")
     .max(10),
-  transcriptionProvider: z.enum(["webspeech", "whisper"]),
 });
 
 export async function updateSettings(input: unknown): Promise<AdminResult> {
@@ -34,7 +33,6 @@ export async function updateSettings(input: unknown): Promise<AdminResult> {
         set: {
           defaultTimerSeconds: p.data.defaultTimerSeconds,
           questionCounts,
-          transcriptionProvider: p.data.transcriptionProvider,
           updatedAt: new Date(),
         },
       });

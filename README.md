@@ -1,7 +1,7 @@
 # Intervium
 
 AI-powered mock interviews with instant, actionable feedback. Pick a role, tech
-stack, focus area and difficulty; answer by **text or voice**; get per-question
+stack, focus area and difficulty; answer in your own words; get per-question
 scoring and a results breakdown — all powered by **Groq model routing**.
 
 Built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS v4**,
@@ -15,7 +15,7 @@ Built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS v4**,
 - 🧭 **Onboarding wizard** that builds the candidate profile
 - ⚙️ **Interview setup** wired entirely to admin-managed DB content
 - 🤖 **Cache-first question engine** — reuses past questions, generates with Groq only when needed
-- ⌨️ **Text** and 🎙️ **voice** interviews (Web Speech by default; Groq Whisper drop-in)
+- ⌨️ **Text & coding interviews** — type answers, or solve coding problems in an in-browser editor
 - 📊 **AI scoring** with per-question feedback, strengths/improvements, and an overall summary
 - 🛠️ **Admin panel** — full CRUD for roles, focus areas, tech stacks, difficulty bands, access codes, questions, settings, and users
 - 🌗 Light/dark themes, brand green `#00B775`, responsive, `prefers-reduced-motion` aware
@@ -28,7 +28,6 @@ Built with **Next.js (App Router)**, **TypeScript**, **Tailwind CSS v4**,
 | --- | --- | --- |
 | Question generation | **Groq llama-3.1-8b-instant** | Fast, generous free-tier request budget, cache-friendly |
 | Scoring, result summaries & CV AI | **Groq llama-3.3-70b-versatile** | Stronger judgment for feedback, code review, ATS analysis, and rewrites |
-| Voice transcription | **Web Speech API** (default), **Groq Whisper-large-v3** (optional) | Web Speech is free & client-side; Groq behind one interface for later |
 | DB | **Neon Postgres** + **Drizzle ORM** | Serverless-friendly; HTTP driver for queries, WS pool for the registration transaction |
 | Auth | **Auth.js v5** Credentials + JWT | JWT strategy required for credentials; role on the session |
 
@@ -56,7 +55,7 @@ See [`.env.example`](.env.example). Summary:
 | --- | --- | --- |
 | `DATABASE_URL` | ✅ | Neon Postgres connection string |
 | `AUTH_SECRET` | ✅ | Signs Auth.js JWT sessions (`openssl rand -base64 32`) |
-| `GROQ_API_KEY` | ✅ | Question generation, scoring, CV AI, and optional Groq Whisper |
+| `GROQ_API_KEY` | ✅ | Question generation, scoring, and CV AI |
 | `GROQ_FAST_MODEL` | ⬜ | Question generation model; defaults to `llama-3.1-8b-instant` |
 | `GROQ_SMART_MODEL` | ⬜ | Scoring/CV model; defaults to `llama-3.3-70b-versatile` |
 | `NEXT_PUBLIC_SITE_URL` | ⬜ | Absolute URL for OG/social images |
@@ -104,7 +103,7 @@ src/
   app/                  App Router pages, route handlers, admin panel
   components/           UI (shadcn-style), interview, onboarding, admin, brand
   lib/                  auth, session, groq, scoring, question-engine,
-                        signature, rate-limit, settings, transcription, actions
+                        signature, rate-limit, settings, actions
 ```
 
 Admin-managed content means the app can be reconfigured (new roles, questions,

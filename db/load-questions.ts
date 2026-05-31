@@ -16,7 +16,7 @@ import { computeSignature } from "../src/lib/signature";
  * This is the companion to `db/seed-questions.ts` (which uses Groq): instead
  * of generating, it ingests questions you wrote yourself. Each row gets the
  * deterministic `signature` computed with the SAME algorithm the interview
- * engine uses, `source = 'admin'`, modality `'either'`, and `is_active = true`.
+ * engine uses, `source = 'admin'`, modality `'text'`, and `is_active = true`.
  *
  * IDEMPOTENT: a question whose text already exists in the same pool
  * (case/whitespace-insensitive) is skipped, so re-running never duplicates.
@@ -206,7 +206,7 @@ async function main() {
           techStackId: tech.id,
           focusAreaId: focus.id,
           difficulty: band.label,
-          type: "either" as const,
+          type: "text" as const,
           questionText: q.questionText,
           idealAnswer: q.idealAnswer,
           signature,

@@ -18,13 +18,10 @@ import {
 export const roleEnum = pgEnum("role", ["user", "admin"]);
 export const questionTypeEnum = pgEnum("question_type", [
   "text",
-  "voice",
-  "either",
   // Answered in the code editor and graded with a code-aware rubric.
   "coding",
 ]);
 export const questionSourceEnum = pgEnum("question_source", ["ai", "admin"]);
-export const sessionModeEnum = pgEnum("session_mode", ["text", "voice"]);
 export const interviewTypeEnum = pgEnum("interview_type", [
   "technical",
   "behavioral",
@@ -234,7 +231,6 @@ export const interviewSessions = pgTable(
       .default("technical"),
     difficulty: text("difficulty").notNull(),
     questionCount: integer("question_count").notNull(),
-    mode: sessionModeEnum("mode").notNull(),
     timerEnabled: boolean("timer_enabled").notNull().default(false),
     status: sessionStatusEnum("status").notNull().default("in_progress"),
     totalScore: integer("total_score").notNull().default(0),
@@ -279,14 +275,26 @@ export const sessionQuestions = pgTable(
     // 0-based order of the question within the session.
     position: integer("position").notNull().default(0),
     userAnswer: text("user_answer"),
-    transcript: text("transcript"),
     score: integer("score").notNull().default(0),
     maxScore: integer("max_score").notNull().default(10),
     feedback: text("feedback"),
-    // Structured feedback: { strengths: string[]; improvements: string[] }.
+    // Structured feedback: strengths/improvements plus the interviewer rubric
+    // breakdown (one of `rubric`/`codeRubric` depending on question type).
     feedbackDetail: jsonb("feedback_detail").$type<{
       strengths: string[];
       improvements: string[];
+      rubric?: {
+        technicalAccuracy: number;
+        completeness: number;
+        communicationClarity: number;
+        interviewReadiness: number;
+      };
+      codeRubric?: {
+        correctness: number;
+        approach: number;
+        edgeCases: number;
+        readability: number;
+      };
     }>(),
     timeTakenSeconds: integer("time_taken_seconds"),
     answeredAt: timestamp("answered_at", { withTimezone: true }),
@@ -319,9 +327,6 @@ export const appSettings = pgTable("app_settings", {
     .$type<number[]>()
     .notNull()
     .default(sql`'[3,5,10]'::jsonb`),
-  transcriptionProvider: text("transcription_provider")
-    .notNull()
-    .default("webspeech"),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

@@ -9,7 +9,6 @@ export default async function AdminSettingsPage() {
     <SettingsAdmin
       defaultTimerSeconds={settings.defaultTimerSeconds}
       questionCounts={settings.questionCounts}
-      transcriptionProvider={settings.transcriptionProvider}
     />
   );
 }

@@ -68,12 +68,11 @@ export default async function OnboardingPage({
     yearsExperience: draft.yearsExperience ?? 0,
     skills: draft.skills ?? [],
     targetRole: draft.targetRole ?? "",
-    interviewStyle: draft.interviewStyle ?? "",
     cvText: draft.cvText ?? "",
   };
 
-  // Resume on the saved step, clamped to a real step index (0–7).
-  const initialStep = Math.min(Math.max(draft.step ?? 0, 0), 7);
+  // Resume on the saved step, clamped to a real step index (0–6).
+  const initialStep = Math.min(Math.max(draft.step ?? 0, 0), 6);
 
   return (
     <OnboardingWizard

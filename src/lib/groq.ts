@@ -136,9 +136,7 @@ function getModel(
           const isTimeout =
             error instanceof Error &&
             (error.name === "TimeoutError" || error.name === "AbortError");
-          lastError = isTimeout
-            ? new Error("Groq request timed out")
-            : error;
+          lastError = isTimeout ? new Error("Groq request timed out") : error;
           if (attempt < MAX_TRANSIENT_ATTEMPTS) {
             await sleep(
               Math.min(2 ** (attempt - 1) * 500, MAX_BACKOFF_MS) +
@@ -216,6 +214,27 @@ function codingFormat(): string[] {
   ];
 }
 
+/**
+ * Depth spec for a (non-coding) "ideal_answer". The field stays a single
+ * string, but we require a structured, multi-point model answer instead of a
+ * 1-2 sentence gloss. The scorer grades against this reference, so a shallow
+ * ideal answer was a root cause of over-generous scores — a rich one gives the
+ * grader the concepts a strong answer should contain.
+ */
+function idealAnswerSpec(difficulty: string): string {
+  return [
+    ``,
+    `For each question, "ideal_answer" must be a COMPREHENSIVE model answer (NOT 1-2 sentences) that a strong candidate would give. Write it as clearly separated "- " bullet points (use "\\n" between them inside the JSON string) covering, where relevant:`,
+    `- Core definition / direct answer`,
+    `- Key concepts and how they actually work`,
+    `- Important interview points an evaluator listens for`,
+    `- Common pitfalls or misconceptions`,
+    `- A short, concrete practical example`,
+    `- 1-2 natural follow-up discussion topics`,
+    `Scale the DEPTH to the "${difficulty}" band: Junior ≈ 5-8 bullets, Mid ≈ 8-12 bullets, Senior/Lead ≈ 10-15 bullets. Map any other band label to the nearest of these.`,
+  ].join("\n");
+}
+
 function buildPrompt(ctx: GenerationContext, strict: boolean): string {
   const cv = ctx.cvText ? ctx.cvText.slice(0, 2000) : "";
   return [
@@ -237,10 +256,7 @@ function buildPrompt(ctx: GenerationContext, strict: boolean): string {
     cv ? `- CV excerpt: """${cv}"""` : ``,
     ...(ctx.interviewType === "coding"
       ? codingFormat()
-      : [
-          ``,
-          `For each question also provide a concise "ideal_answer" (3-6 sentences) an interviewer would expect.`,
-        ]),
+      : [idealAnswerSpec(ctx.difficulty)]),
     ``,
     ctx.interviewType === "coding"
       ? strict
@@ -439,10 +455,7 @@ function buildBankPrompt(ctx: BankGenContext, strict: boolean): string {
       : ``,
     ...(ctx.interviewType === "coding"
       ? codingFormat()
-      : [
-          ``,
-          `For each question also provide a strong "ideal_answer" (3-6 sentences) that a rigorous interviewer would expect for the ${ctx.difficulty} band.`,
-        ]),
+      : [idealAnswerSpec(ctx.difficulty)]),
     ``,
     ctx.interviewType === "coding"
       ? strict
@@ -502,14 +515,185 @@ export async function generateQuestionBatch(
 /** Clean error for scoring failures (caught per-question → fallback score). */
 export class ScoringError extends Error {}
 
-const scoreSchema = z.object({
-  score: z.number().int().min(0).max(10),
+/* --- Structured interviewer rubric --------------------------------------- *
+ * Scores are no longer a single subjective number the model invents. The model
+ * grades discrete rubric components and we DERIVE the /10 total in code, so a
+ * thin "keyword" answer can never be handed a 9 the breakdown doesn't justify.
+ *
+ *   Text/behavioural answers — components SUM to 10:
+ *     technicalAccuracy (0-4) + completeness (0-3)
+ *     + communicationClarity (0-2) + interviewReadiness (0-1)
+ *
+ *   Coding answers — components are each 0-10 and combined with fixed weights:
+ *     correctness 40% + approach 25% + edgeCases 20% + readability 15%
+ * ------------------------------------------------------------------------- */
+
+const textRubricSchema = z.object({
+  technicalAccuracy: z.number().int().min(0).max(4),
+  completeness: z.number().int().min(0).max(3),
+  communicationClarity: z.number().int().min(0).max(2),
+  interviewReadiness: z.number().int().min(0).max(1),
+});
+export type TextRubric = z.infer<typeof textRubricSchema>;
+
+const codeRubricSchema = z.object({
+  correctness: z.number().int().min(0).max(10),
+  approach: z.number().int().min(0).max(10),
+  edgeCases: z.number().int().min(0).max(10),
+  readability: z.number().int().min(0).max(10),
+});
+export type CodeRubric = z.infer<typeof codeRubricSchema>;
+
+/** Fixed weights for the coding rubric (sum to 1). */
+const CODE_WEIGHTS = {
+  correctness: 0.4,
+  approach: 0.25,
+  edgeCases: 0.2,
+  readability: 0.15,
+} as const;
+
+/** Feedback fields every score shape carries. */
+const feedbackFields = {
   feedback: z.string().trim().min(1),
   strengths: z.array(z.string().trim().min(1)).max(10),
   improvements: z.array(z.string().trim().min(1)).max(10),
-});
+};
 
-export type AnswerScore = z.infer<typeof scoreSchema>;
+/** What the model returns for a text answer (rubric + feedback, no total). */
+const textScoreSchema = textRubricSchema.extend(feedbackFields);
+/** What the model returns for a coding answer (rubric + feedback, no total). */
+const codeScoreSchema = codeRubricSchema.extend(feedbackFields);
+
+/**
+ * Resolved score the pipeline persists. `score` is ALWAYS derived here from the
+ * rubric (never trusted from the model). `rubric`/`codeRubric` are carried
+ * through so the results UI can show the breakdown.
+ */
+export interface AnswerScore {
+  score: number;
+  feedback: string;
+  strengths: string[];
+  improvements: string[];
+  rubric?: TextRubric;
+  codeRubric?: CodeRubric;
+}
+
+/** Sum the four text-rubric components into a 0-10 total. */
+function textTotal(r: TextRubric): number {
+  return (
+    r.technicalAccuracy +
+    r.completeness +
+    r.communicationClarity +
+    r.interviewReadiness
+  );
+}
+
+/** Weight the four code-rubric components into a 0-10 total. */
+function codeTotal(r: CodeRubric): number {
+  const weighted =
+    r.correctness * CODE_WEIGHTS.correctness +
+    r.approach * CODE_WEIGHTS.approach +
+    r.edgeCases * CODE_WEIGHTS.edgeCases +
+    r.readability * CODE_WEIGHTS.readability;
+  return Math.max(0, Math.min(10, Math.round(weighted)));
+}
+
+/** Map a parsed text-rubric object to the resolved {@link AnswerScore}. */
+function toTextScore(p: z.infer<typeof textScoreSchema>): AnswerScore {
+  const rubric: TextRubric = {
+    technicalAccuracy: p.technicalAccuracy,
+    completeness: p.completeness,
+    communicationClarity: p.communicationClarity,
+    interviewReadiness: p.interviewReadiness,
+  };
+  return {
+    score: textTotal(rubric),
+    feedback: p.feedback,
+    strengths: p.strengths,
+    improvements: p.improvements,
+    rubric,
+  };
+}
+
+/** Map a parsed code-rubric object to the resolved {@link AnswerScore}. */
+function toCodeScore(p: z.infer<typeof codeScoreSchema>): AnswerScore {
+  const codeRubric: CodeRubric = {
+    correctness: p.correctness,
+    approach: p.approach,
+    edgeCases: p.edgeCases,
+    readability: p.readability,
+  };
+  return {
+    score: codeTotal(codeRubric),
+    feedback: p.feedback,
+    strengths: p.strengths,
+    improvements: p.improvements,
+    codeRubric,
+  };
+}
+
+/**
+ * The shared interviewer rubric + calibration block injected into every
+ * text-answer scoring prompt (single and batch) so both paths grade
+ * identically. Difficulty is woven in so the bar tracks the seniority band.
+ */
+function textRubricInstructions(difficulty: string): string[] {
+  return [
+    `Evaluate like a senior interviewer at a top engineering company. Be rigorous: reward genuine understanding, NOT keyword-matching. A short answer that merely names the right terms is not a strong answer.`,
+    ``,
+    `Grade with this STRUCTURED RUBRIC. The four components SUM to the /10 total — do not output a total yourself, just the four numbers:`,
+    `- "technicalAccuracy" (0-4): Are the stated concepts correct and precise? Deduct for any factual mistake, vagueness, or imprecision.`,
+    `- "completeness" (0-3): Did they address every part of the question and the important sub-concepts? Deduct for missing key points even when what they did say is correct.`,
+    `- "communicationClarity" (0-2): Is the answer clearly structured, well-worded, and unambiguous?`,
+    `- "interviewReadiness" (0-1): Would a real interviewer be satisfied and move on? Award 1 ONLY for a genuinely solid, convincing answer.`,
+    ``,
+    `Calibration for the resulting /10 total:`,
+    `- 9-10: Exceptional — accurate, complete, demonstrates strong, deep understanding.`,
+    `- 7-8: Good — mostly correct with only minor omissions.`,
+    `- 5-6: Partially correct — missing important details or examples.`,
+    `- 3-4: Major gaps — shows limited understanding.`,
+    `- 0-2: Incorrect or largely irrelevant.`,
+    ``,
+    `HARD RULES (never violate):`,
+    `- NEVER award a 9 or 10 to a short, keyword-only answer that lacks explanation, depth, or examples.`,
+    `- NEVER award 8+ when any major concept the question asks about is missing.`,
+    `- A correct-but-incomplete answer belongs around 5-6, not 8-9. Reward partial credit fairly, but do not inflate.`,
+    `- Judge depth of understanding, not the presence of buzzwords.`,
+    `- Calibrate to the "${difficulty}" band: judge a Junior answer by Junior expectations and a Senior answer by Senior expectations. Do NOT penalise a Junior for lacking Senior-level depth, but do NOT inflate a thin answer just because the candidate is Junior.`,
+    ``,
+    `Feedback rules:`,
+    `- "feedback" MUST reference specific content from THIS candidate's answer (quote or paraphrase what they actually said) and MUST explain WHY points were lost in each weak rubric area. No generic praise.`,
+    `- "strengths"/"improvements": short, specific, grounded in what they actually wrote.`,
+  ];
+}
+
+/**
+ * Few-shot calibration so the model anchors on interviewer-grade severity.
+ * The breakdowns are internally consistent (components sum to the stated
+ * total) and deliberately include the array-vs-object case that was
+ * over-scoring at 6 → corrected to a 4.
+ */
+const TEXT_SCORING_EXAMPLES: string[] = [
+  `Calibration examples — study the SEVERITY and logic, do not copy the wording:`,
+  ``,
+  `Example 1`,
+  `Q: "What is the difference between let and var?"`,
+  `A: "let is block scoped and var is function scoped"`,
+  `Grade: technicalAccuracy 3, completeness 1, communicationClarity 2, interviewReadiness 0 → total 6.`,
+  `Why: Correct but incomplete — names scoping correctly yet omits hoisting, the temporal dead zone, and redeclaration rules. Not enough to satisfy an interviewer.`,
+  ``,
+  `Example 2`,
+  `Q: "What is the difference between let and var?"`,
+  `A: "let is block scoped, cannot be redeclared in the same scope and exists in the temporal dead zone. var is function scoped, hoisted and initialized with undefined."`,
+  `Grade: technicalAccuracy 4, completeness 3, communicationClarity 1, interviewReadiness 1 → total 9.`,
+  `Why: Accurate and sufficiently complete (scope, redeclaration, TDZ, hoisting). Loses one clarity point only for giving no concrete example.`,
+  ``,
+  `Example 3`,
+  `Q: "What is the difference between an array and an object in JavaScript?"`,
+  `A: "arrays and object both are non primitive data type, arrays are used to store multiple value, object is used to store key value pairs"`,
+  `Grade: technicalAccuracy 2, completeness 1, communicationClarity 1, interviewReadiness 0 → total 4.`,
+  `Why: States two surface facts correctly but is imprecise and shallow — misses that arrays are ordered/indexed (and are themselves objects), iteration, built-in methods, reference semantics, and when to use each. A keyword-level answer, not interview-ready.`,
+];
 
 export interface ScoreContext {
   roleName: string;
@@ -521,21 +705,26 @@ export interface ScoreContext {
 
 function scorePrompt(ctx: ScoreContext, strict: boolean): string {
   return [
-    `You are a fair but rigorous interviewer evaluating a candidate's answer for a ${ctx.roleName} role.`,
+    `You are a fair but rigorous senior interviewer evaluating a candidate's answer for a ${ctx.roleName} role.`,
     ``,
-    `Grade on: correctness, depth, and relevance to the role. Reward partial credit.`,
-    `Calibrate to the difficulty band "${ctx.difficulty}" — judge a Junior answer by Junior expectations, a Senior answer by Senior expectations. Do NOT penalise a Junior for lacking Senior-level depth.`,
-    `Keep feedback specific and actionable — reference what they actually said. Avoid generic praise.`,
+    ...textRubricInstructions(ctx.difficulty),
     ``,
+    ...TEXT_SCORING_EXAMPLES,
+    ``,
+    `Now grade this answer:`,
     `Question: ${ctx.question}`,
     `Reference / ideal answer: ${ctx.idealAnswer}`,
     `Candidate answer: ${ctx.userAnswer}`,
     ``,
     `Return a JSON object with:`,
-    `- "score": integer 0-10`,
-    `- "feedback": 2-4 sentence specific assessment`,
+    `- "technicalAccuracy": integer 0-4`,
+    `- "completeness": integer 0-3`,
+    `- "communicationClarity": integer 0-2`,
+    `- "interviewReadiness": integer 0-1`,
+    `- "feedback": 2-4 sentences referencing the candidate's actual words and explaining why points were lost`,
     `- "strengths": array of short strings (may be empty)`,
     `- "improvements": array of short strings (may be empty)`,
+    `Do NOT include a "score" field — the total is computed from the four rubric numbers.`,
     strict
       ? `CRITICAL: Respond with ONLY the raw JSON object. No markdown, no code fences, no prose.`
       : `Respond as a JSON object only. No markdown.`,
@@ -556,7 +745,7 @@ export async function scoreAnswer(ctx: ScoreContext): Promise<AnswerScore> {
       throw new ScoringError("Scoring request failed.");
     }
     try {
-      return scoreSchema.parse(parseModelJson(raw));
+      return toTextScore(textScoreSchema.parse(parseModelJson(raw)));
     } catch (error) {
       lastIssue = error;
       console.warn(`[groq:score] invalid output on attempt ${attempt}`);
@@ -578,9 +767,13 @@ export interface BatchScoreItem {
   userAnswer: string;
 }
 
-/** scoreSchema plus the row id the model must echo back, so we can map results. */
-const batchScoreSchema = z.array(
-  scoreSchema.extend({ id: z.string().trim().min(1) }),
+/** textScoreSchema plus the row id the model must echo back, so we can map results. */
+const batchTextSchema = z.array(
+  textScoreSchema.extend({ id: z.string().trim().min(1) }),
+);
+/** codeScoreSchema plus the row id, for the code-scoring batch. */
+const batchCodeSchema = z.array(
+  codeScoreSchema.extend({ id: z.string().trim().min(1) }),
 );
 
 function batchScorePrompt(
@@ -602,22 +795,26 @@ function batchScorePrompt(
     .join("\n\n");
 
   return [
-    `You are a fair but rigorous interviewer evaluating a candidate's answers for a ${roleName} role.`,
-    `Grade the ${items.length} answers below. Score EACH one independently.`,
+    `You are a fair but rigorous senior interviewer evaluating a candidate's answers for a ${roleName} role.`,
+    `Grade the ${items.length} answers below. Score EACH one independently and consistently.`,
     ``,
-    `Grade on: correctness, depth, and relevance to the role. Reward partial credit.`,
-    `Calibrate to the difficulty band "${difficulty}" — judge a Junior answer by Junior expectations, a Senior answer by Senior expectations. Do NOT penalise a Junior for lacking Senior-level depth.`,
-    `Keep feedback specific and actionable — reference what they actually said. Avoid generic praise.`,
+    ...textRubricInstructions(difficulty),
+    ``,
+    ...TEXT_SCORING_EXAMPLES,
     ``,
     `Answers to grade:`,
     blocks,
     ``,
     `Return a JSON array with exactly one object per item above, each containing:`,
     `- "id": the exact id string from the matching item, echoed verbatim`,
-    `- "score": integer 0-10`,
-    `- "feedback": 2-4 sentence specific assessment`,
+    `- "technicalAccuracy": integer 0-4`,
+    `- "completeness": integer 0-3`,
+    `- "communicationClarity": integer 0-2`,
+    `- "interviewReadiness": integer 0-1`,
+    `- "feedback": 2-4 sentences referencing the candidate's actual words and explaining why points were lost`,
     `- "strengths": array of short strings (may be empty)`,
     `- "improvements": array of short strings (may be empty)`,
+    `Do NOT include a "score" field — the total is computed from the four rubric numbers.`,
     `Include every id exactly once. Do not merge, reorder-away, or omit any item.`,
     strict
       ? `CRITICAL: Respond with ONLY the raw JSON array. No markdown, no code fences, no prose.`
@@ -660,10 +857,11 @@ export async function scoreAnswersBatch(
     }
 
     try {
-      const parsed = batchScoreSchema.parse(parseModelJson(raw));
+      const parsed = batchTextSchema.parse(parseModelJson(raw));
       // Only accept ids we actually asked for; keep the first valid score seen.
-      for (const { id, ...score } of parsed) {
-        if (requested.has(id) && !map.has(id)) map.set(id, score);
+      // toTextScore derives the /10 total from the rubric components.
+      for (const { id, ...rest } of parsed) {
+        if (requested.has(id) && !map.has(id)) map.set(id, toTextScore(rest));
       }
 
       // All ids present — done. Otherwise retry only to recover the stragglers.
@@ -726,26 +924,34 @@ function batchCodePrompt(
 
   return [
     `You are a senior engineer conducting a CODING interview for a ${roleName} role. Evaluate each submission BY READING THE CODE — you cannot execute it.`,
-    `Grade the ${items.length} submission(s) below. Score EACH one independently 0-10.`,
+    `Grade the ${items.length} submission(s) below. Score EACH one independently.`,
     ``,
-    `Use a code-aware rubric, weighing:`,
-    `- Correctness: does the logic solve the stated problem and produce the right outputs?`,
-    `- Approach: is the algorithm/data-structure choice sound and reasonably efficient?`,
-    `- Edge cases: are empty/boundary/invalid inputs and overflow/null handled?`,
-    `- Readability: naming, structure, clarity, idiomatic use of the language.`,
-    `Reward partial credit for a correct approach with minor bugs. The reference solution is ONE valid answer — a different but correct approach should score well.`,
-    `Calibrate to the difficulty band "${difficulty}" — judge a Junior submission by Junior expectations, not Senior depth.`,
-    `In feedback, reference specific lines/choices in their code. Mention concrete bugs or missed edge cases when present.`,
+    `Score these FOUR dimensions, each 0-10. The /10 total is a WEIGHTED blend you do NOT compute — just give the four numbers (weights: correctness 40%, approach 25%, edge cases 20%, readability 15%):`,
+    `- "correctness" (0-10): does the logic actually solve the stated problem and produce correct outputs for normal inputs?`,
+    `- "approach" (0-10): is the algorithm / data-structure choice sound and reasonably efficient?`,
+    `- "edgeCases" (0-10): are empty / boundary / invalid inputs, overflow, and null/undefined handled?`,
+    `- "readability" (0-10): naming, structure, clarity, idiomatic use of the language.`,
+    ``,
+    `Grading rules:`,
+    `- Judge the LOGIC, not surface syntax. Do NOT heavily penalise minor syntax slips or typos when the intended logic is clearly correct — at most dock a little from readability.`,
+    `- Reward partial credit for a correct approach with minor bugs.`,
+    `- The reference solution is ONE valid answer — a different but correct approach should score just as well.`,
+    `- Calibrate to the difficulty band "${difficulty}" — judge a Junior submission by Junior expectations, not Senior depth.`,
+    `- "feedback" MUST reference specific lines/choices in THEIR code and name concrete bugs or missed edge cases, explaining why points were lost. No generic praise.`,
     ``,
     `Submissions to grade:`,
     blocks,
     ``,
     `Return a JSON array with exactly one object per item above, each containing:`,
     `- "id": the exact id string from the matching item, echoed verbatim`,
-    `- "score": integer 0-10`,
-    `- "feedback": 2-4 sentence specific assessment of the code`,
+    `- "correctness": integer 0-10`,
+    `- "approach": integer 0-10`,
+    `- "edgeCases": integer 0-10`,
+    `- "readability": integer 0-10`,
+    `- "feedback": 2-4 sentences referencing the actual code and explaining why points were lost`,
     `- "strengths": array of short strings (may be empty)`,
     `- "improvements": array of short strings (may be empty)`,
+    `Do NOT include a "score" field — it is computed from the weighted rubric.`,
     `Include every id exactly once. Do not merge, reorder-away, or omit any item.`,
     strict
       ? `CRITICAL: Respond with ONLY the raw JSON array. No markdown, no code fences, no prose.`
@@ -786,9 +992,10 @@ export async function scoreCodeBatch(
     }
 
     try {
-      const parsed = batchScoreSchema.parse(parseModelJson(raw));
-      for (const { id, ...score } of parsed) {
-        if (requested.has(id) && !map.has(id)) map.set(id, score);
+      const parsed = batchCodeSchema.parse(parseModelJson(raw));
+      // toCodeScore derives the /10 total from the weighted rubric.
+      for (const { id, ...rest } of parsed) {
+        if (requested.has(id) && !map.has(id)) map.set(id, toCodeScore(rest));
       }
 
       if (items.every((it) => map.has(it.id))) return map;

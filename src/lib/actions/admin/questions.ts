@@ -27,7 +27,7 @@ const normText = (s: string) => s.trim().toLowerCase().replace(/\s+/g, " ");
 /** Language column for a row: coding rows get a language (default if unset),
  *  everything else is null. */
 function languageFor(
-  type: "text" | "voice" | "either" | "coding",
+  type: "text" | "coding",
   language?: string | null,
 ): string | null {
   return type === "coding" ? (language ?? DEFAULT_CODING_LANGUAGE) : null;
@@ -41,7 +41,7 @@ const createSchema = z.object({
   // Interview type drives the signature (which pool this joins).
   interviewType: z.enum(["technical", "behavioral", "mixed", "coding"]),
   // Answering modality stored on the row.
-  type: z.enum(["text", "voice", "either", "coding"]),
+  type: z.enum(["text", "coding"]),
   // Editor language — only meaningful for coding questions.
   language: z.enum(CODING_LANGUAGES).optional(),
   questionText: z.string().trim().min(1, "Question is required.").max(4000),
@@ -88,7 +88,7 @@ const updateSchema = z.object({
   id: z.string().uuid(),
   questionText: z.string().trim().min(1).max(4000),
   idealAnswer: z.string().trim().min(1).max(8000),
-  type: z.enum(["text", "voice", "either", "coding"]),
+  type: z.enum(["text", "coding"]),
   language: z.enum(CODING_LANGUAGES).optional(),
   isActive: z.boolean(),
 });
@@ -311,7 +311,7 @@ export async function generateForConfig(
       techStackId: d.techStackId,
       focusAreaId: d.focusAreaId,
       difficulty: d.difficulty,
-      type: isCoding ? ("coding" as const) : ("either" as const),
+      type: isCoding ? ("coding" as const) : ("text" as const),
       language: isCoding ? (g.language ?? DEFAULT_CODING_LANGUAGE) : null,
       questionText: g.question_text,
       idealAnswer: g.ideal_answer,

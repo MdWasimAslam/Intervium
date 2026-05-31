@@ -254,7 +254,7 @@ async function main() {
                   techStackId: tech.id,
                   focusAreaId: focus.id,
                   difficulty: band.label,
-                  type: isCoding ? ("coding" as const) : ("either" as const),
+                  type: isCoding ? ("coding" as const) : ("text" as const),
                   language: isCoding
                     ? (g.language ?? DEFAULT_CODING_LANGUAGE)
                     : null,

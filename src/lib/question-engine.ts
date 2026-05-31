@@ -165,7 +165,7 @@ export async function getQuestionsForSession(
             techStackId: session.techStackId,
             focusAreaId: session.focusAreaId,
             difficulty: session.difficulty,
-            type: isCoding ? ("coding" as const) : ("either" as const),
+            type: isCoding ? ("coding" as const) : ("text" as const),
             language: isCoding
               ? (g.language ?? DEFAULT_CODING_LANGUAGE)
               : null,

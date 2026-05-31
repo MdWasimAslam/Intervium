@@ -13,7 +13,6 @@ import { Container } from "@/components/layout/Container";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InterviewRunner } from "@/components/interview/InterviewRunner";
-import { VoiceRunner } from "@/components/interview/VoiceRunner";
 
 export const metadata: Metadata = { title: "Interview" };
 
@@ -42,7 +41,6 @@ export default async function InterviewSessionPage({
       difficulty: interviewSessions.difficulty,
       interviewType: interviewSessions.interviewType,
       questionCount: interviewSessions.questionCount,
-      mode: interviewSessions.mode,
       timerEnabled: interviewSessions.timerEnabled,
       status: interviewSessions.status,
     })
@@ -133,26 +131,20 @@ export default async function InterviewSessionPage({
   for (const r of rows) initialAnswers[r.position] = r.userAnswer ?? "";
 
   const settings = await getSettings();
-  const runnerProps = {
-    sessionId,
-    questions: rows.map((r) => ({
-      position: r.position,
-      questionText: r.questionText,
-      type: r.type,
-      language: r.language,
-    })),
-    initialAnswers,
-    timerEnabled: session.timerEnabled,
-    timerSeconds: settings.defaultTimerSeconds,
-    startIndex,
-  };
 
-  return session.mode === "voice" ? (
-    <VoiceRunner
-      {...runnerProps}
-      transcriptionProvider={settings.transcriptionProvider}
+  return (
+    <InterviewRunner
+      sessionId={sessionId}
+      questions={rows.map((r) => ({
+        position: r.position,
+        questionText: r.questionText,
+        type: r.type,
+        language: r.language,
+      }))}
+      initialAnswers={initialAnswers}
+      timerEnabled={session.timerEnabled}
+      timerSeconds={settings.defaultTimerSeconds}
+      startIndex={startIndex}
     />
-  ) : (
-    <InterviewRunner {...runnerProps} />
   );
 }

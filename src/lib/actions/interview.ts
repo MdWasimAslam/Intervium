@@ -25,7 +25,6 @@ const startSchema = z.object({
   // so we only enforce shape here and validate membership at action time.
   questionCount: z.coerce.number().int().min(1).max(50),
   timerEnabled: z.boolean(),
-  mode: z.enum(["text", "voice"]),
 });
 
 export type StartInterviewInput = z.infer<typeof startSchema>;
@@ -117,7 +116,6 @@ export async function startInterview(
         interviewType: config.interviewType,
         difficulty: config.difficulty,
         questionCount: config.questionCount,
-        mode: config.mode,
         timerEnabled: config.timerEnabled,
         status: "in_progress",
       })
@@ -140,9 +138,6 @@ const saveAnswerSchema = z.object({
   position: z.number().int().min(0),
   answer: z.string().max(20000),
   timeTaken: z.number().int().min(0).max(100000),
-  // For voice mode: the raw transcript. Mirrored into user_answer by the
-  // caller so the Phase 8 scorer needs no changes.
-  transcript: z.string().max(20000).optional(),
 });
 
 export type SaveAnswerInput = z.infer<typeof saveAnswerSchema>;
@@ -178,7 +173,7 @@ export async function saveAnswer(
 
   const parsed = saveAnswerSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Invalid answer payload." };
-  const { sessionId, position, answer, timeTaken, transcript } = parsed.data;
+  const { sessionId, position, answer, timeTaken } = parsed.data;
 
   const session = await loadOwnedSession(sessionId, user.id);
   if (!session) return { ok: false, error: "Session not found." };
@@ -193,8 +188,6 @@ export async function saveAnswer(
         userAnswer: answer,
         timeTakenSeconds: timeTaken,
         answeredAt: new Date(),
-        // Only set transcript for voice; leave it untouched for text.
-        ...(transcript !== undefined ? { transcript } : {}),
       })
       .where(
         and(
@@ -305,7 +298,6 @@ export async function retakeSession(input: {
       interviewType: interviewSessions.interviewType,
       difficulty: interviewSessions.difficulty,
       questionCount: interviewSessions.questionCount,
-      mode: interviewSessions.mode,
       timerEnabled: interviewSessions.timerEnabled,
     })
     .from(interviewSessions)

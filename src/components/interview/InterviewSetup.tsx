@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Code2, Loader2, Mic, Zap } from "lucide-react";
+import { Code2, Loader2, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -97,7 +97,6 @@ export function InterviewSetup({
   const [timerEnabled, setTimerEnabled] = useState(false);
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
-  const [mode, setMode] = useState<"text" | "voice">("text");
 
   const roleFocus = useMemo(
     () => focusAreas.filter((f) => f.jobRoleId === jobRoleId),
@@ -145,9 +144,8 @@ export function InterviewSetup({
     `${questionCount} questions`,
   ];
 
-  function handleStart(selectedMode: "text" | "voice") {
+  function handleStart() {
     setError(undefined);
-    setMode(selectedMode);
     startTransition(async () => {
       const res = await startInterview({
         jobRoleId,
@@ -157,7 +155,6 @@ export function InterviewSetup({
         techStackId,
         questionCount,
         timerEnabled,
-        mode: selectedMode,
       });
       if (res?.error) setError(res.error);
     });
@@ -318,14 +315,10 @@ export function InterviewSetup({
 
         {error && <FormError message={error} />}
 
-        {/* Start actions. Coding interviews are editor-only (no speech). */}
+        {/* Start action. Coding interviews are editor-only. */}
         {interviewType === "coding" ? (
           <div className="flex flex-col gap-2">
-            <Button
-              size="lg"
-              disabled={pending}
-              onClick={() => handleStart("text")}
-            >
+            <Button size="lg" disabled={pending} onClick={handleStart}>
               {pending ? <Loader2 className="animate-spin" /> : <Code2 />}
               Start Coding Interview
             </Button>
@@ -334,35 +327,15 @@ export function InterviewSetup({
             </p>
           </div>
         ) : (
-          <div className="flex flex-col gap-3 sm:flex-row">
-            <Button
-              size="lg"
-              className="flex-1"
-              disabled={pending}
-              onClick={() => handleStart("text")}
-            >
-              {pending && mode === "text" ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <Zap />
-              )}
-              Start Interview
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="flex-1"
-              disabled={pending}
-              onClick={() => handleStart("voice")}
-            >
-              {pending && mode === "voice" ? (
-                <Loader2 className="animate-spin" />
-              ) : (
-                <Mic />
-              )}
-              Speech Interview
-            </Button>
-          </div>
+          <Button
+            size="lg"
+            className="w-full"
+            disabled={pending}
+            onClick={handleStart}
+          >
+            {pending ? <Loader2 className="animate-spin" /> : <Zap />}
+            Start Interview
+          </Button>
         )}
       </CardContent>
     </Card>

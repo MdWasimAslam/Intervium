@@ -7,26 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { FormError } from "@/components/auth/FormError";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { updateSettings } from "@/lib/actions/admin/settings";
 
 interface Props {
   defaultTimerSeconds: number;
   questionCounts: number[];
-  transcriptionProvider: "webspeech" | "whisper";
 }
 
 export function SettingsAdmin(initial: Props) {
   const router = useRouter();
   const [timer, setTimer] = useState(initial.defaultTimerSeconds);
   const [counts, setCounts] = useState(initial.questionCounts.join(", "));
-  const [provider, setProvider] = useState(initial.transcriptionProvider);
   const [error, setError] = useState<string>();
   const [saved, setSaved] = useState(false);
   const [pending, start] = useTransition();
@@ -42,7 +33,6 @@ export function SettingsAdmin(initial: Props) {
       const res = await updateSettings({
         defaultTimerSeconds: timer,
         questionCounts: parsedCounts,
-        transcriptionProvider: provider,
       });
       if (res.ok) {
         setSaved(true);
@@ -83,25 +73,6 @@ export function SettingsAdmin(initial: Props) {
               onChange={(e) => setCounts(e.target.value)}
               placeholder="3, 5, 10"
             />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Transcription provider</Label>
-            <Select
-              value={provider}
-              onValueChange={(v) => setProvider(v as typeof provider)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="webspeech">
-                  Web Speech (browser, needs Google)
-                </SelectItem>
-                <SelectItem value="whisper">
-                  Local Whisper (server, offline)
-                </SelectItem>
-              </SelectContent>
-            </Select>
           </div>
 
           {error && <FormError message={error} />}

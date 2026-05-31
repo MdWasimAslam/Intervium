@@ -25,6 +25,5 @@ export interface WizardValues {
   yearsExperience: number;
   skills: string[];
   targetRole: string;
-  interviewStyle: "" | "text" | "voice" | "both";
   cvText: string;
 }

@@ -4,13 +4,11 @@ import { appSettings, db } from "@db";
 export interface AppSettings {
   defaultTimerSeconds: number;
   questionCounts: number[];
-  transcriptionProvider: "webspeech" | "whisper";
 }
 
 const DEFAULTS: AppSettings = {
   defaultTimerSeconds: 120,
   questionCounts: [3, 5, 10],
-  transcriptionProvider: "webspeech",
 };
 
 /**
@@ -38,8 +36,6 @@ export async function getSettings(): Promise<AppSettings> {
         Array.isArray(row.questionCounts) && row.questionCounts.length
           ? row.questionCounts
           : DEFAULTS.questionCounts,
-      transcriptionProvider:
-        row.transcriptionProvider === "whisper" ? "whisper" : "webspeech",
     };
   } catch (error) {
     console.error("[getSettings]", error);

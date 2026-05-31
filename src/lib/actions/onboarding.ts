@@ -10,8 +10,6 @@ import { getCurrentUser } from "@/lib/session";
 /* Schemas                                                                    */
 /* -------------------------------------------------------------------------- */
 
-const INTERVIEW_STYLES = ["text", "voice", "both"] as const;
-
 /** Per-field rules. Used partially for step saves, fully for completion. */
 const fieldSchema = {
   displayName: z.string().trim().min(1, "Display name is required.").max(80),
@@ -19,7 +17,6 @@ const fieldSchema = {
   yearsExperience: z.number().int().min(0).max(60),
   skills: z.array(z.string().trim().min(1).max(60)).max(50),
   targetRole: z.string().trim().max(200),
-  interviewStyle: z.enum(INTERVIEW_STYLES),
   cvText: z.string().max(20000),
 };
 
@@ -31,7 +28,6 @@ const completeSchema = z.object({
   yearsExperience: fieldSchema.yearsExperience,
   skills: fieldSchema.skills.default([]),
   targetRole: fieldSchema.targetRole.default(""),
-  interviewStyle: fieldSchema.interviewStyle,
   cvText: fieldSchema.cvText.default(""),
 });
 
@@ -143,7 +139,6 @@ export async function completeOnboarding(data: unknown): Promise<StepResult> {
       yearsExperience: input.yearsExperience,
       skills: input.skills,
       targetRole: input.targetRole,
-      interviewStyle: input.interviewStyle,
       // cvText is intentionally kept out of the draft echo; it lives in its column.
       completed: true,
     };

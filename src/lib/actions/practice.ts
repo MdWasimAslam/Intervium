@@ -89,7 +89,6 @@ export async function practiceWeakArea(
         interviewType: "technical",
         difficulty: config.difficulty,
         questionCount: PRACTICE_QUESTION_COUNT,
-        mode: "text",
         timerEnabled: false,
         status: "in_progress",
       })
@@ -167,7 +166,6 @@ export async function retryWeakAnswers(): Promise<{ error?: string }> {
           interviewType: "mixed",
           difficulty: dominant.difficulty,
           questionCount: ordered.length,
-          mode: "text",
           timerEnabled: false,
           status: "in_progress",
         })

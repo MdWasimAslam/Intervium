@@ -81,7 +81,7 @@ export interface QuestionRow {
   techName: string;
   focusName: string;
   difficulty: string;
-  type: "text" | "voice" | "either" | "coding";
+  type: "text" | "coding";
   language: string | null;
   source: "ai" | "admin";
   isActive: boolean;
@@ -890,9 +890,7 @@ function QuestionDialog({
   const [error, setError] = useState<string>();
   const [pending, start] = useTransition();
   const c = useConfigState(roles, techStacks, focusAreas, bands);
-  const [type, setType] = useState<"text" | "voice" | "either" | "coding">(
-    "either",
-  );
+  const [type, setType] = useState<"text" | "coding">("text");
   const [language, setLanguage] = useState<string>("javascript");
   const [questionText, setQuestionText] = useState("");
   const [idealAnswer, setIdealAnswer] = useState("");
@@ -1014,9 +1012,7 @@ function QuestionDialog({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="either">Either</SelectItem>
                   <SelectItem value="text">Text</SelectItem>
-                  <SelectItem value="voice">Voice</SelectItem>
                   <SelectItem value="coding">Coding</SelectItem>
                 </SelectContent>
               </Select>

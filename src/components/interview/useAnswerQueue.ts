@@ -6,8 +6,6 @@ import { saveAnswer } from "@/lib/actions/interview";
 export interface AnswerPayload {
   answer: string;
   timeTaken: number;
-  /** Voice mode only — mirrored into user_answer by saveAnswer. */
-  transcript?: string;
 }
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));

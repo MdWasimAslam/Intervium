@@ -50,7 +50,6 @@ export async function scoreSession(sessionId: string): Promise<void> {
       type: questionsCache.type,
       language: questionsCache.language,
       userAnswer: sessionQuestions.userAnswer,
-      transcript: sessionQuestions.transcript,
       feedback: sessionQuestions.feedback,
     })
     .from(sessionQuestions)
@@ -72,7 +71,7 @@ export async function scoreSession(sessionId: string): Promise<void> {
   const codeAnswered: BatchCodeItem[] = [];
 
   for (const row of pending) {
-    const answer = (row.userAnswer ?? row.transcript ?? "").trim();
+    const answer = (row.userAnswer ?? "").trim();
     if (!answer) {
       // Empty/skipped — score 0 without calling the model.
       results.set(row.id, {
@@ -171,6 +170,11 @@ export async function scoreSession(sessionId: string): Promise<void> {
         const detail = JSON.stringify({
           strengths: u.result.strengths,
           improvements: u.result.improvements,
+          // Rubric breakdown for the results UI. JSON.stringify drops whichever
+          // is undefined (text answers have `rubric`, coding has `codeRubric`,
+          // empty/fallback scores have neither).
+          rubric: u.result.rubric,
+          codeRubric: u.result.codeRubric,
         });
         return sql`(${u.id}::uuid, ${u.result.score}::int, ${u.result.feedback}::text, ${detail}::jsonb)`;
       }),
