@@ -8,6 +8,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 
@@ -95,7 +96,11 @@ export const focusAreas = pgTable(
     name: text("name").notNull(),
     isActive: boolean("is_active").notNull().default(true),
   },
-  (table) => [index("focus_areas_job_role_id_idx").on(table.jobRoleId)],
+  (table) => [
+    index("focus_areas_job_role_id_idx").on(table.jobRoleId),
+    // No two focus areas with the same name under one role.
+    unique("focus_areas_job_role_id_name_key").on(table.jobRoleId, table.name),
+  ],
 );
 
 /* -------------------------------------------------------------------------- */
@@ -111,7 +116,11 @@ export const techStacks = pgTable(
     name: text("name").notNull(),
     isActive: boolean("is_active").notNull().default(true),
   },
-  (table) => [index("tech_stacks_job_role_id_idx").on(table.jobRoleId)],
+  (table) => [
+    index("tech_stacks_job_role_id_idx").on(table.jobRoleId),
+    // No two tech stacks with the same name under one role.
+    unique("tech_stacks_job_role_id_name_key").on(table.jobRoleId, table.name),
+  ],
 );
 
 /* -------------------------------------------------------------------------- */
@@ -128,7 +137,15 @@ export const difficultyBands = pgTable(
     minYears: integer("min_years"),
     maxYears: integer("max_years"),
   },
-  (table) => [index("difficulty_bands_job_role_id_idx").on(table.jobRoleId)],
+  (table) => [
+    index("difficulty_bands_job_role_id_idx").on(table.jobRoleId),
+    // A role can't have two bands sharing the same label (backs the app-level
+    // overlap check with a race-proof DB constraint).
+    unique("difficulty_bands_job_role_id_label_key").on(
+      table.jobRoleId,
+      table.label,
+    ),
+  ],
 );
 
 /* -------------------------------------------------------------------------- */
@@ -282,6 +299,12 @@ export const sessionQuestions = pgTable(
     ),
     // "Has any session used this question?" guard before deleting a question.
     index("session_questions_question_id_idx").on(table.questionId),
+    // A question appears at most once per session — lets inserts use
+    // .onConflictDoNothing() to dedupe safely.
+    unique("session_questions_session_id_question_id_key").on(
+      table.sessionId,
+      table.questionId,
+    ),
   ],
 );
 

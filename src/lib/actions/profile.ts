@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, jobRoles, profiles } from "@db";
 import { getCurrentUser } from "@/lib/session";
@@ -66,7 +66,9 @@ export async function updateProfile(
     const [role] = await db
       .select({ id: jobRoles.id })
       .from(jobRoles)
-      .where(eq(jobRoles.id, data.primaryRoleId));
+      .where(
+        and(eq(jobRoles.id, data.primaryRoleId), eq(jobRoles.isActive, true)),
+      );
     if (!role) {
       return { ok: false, error: "Selected role is no longer available." };
     }

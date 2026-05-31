@@ -1,6 +1,7 @@
 import { config } from "dotenv";
 config({ path: ".env.local" });
 
+import { randomBytes } from "node:crypto";
 import bcrypt from "bcryptjs";
 import { and, eq } from "drizzle-orm";
 import { neon } from "@neondatabase/serverless";
@@ -61,9 +62,22 @@ const CODING_QUESTIONS: {
  */
 
 const ADMIN_EMAIL = "admin@intervium.app";
-const ADMIN_PASSWORD = "Intervium@Admin1"; // placeholder — change after first login
 
 const ACCESS_CODES = ["INTV-2K7Q4", "INTV-9F3X1", "INTV-5M8Z6"];
+
+/**
+ * Resolve the admin password: prefer `ADMIN_PASSWORD` from the environment,
+ * otherwise generate a strong random one. The plaintext is NEVER logged — if
+ * it was generated, the operator must reset it (see notice printed at seed time).
+ */
+function resolveAdminPassword(): { password: string; generated: boolean } {
+  const fromEnv = process.env.ADMIN_PASSWORD;
+  if (fromEnv && fromEnv.length > 0) {
+    return { password: fromEnv, generated: false };
+  }
+  // base64url, ~32 bytes of entropy → a strong, unguessable password.
+  return { password: randomBytes(24).toString("base64url"), generated: true };
+}
 
 async function main() {
   const databaseUrl = process.env.DATABASE_URL;
@@ -72,7 +86,10 @@ async function main() {
   const db = drizzle(neon(databaseUrl), { schema });
 
   // 1) Admin user --------------------------------------------------------
-  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
+  // Idempotent: onConflictDoNothing means an existing admin keeps its current
+  // password — the hash below is only used when the row is first created.
+  const { password: adminPassword, generated } = resolveAdminPassword();
+  const passwordHash = await bcrypt.hash(adminPassword, 12);
   await db
     .insert(schema.users)
     .values({ email: ADMIN_EMAIL, passwordHash, role: "admin" })
@@ -83,10 +100,21 @@ async function main() {
     .from(schema.users)
     .where(eq(schema.users.email, ADMIN_EMAIL));
 
+  // Never log the plaintext password or the hash — only the email + a notice.
   console.log("\n👤 Admin user:");
-  console.log(`   email:    ${admin.email}`);
-  console.log(`   password: ${ADMIN_PASSWORD}  (placeholder plaintext)`);
-  console.log(`   hash:     ${admin.passwordHash}`);
+  console.log(`   email: ${admin.email}`);
+  if (generated) {
+    console.log(
+      "   notice: no ADMIN_PASSWORD was set, so a random password was generated.",
+    );
+    console.log(
+      "           Reset it now via the admin panel or by re-seeding with ADMIN_PASSWORD set.",
+    );
+  } else {
+    console.log(
+      "   notice: rotate the admin password after first login if this is a shared/default value.",
+    );
+  }
 
   // 2) Job role ----------------------------------------------------------
   await db

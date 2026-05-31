@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
 import { db, interviewSessions, questionsCache, sessionQuestions } from "@db";
@@ -10,6 +11,7 @@ import {
 } from "@/lib/question-engine";
 import { Container } from "@/components/layout/Container";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { InterviewRunner } from "@/components/interview/InterviewRunner";
 import { VoiceRunner } from "@/components/interview/VoiceRunner";
 
@@ -78,8 +80,20 @@ export default async function InterviewSessionPage({
           <CardHeader>
             <CardTitle>We hit a snag</CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-4">
             <p className="text-sm text-[var(--destructive)]">{genError}</p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {/* Retry: reloading this page re-runs question generation. */}
+              <Link href={`/interview/${sessionId}`}>
+                <Button>Try again</Button>
+              </Link>
+              <Link href="/interview/new">
+                <Button variant="outline">Back to setup</Button>
+              </Link>
+              <Link href="/dashboard">
+                <Button variant="ghost">Dashboard</Button>
+              </Link>
+            </div>
           </CardContent>
         </Card>
       </Container>

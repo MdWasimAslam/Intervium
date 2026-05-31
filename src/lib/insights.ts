@@ -28,6 +28,12 @@ const MIN_SAMPLES = 3;
 const RETRY_MAX_SCORE = 6;
 /** Hard cap on a single "retry weakest" session. */
 const RETRY_LIMIT = 10;
+/**
+ * Upper bound on answered-question rows scanned for insights. Ordered by most
+ * recent scored session, so this covers a generous window of recent attempts
+ * (the latest attempt per question is what counts) without an unbounded scan.
+ */
+const ATTEMPT_SCAN_LIMIT = 1000;
 
 export interface WeakArea {
   /** Full config to launch a pre-set practice session. */
@@ -132,7 +138,8 @@ async function loadLatestAttempts(userId: string): Promise<Attempt[]> {
         isNotNull(sessionQuestions.feedback),
       ),
     )
-    .orderBy(desc(interviewSessions.scoredAt));
+    .orderBy(desc(interviewSessions.scoredAt))
+    .limit(ATTEMPT_SCAN_LIMIT);
 
   const latest = new Map<string, Attempt>();
   for (const r of rows) {

@@ -11,7 +11,13 @@ export const authConfig = {
   // Trust the deploy host (Vercel sets the URL; required for the Edge
   // middleware instance to read the session without AUTH_URL).
   trustHost: true,
-  session: { strategy: "jwt" },
+  // 7-day sessions, refreshed at most once a day. The JWT is not reconciled
+  // against the DB here (this runs in Edge middleware) — see getCurrentUser.
+  session: {
+    strategy: "jwt",
+    maxAge: 60 * 60 * 24 * 7,
+    updateAge: 60 * 60 * 24,
+  },
   pages: {
     signIn: "/login",
   },

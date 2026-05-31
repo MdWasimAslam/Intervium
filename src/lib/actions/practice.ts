@@ -12,6 +12,7 @@ import {
   sessionQuestions,
   techStacks,
 } from "@db";
+import { withTransaction } from "@db/tx";
 import { getCurrentUser } from "@/lib/session";
 import { getRetryQuestionIds } from "@/lib/insights";
 
@@ -153,30 +154,34 @@ export async function retryWeakAnswers(): Promise<{ error?: string }> {
 
   let sessionId: string;
   try {
-    const [session] = await db
-      .insert(interviewSessions)
-      .values({
-        userId: user.id,
-        jobRoleId: dominant.jobRoleId,
-        techStackId: dominant.techStackId,
-        focusAreaId: dominant.focusAreaId,
-        interviewType: "mixed",
-        difficulty: dominant.difficulty,
-        questionCount: ordered.length,
-        mode: "text",
-        timerEnabled: false,
-        status: "in_progress",
-      })
-      .returning({ id: interviewSessions.id });
-    sessionId = session.id;
+    // Both inserts must succeed together — otherwise an orphaned empty session
+    // (no questions) would persist and break the interview page.
+    sessionId = await withTransaction(async (tx) => {
+      const [session] = await tx
+        .insert(interviewSessions)
+        .values({
+          userId: user.id,
+          jobRoleId: dominant.jobRoleId,
+          techStackId: dominant.techStackId,
+          focusAreaId: dominant.focusAreaId,
+          interviewType: "mixed",
+          difficulty: dominant.difficulty,
+          questionCount: ordered.length,
+          mode: "text",
+          timerEnabled: false,
+          status: "in_progress",
+        })
+        .returning({ id: interviewSessions.id });
 
-    await db.insert(sessionQuestions).values(
-      ordered.map((questionId, position) => ({
-        sessionId,
-        questionId,
-        position,
-      })),
-    );
+      await tx.insert(sessionQuestions).values(
+        ordered.map((questionId, position) => ({
+          sessionId: session.id,
+          questionId,
+          position,
+        })),
+      );
+      return session.id;
+    });
   } catch (error) {
     console.error("[retryWeakAnswers]", error);
     return { error: "Could not start your retry session. Please try again." };

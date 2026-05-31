@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { Check, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { QuestionPrompt } from "@/components/interview/QuestionPrompt";
@@ -32,12 +32,13 @@ function CodeBlock({ code }: { code: string }) {
 
 function scoreColor(pct: number): string {
   if (pct >= 70) return "text-[var(--primary)]";
-  if (pct >= 40) return "text-amber-500";
+  if (pct >= 40) return "text-amber-600 dark:text-amber-400";
   return "text-[var(--destructive)]";
 }
 
 /** Animated per-question breakdown cards. */
 export function QuestionResults({ results }: { results: QuestionResult[] }) {
+  const reduced = useReducedMotion() ?? false;
   return (
     <div className="space-y-4">
       {results.map((r, i) => {
@@ -45,9 +46,13 @@ export function QuestionResults({ results }: { results: QuestionResult[] }) {
         return (
           <motion.div
             key={r.position}
-            initial={{ opacity: 0, y: 12 }}
+            initial={reduced ? false : { opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: i * 0.06, ease: "easeOut" }}
+            transition={
+              reduced
+                ? { duration: 0 }
+                : { duration: 0.3, delay: Math.min(i, 8) * 0.06, ease: "easeOut" }
+            }
           >
             <Card>
               <CardContent className="space-y-4 p-6">
@@ -124,7 +129,7 @@ export function QuestionResults({ results }: { results: QuestionResult[] }) {
                     )}
                     {r.improvements.length > 0 && (
                       <div>
-                        <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-500">
+                        <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
                           <TrendingUp className="h-3.5 w-3.5" /> To improve
                         </p>
                         <ul className="space-y-1 text-sm">

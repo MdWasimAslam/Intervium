@@ -23,6 +23,10 @@ export function QuestionTimer({
 }: QuestionTimerProps) {
   const [remaining, setRemaining] = useState(seconds);
   const expireRef = useRef(onExpire);
+  // Wall-clock start so the countdown self-corrects under tab throttling
+  // (setInterval is throttled/coalesced in background tabs and would drift).
+  // Set inside the effect (not during render) to stay pure.
+  const startRef = useRef<number | null>(null);
 
   // Keep the latest onExpire without re-running the interval effect.
   useEffect(() => {
@@ -30,11 +34,24 @@ export function QuestionTimer({
   });
 
   useEffect(() => {
-    const id = setInterval(() => {
-      setRemaining((r) => (r > 0 ? r - 1 : 0));
-    }, 1000);
-    return () => clearInterval(id);
-  }, []);
+    startRef.current = Date.now();
+    const compute = () => {
+      const elapsed = Math.round((Date.now() - (startRef.current ?? Date.now())) / 1000);
+      setRemaining(Math.max(0, seconds - elapsed));
+    };
+    compute();
+    const id = setInterval(compute, 1000);
+    // Recompute immediately when the tab regains focus so a throttled timer
+    // snaps back to the true remaining time.
+    const onVisibility = () => {
+      if (document.visibilityState === "visible") compute();
+    };
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, [seconds]);
 
   // Fire onExpire exactly once when we hit zero.
   useEffect(() => {

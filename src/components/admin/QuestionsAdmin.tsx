@@ -410,9 +410,13 @@ export function QuestionsAdmin({
                 <Switch
                   checked={q.isActive}
                   onCheckedChange={(v) =>
-                    toggleQuestion({ id: q.id, isActive: v }).then(() =>
-                      router.refresh(),
-                    )
+                    toggleQuestion({ id: q.id, isActive: v }).then((res) => {
+                      if (!res.ok) {
+                        window.alert(res.error ?? "Could not update the question.");
+                        return;
+                      }
+                      router.refresh();
+                    })
                   }
                   aria-label="Toggle active"
                 />
@@ -648,7 +652,11 @@ function DuplicateButton({ id }: { id: string }) {
       disabled={pending}
       onClick={() =>
         start(async () => {
-          await duplicateQuestion({ id });
+          const res = await duplicateQuestion({ id });
+          if (!res.ok) {
+            window.alert(res.error ?? "Could not duplicate the question.");
+            return;
+          }
           router.refresh();
         })
       }

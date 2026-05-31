@@ -23,6 +23,24 @@ const GROQ_MODEL = "whisper-large-v3-turbo";
 // Local fallback model (~142MB), auto-downloaded on first use.
 const LOCAL_MODEL = "base";
 
+// Reject uploads larger than this before reading the body into memory.
+const MAX_AUDIO_BYTES = 20 * 1024 * 1024; // 20MB
+// Allowed audio container/codec MIME types (matches what MediaRecorder emits).
+const ALLOWED_MIME = new Set([
+  "audio/webm",
+  "audio/ogg",
+  "audio/wav",
+  "audio/mp4",
+  "audio/mpeg",
+]);
+
+/** Upstream "try again" error → propagate the transient status to the client. */
+class TransientTranscriptionError extends Error {
+  constructor(public status: number) {
+    super(`transient ${status}`);
+  }
+}
+
 async function transcribeWithGroq(apiKey: string, audio: File): Promise<string> {
   const form = new FormData();
   form.append("file", audio, audio.name || "answer.webm");
@@ -36,6 +54,11 @@ async function transcribeWithGroq(apiKey: string, audio: File): Promise<string> 
   if (!res.ok) {
     const detail = await res.text().catch(() => "");
     console.error("[transcribe] groq error", res.status, detail.slice(0, 300));
+    // 429 (rate limited) / 503 (overloaded) are transient — surface them so the
+    // client can distinguish "retry later" from a permanent failure.
+    if (res.status === 429 || res.status === 503) {
+      throw new TransientTranscriptionError(res.status);
+    }
     throw new Error(`groq ${res.status}`);
   }
   const data = (await res.json()) as { text?: string };
@@ -100,6 +123,22 @@ export async function POST(req: NextRequest) {
   if (!audio || audio.size === 0) {
     return NextResponse.json({ error: "No audio provided." }, { status: 400 });
   }
+  // Reject oversized uploads before doing any work with the body.
+  if (audio.size > MAX_AUDIO_BYTES) {
+    return NextResponse.json(
+      { error: "Audio is too large (max 20MB). Please record a shorter answer." },
+      { status: 413 },
+    );
+  }
+  // Allow-list the container/codec. `audio.type` can carry codec params
+  // (e.g. "audio/webm;codecs=opus"), so match on the base MIME type.
+  const baseType = audio.type.split(";")[0].trim().toLowerCase();
+  if (!ALLOWED_MIME.has(baseType)) {
+    return NextResponse.json(
+      { error: "Unsupported audio format." },
+      { status: 400 },
+    );
+  }
 
   const apiKey = process.env.GROQ_API_KEY;
   try {
@@ -109,6 +148,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ text });
   } catch (error) {
     console.error("[transcribe]", error);
+    // Propagate transient upstream errors so the client can retry; everything
+    // else is treated as a fatal server error.
+    if (error instanceof TransientTranscriptionError) {
+      return NextResponse.json(
+        { error: "Transcription is busy. Please try again in a moment." },
+        { status: error.status },
+      );
+    }
     return NextResponse.json(
       { error: "Transcription failed." },
       { status: 500 },

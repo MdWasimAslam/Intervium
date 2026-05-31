@@ -1,7 +1,4 @@
 # Intervium
-email: admin@intervium.app
-password (plaintext placeholder): Intervium@Admin1
-bcrypt hash stored: $2b$10$ts4vF/5KpkRqjdJwQwUL/.c1Zhp6wBsE59O/TzGouesXn4pPHMubG
 
 AI-powered mock interviews with instant, actionable feedback. Pick a role, tech
 stack, focus area and difficulty; answer by **text or voice**; get per-question
@@ -72,8 +69,10 @@ npm run db:migrate    # apply pending migrations
 npm run db:seed       # seed baseline data (idempotent)
 ```
 
-The seed prints the admin credentials (default `admin@intervium.app`). **Change
-the password after first login.**
+The seed creates the admin account (default email `admin@intervium.app`). Set
+`ADMIN_PASSWORD` before seeding to choose the password; if it's unset, the seed
+generates a random one and prints **only** a notice to set/rotate it (never the
+password itself). **Set or rotate the admin password before first login.**
 
 ---
 

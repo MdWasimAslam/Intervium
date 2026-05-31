@@ -1,9 +1,14 @@
 /**
  * Tiny in-memory, per-key sliding-window rate limiter.
  *
- * Good enough to throttle expensive Groq generation per user during a
- * single server instance's lifetime. For multi-instance production you'd back
- * this with Redis/Upstash, but that's out of scope here.
+ * IMPORTANT: state lives in this process's memory only. On serverless
+ * (e.g. Vercel) each instance — and each cold start — has its own buckets, so
+ * limits are NOT shared across instances and can reset at any time. This makes
+ * the limiter strictly best-effort: it raises the cost of brute-force /
+ * enumeration / abuse but must NOT be relied on as a hard security control.
+ *
+ * For real multi-instance enforcement in production, back this with a shared
+ * store such as Redis / Upstash (a drop-in replacement behind allowAction).
  */
 const buckets = new Map<string, number[]>();
 

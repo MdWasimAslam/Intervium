@@ -41,7 +41,13 @@ const yearsSchema = z.number().int().min(0).max(60).optional();
 /* Activate / deactivate                                                      */
 /* -------------------------------------------------------------------------- */
 
-/** Activate or deactivate a user (deactivated users can't log in). */
+/**
+ * Activate or deactivate a user (deactivated users can't log in).
+ *
+ * Deactivation takes effect on the user's next server request: getCurrentUser
+ * re-reads `isActive` from the DB and treats a deactivated account as signed
+ * out, so an already-issued JWT is effectively revoked without a logout.
+ */
 export async function setUserActive(input: unknown): Promise<AdminResult> {
   const admin = await requireAdmin();
   const p = z
@@ -235,20 +241,24 @@ export async function resetUserAccountData(
   if (!target) return { ok: false, error: "User not found." };
 
   try {
-    // Children first: session questions are deleted by their parent sessions.
-    await db.delete(sessionQuestions).where(
-      inArray(
-        sessionQuestions.sessionId,
-        db
-          .select({ id: interviewSessions.id })
-          .from(interviewSessions)
-          .where(eq(interviewSessions.userId, id)),
-      ),
-    );
-    await db
-      .delete(interviewSessions)
-      .where(eq(interviewSessions.userId, id));
-    await db.delete(profiles).where(eq(profiles.userId, id));
+    // All three deletes run atomically so we never leave a partially-wiped
+    // account behind if one statement fails (mirrors deleteUser).
+    await withTransaction(async (tx) => {
+      // Children first: session questions are deleted by their parent sessions.
+      await tx.delete(sessionQuestions).where(
+        inArray(
+          sessionQuestions.sessionId,
+          tx
+            .select({ id: interviewSessions.id })
+            .from(interviewSessions)
+            .where(eq(interviewSessions.userId, id)),
+        ),
+      );
+      await tx
+        .delete(interviewSessions)
+        .where(eq(interviewSessions.userId, id));
+      await tx.delete(profiles).where(eq(profiles.userId, id));
+    });
   } catch (error) {
     console.error("[resetUserAccountData]", error);
     return { ok: false, error: "Could not reset the account." };

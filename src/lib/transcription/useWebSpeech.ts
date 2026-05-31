@@ -86,6 +86,9 @@ export function useWebSpeech({
   const finalRef = useRef("");
   // True while the user intends to be recording — drives the auto-restart.
   const keepAliveRef = useRef(false);
+  // True once stop() has been requested: suppresses further onTranscript emits
+  // so we don't clobber manual textarea edits made after stopping.
+  const stoppingRef = useRef(false);
   const restartTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const onTranscriptRef = useRef(onTranscript);
@@ -112,6 +115,7 @@ export function useWebSpeech({
     recognition.interimResults = true;
     recognition.lang = "en-US";
     finalRef.current = "";
+    stoppingRef.current = false;
 
     // Only the live instance is allowed to act on its events.
     const isActive = () => recognitionRef.current === recognition;
@@ -148,6 +152,9 @@ export function useWebSpeech({
         if (result.isFinal) finalRef.current += result[0].transcript + " ";
         else interim += result[0].transcript;
       }
+      // Once stop() has been requested, don't keep pushing text — a late
+      // result would otherwise overwrite manual edits to the textarea.
+      if (stoppingRef.current) return;
       onTranscriptRef.current((finalRef.current + interim).trim());
     };
 
@@ -193,8 +200,9 @@ export function useWebSpeech({
     }
   }, []);
 
-  const stop = useCallback(() => {
+  const stop = useCallback((): Promise<string> => {
     keepAliveRef.current = false;
+    stoppingRef.current = true;
     if (restartTimerRef.current) {
       clearTimeout(restartTimerRef.current);
       restartTimerRef.current = null;
@@ -202,6 +210,9 @@ export function useWebSpeech({
     recognitionRef.current?.stop();
     setRecording(false);
     setStatus((s) => (s === "recording" ? "idle" : s));
+    // Web Speech has already emitted finalized text live; resolve with it so
+    // callers can treat stop() uniformly with the server provider.
+    return Promise.resolve(finalRef.current.trim());
   }, []);
 
   const reset = useCallback(() => {

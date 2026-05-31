@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
-import { db, profiles } from "@db";
+import { db, profiles, users } from "@db";
 import { auth } from "@/auth";
 
 /**
@@ -9,10 +9,37 @@ import { auth } from "@/auth";
  * authorization (especially admin checks).
  */
 
-/** Return the current user, or `null` if not signed in. */
+/**
+ * Return the current user, or `null` if not signed in.
+ *
+ * This is the real revocation-enforcement point: the JWT carries a snapshot of
+ * the user's role/active state and is NOT reconciled against the DB in the Edge
+ * middleware. So on every server-side check we re-read the `users` row and:
+ *   - treat a missing or deactivated user as signed out (return null), and
+ *   - return the *fresh* DB role, so a demotion takes effect immediately.
+ * If the DB read fails we fall back to the JWT user rather than locking
+ * everyone out on a transient error.
+ */
 export async function getCurrentUser() {
   const session = await auth();
-  return session?.user ?? null;
+  const user = session?.user ?? null;
+  if (!user?.id) return user;
+
+  try {
+    const [row] = await db
+      .select({ isActive: users.isActive, role: users.role })
+      .from(users)
+      .where(eq(users.id, user.id));
+
+    // Gone or deactivated → treat as signed out.
+    if (!row || row.isActive === false) return null;
+
+    // Use the current DB role so demotions/promotions apply right away.
+    return { ...user, role: row.role };
+  } catch (error) {
+    console.error("[getCurrentUser] DB re-validation failed", error);
+    return user;
+  }
 }
 
 /**

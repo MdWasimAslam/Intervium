@@ -11,7 +11,6 @@ import {
   generateSummary,
   scoreAnswersBatch,
   scoreCodeBatch,
-  ScoringError,
   type AnswerScore,
   type BatchCodeItem,
   type BatchScoreItem,
@@ -117,38 +116,45 @@ export async function scoreSession(sessionId: string): Promise<void> {
     improvements: [],
   };
 
-  // Text / behavioral answers — ONE Groq call.
+  // Text / behavioral answers — ONE Groq call. A ScoringError here means the
+  // model never produced *any* valid score for this group (network/quota/
+  // invalid output). We must NOT persist fallback zeros or mark the session
+  // scored — that would permanently finalise a failure the user can never
+  // retry. Re-throw so the session stays unscored and the "Try again" UI path
+  // can re-run real scoring later. (A *partial* response is no longer an error:
+  // scoreAnswersBatch returns the valid ids and we fill only the missing ones
+  // with `fallback` below — those genuinely couldn't be scored this run.)
   if (answered.length > 0) {
-    try {
-      const scores = await scoreAnswersBatch(
-        session.roleName,
-        session.difficulty,
-        answered,
-      );
-      for (const item of answered) {
-        results.set(item.id, scores.get(item.id) ?? fallback);
-      }
-    } catch (error) {
-      if (!(error instanceof ScoringError)) throw error;
-      // Quota/network/invalid output — fall back rather than crashing the session.
-      for (const item of answered) results.set(item.id, fallback);
+    // A thrown ScoringError (or any error) propagates out of scoreSession,
+    // leaving the session unscored and retryable — we never persist fallback
+    // zeros for a fully-failed group. scoreAnswersBatch returns partial maps,
+    // so `?? fallback` only fills ids the model genuinely couldn't return.
+    const scores = await scoreAnswersBatch(
+      session.roleName,
+      session.difficulty,
+      answered,
+    );
+    for (const item of answered) {
+      results.set(item.id, scores.get(item.id) ?? fallback);
     }
   }
 
-  // Coding submissions — ONE Groq call with the code-aware rubric.
+  // Coding submissions — ONE Groq call with the code-aware rubric. Same
+  // all-or-nothing-failure handling: a ScoringError leaves the session
+  // unscored (including mixed text+code sessions — if either group fully
+  // fails, nothing is finalised) so it can be retried.
   if (codeAnswered.length > 0) {
-    try {
-      const scores = await scoreCodeBatch(
-        session.roleName,
-        session.difficulty,
-        codeAnswered,
-      );
-      for (const item of codeAnswered) {
-        results.set(item.id, scores.get(item.id) ?? fallback);
-      }
-    } catch (error) {
-      if (!(error instanceof ScoringError)) throw error;
-      for (const item of codeAnswered) results.set(item.id, fallback);
+    // Same all-or-nothing-failure handling as the text group above. For a
+    // mixed text+code session, if EITHER group fully fails the error propagates
+    // before any persistence below, so nothing is finalised — the whole session
+    // stays unscored and retryable rather than half-zeroed.
+    const scores = await scoreCodeBatch(
+      session.roleName,
+      session.difficulty,
+      codeAnswered,
+    );
+    for (const item of codeAnswered) {
+      results.set(item.id, scores.get(item.id) ?? fallback);
     }
   }
 
@@ -196,19 +202,23 @@ export async function scoreSession(sessionId: string): Promise<void> {
   const maxScore = scored.reduce((sum, r) => sum + r.maxScore, 0);
 
   // The one-line summary is a nice-to-have; only spend budget on it if we have
-  // it, otherwise use the same deterministic fallback generateSummary would.
-  const summary = (await reserveAiCalls(1))
-    ? await generateSummary({
-        roleName: session.roleName,
-        difficulty: session.difficulty,
-        totalScore,
-        maxScore,
-        perQuestion: scored.map((r) => ({
-          score: r.score,
-          feedback: r.feedback ?? "",
-        })),
-      })
-    : `You scored ${totalScore}/${maxScore} on this ${session.difficulty} ${session.roleName} interview.`;
+  // it. Skip the AI call entirely (deterministic fallback) when no answer
+  // actually required a model call — i.e. every question was empty/skipped, so
+  // there's nothing substantive to summarise and no point burning budget.
+  const needsSummaryCall = answered.length > 0 || codeAnswered.length > 0;
+  const summary =
+    needsSummaryCall && (await reserveAiCalls(1))
+      ? await generateSummary({
+          roleName: session.roleName,
+          difficulty: session.difficulty,
+          totalScore,
+          maxScore,
+          perQuestion: scored.map((r) => ({
+            score: r.score,
+            feedback: r.feedback ?? "",
+          })),
+        })
+      : `You scored ${totalScore}/${maxScore} on this ${session.difficulty} ${session.roleName} interview.`;
 
   await db
     .update(interviewSessions)

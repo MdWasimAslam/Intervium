@@ -14,10 +14,12 @@ export function ScoreRing({ score, max, size = 160 }: ScoreRingProps) {
 
   return (
     <div
+      role="img"
+      aria-label={`Score ${score} out of ${max}, ${pct} percent`}
       className="relative inline-flex items-center justify-center"
       style={{ width: size, height: size }}
     >
-      <svg width={size} height={size} className="-rotate-90">
+      <svg width={size} height={size} className="-rotate-90" aria-hidden>
         <circle
           cx={size / 2}
           cy={size / 2}

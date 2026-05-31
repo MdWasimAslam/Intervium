@@ -11,7 +11,7 @@ import {
   techStacks,
 } from "@db";
 import { requireAdmin } from "@/lib/session";
-import { zodError, type AdminResult } from "./util";
+import { isUniqueViolation, zodError, type AdminResult } from "./util";
 
 const schema = z.object({
   jobRoleId: z.string().uuid("Pick a role."),
@@ -26,7 +26,14 @@ export async function createFocus(input: unknown): Promise<AdminResult> {
   await requireAdmin();
   const p = schema.safeParse(input);
   if (!p.success) return { ok: false, error: zodError(p) };
-  await db.insert(focusAreas).values(p.data);
+  try {
+    await db.insert(focusAreas).values(p.data);
+  } catch (error) {
+    if (isUniqueViolation(error))
+      return { ok: false, error: "A focus area with that name already exists." };
+    console.error("[createFocus]", error);
+    return { ok: false, error: "Could not create the focus area." };
+  }
   revalidatePath("/admin/focus-areas");
   return { ok: true };
 }
@@ -36,7 +43,14 @@ export async function updateFocus(input: unknown): Promise<AdminResult> {
   const p = withId.safeParse(input);
   if (!p.success) return { ok: false, error: zodError(p) };
   const { id, ...data } = p.data;
-  await db.update(focusAreas).set(data).where(eq(focusAreas.id, id));
+  try {
+    await db.update(focusAreas).set(data).where(eq(focusAreas.id, id));
+  } catch (error) {
+    if (isUniqueViolation(error))
+      return { ok: false, error: "A focus area with that name already exists." };
+    console.error("[updateFocus]", error);
+    return { ok: false, error: "Could not update the focus area." };
+  }
   revalidatePath("/admin/focus-areas");
   return { ok: true };
 }
@@ -73,7 +87,14 @@ export async function createTech(input: unknown): Promise<AdminResult> {
   await requireAdmin();
   const p = schema.safeParse(input);
   if (!p.success) return { ok: false, error: zodError(p) };
-  await db.insert(techStacks).values(p.data);
+  try {
+    await db.insert(techStacks).values(p.data);
+  } catch (error) {
+    if (isUniqueViolation(error))
+      return { ok: false, error: "A tech stack with that name already exists." };
+    console.error("[createTech]", error);
+    return { ok: false, error: "Could not create the tech stack." };
+  }
   revalidatePath("/admin/tech-stacks");
   return { ok: true };
 }
@@ -83,7 +104,14 @@ export async function updateTech(input: unknown): Promise<AdminResult> {
   const p = withId.safeParse(input);
   if (!p.success) return { ok: false, error: zodError(p) };
   const { id, ...data } = p.data;
-  await db.update(techStacks).set(data).where(eq(techStacks.id, id));
+  try {
+    await db.update(techStacks).set(data).where(eq(techStacks.id, id));
+  } catch (error) {
+    if (isUniqueViolation(error))
+      return { ok: false, error: "A tech stack with that name already exists." };
+    console.error("[updateTech]", error);
+    return { ok: false, error: "Could not update the tech stack." };
+  }
   revalidatePath("/admin/tech-stacks");
   return { ok: true };
 }

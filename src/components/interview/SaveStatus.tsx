@@ -13,7 +13,11 @@ export function SaveStatus({
 }) {
   if (unsavedCount === 0) return null;
   return (
-    <p className="mt-3 flex items-center justify-center gap-2 text-xs text-[var(--muted-foreground)]">
+    <p
+      role="status"
+      aria-live={hasFailure ? "assertive" : "polite"}
+      className="mt-3 flex items-center justify-center gap-2 text-xs text-[var(--muted-foreground)]"
+    >
       {hasFailure ? (
         <>
           <CloudOff className="h-3.5 w-3.5 text-[var(--destructive)]" />

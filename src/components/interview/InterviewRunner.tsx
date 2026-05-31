@@ -142,13 +142,13 @@ export function InterviewRunner({
             Question {index + 1} of {total}
           </span>
           <span className="text-[var(--muted-foreground)]">
-            {Math.round((index / total) * 100)}% complete
+            {Math.round(((index + 1) / total) * 100)}% complete
           </span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--secondary)]">
           <div
             className="h-full rounded-full bg-[var(--primary)] transition-all"
-            style={{ width: `${(index / total) * 100}%` }}
+            style={{ width: `${((index + 1) / total) * 100}%` }}
           />
         </div>
       </div>

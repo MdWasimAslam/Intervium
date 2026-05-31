@@ -15,12 +15,13 @@ export function RetakeButton({ sessionId }: { sessionId: string }) {
       <Button
         variant="outline"
         disabled={pending}
-        onClick={() =>
+        onClick={() => {
+          if (!window.confirm("Start a new attempt?")) return;
           start(async () => {
             const res = await retakeSession({ sessionId });
             if (res?.error) setError(res.error);
-          })
-        }
+          });
+        }}
       >
         {pending ? <Loader2 className="animate-spin" /> : <RotateCcw />}
         Retake

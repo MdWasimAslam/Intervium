@@ -98,10 +98,18 @@ export async function saveCv(data: CvData): Promise<Result<true>> {
   }
 
   try {
-    await db
+    const result = await db
       .update(profiles)
       .set({ cvText: serializeCv(parsed.data), updatedAt: new Date() })
       .where(eq(profiles.userId, user.id));
+    // No profile row means onboarding hasn't created one yet — there's nothing
+    // to attach the CV to, so don't claim a save that didn't happen.
+    if (result.rowCount === 0) {
+      return {
+        ok: false,
+        error: "Finish onboarding before saving your CV.",
+      };
+    }
     return { ok: true, data: true };
   } catch (error) {
     console.error("[saveCv]", error);

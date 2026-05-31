@@ -53,6 +53,13 @@ export function OptimizePanel({
 
   const accept = () => {
     if (!optimized) return;
+    if (
+      !window.confirm(
+        "This will replace your current CV. Continue?",
+      )
+    ) {
+      return;
+    }
     onApply(optimized);
     setAccepted(true);
   };

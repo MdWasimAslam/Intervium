@@ -19,7 +19,13 @@ export interface Transcription {
   status: TranscriptionStatus;
   recording: boolean;
   start: () => Promise<void> | void;
-  stop: () => void;
+  /**
+   * Stop recording and resolve with the final transcript once it is available.
+   * For server transcription this resolves after the audio has been POSTed and
+   * transcribed; for Web Speech it resolves with the current finalized text.
+   * Resolves with "" if nothing was captured or transcription failed.
+   */
+  stop: () => Promise<string>;
   reset: () => void;
 }
 

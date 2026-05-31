@@ -176,20 +176,27 @@ export async function getDashboardData(
 
   const roleId = profileRow.roleId;
 
-  const [statRows, recentRows, answeredRows, bandRows] = await Promise.all([
-    // Lightweight scan of every session for counts, averages and trend.
-    db
-      .select({
-        id: interviewSessions.id,
-        status: interviewSessions.status,
-        totalScore: interviewSessions.totalScore,
-        maxScore: interviewSessions.maxScore,
-        scoredAt: interviewSessions.scoredAt,
-        startedAt: interviewSessions.startedAt,
-      })
-      .from(interviewSessions)
-      .where(eq(interviewSessions.userId, userId))
-      .orderBy(desc(interviewSessions.startedAt)),
+  // Trend/streak/milestone read the most recent N sessions rather than the
+  // user's entire history — bounds the JS-side work without changing the shape
+  // of these (recency-weighted) views for any realistic user.
+  const TREND_SCAN_LIMIT = 200;
+
+  const [statRows, recentRows, answeredRows, bandRows, aggRow] =
+    await Promise.all([
+      // Bounded scan of recent sessions for trend, streak and milestone.
+      db
+        .select({
+          id: interviewSessions.id,
+          status: interviewSessions.status,
+          totalScore: interviewSessions.totalScore,
+          maxScore: interviewSessions.maxScore,
+          scoredAt: interviewSessions.scoredAt,
+          startedAt: interviewSessions.startedAt,
+        })
+        .from(interviewSessions)
+        .where(eq(interviewSessions.userId, userId))
+        .orderBy(desc(interviewSessions.startedAt))
+        .limit(TREND_SCAN_LIMIT),
     // Most recent completed + scored sessions, with display joins.
     db
       .select({
@@ -237,17 +244,31 @@ export async function getDashboardData(
           .where(eq(difficultyBands.jobRoleId, roleId))
           .orderBy(asc(difficultyBands.minYears))
       : Promise.resolve([]),
+    // Completed count + scored average/best computed in SQL over ALL sessions,
+    // so these headline stats stay exact regardless of the trend-scan bound.
+    db
+      .select({
+        completed: sql<number>`count(*) filter (where ${interviewSessions.status} = 'completed')`,
+        avgPct: sql<
+          number | null
+        >`avg(${interviewSessions.totalScore} * 100.0 / ${interviewSessions.maxScore}) filter (where ${interviewSessions.scoredAt} is not null and ${interviewSessions.maxScore} > 0)`,
+        bestPct: sql<
+          number | null
+        >`max(${interviewSessions.totalScore} * 100.0 / ${interviewSessions.maxScore}) filter (where ${interviewSessions.scoredAt} is not null and ${interviewSessions.maxScore} > 0)`,
+      })
+      .from(interviewSessions)
+      .where(eq(interviewSessions.userId, userId)),
   ]);
 
   const scored = statRows.filter((s) => s.scoredAt && s.maxScore > 0);
-  const scoredPcts = scored.map((s) => pct(s.totalScore, s.maxScore));
 
+  const agg = aggRow[0];
+  const avgPctRaw = agg?.avgPct;
+  const bestPctRaw = agg?.bestPct;
   const stats: DashboardStats = {
-    completed: statRows.filter((s) => s.status === "completed").length,
-    avgPct: scoredPcts.length
-      ? Math.round(scoredPcts.reduce((a, b) => a + b, 0) / scoredPcts.length)
-      : null,
-    bestPct: scoredPcts.length ? Math.max(...scoredPcts) : null,
+    completed: Number(agg?.completed ?? 0),
+    avgPct: avgPctRaw != null ? Math.round(Number(avgPctRaw)) : null,
+    bestPct: bestPctRaw != null ? Math.round(Number(bestPctRaw)) : null,
     questionsAnswered: Number(answeredRows[0]?.n ?? 0),
   };
 

@@ -140,11 +140,9 @@ export function TaxonomyAdmin({
               </TableCell>
               <TableCell>
                 {item.isActive ? (
-                  <Chip>Active</Chip>
+                  <Chip tone="success">Active</Chip>
                 ) : (
-                  <span className="text-xs text-[var(--muted-foreground)]">
-                    Inactive
-                  </span>
+                  <Chip tone="neutral">Inactive</Chip>
                 )}
               </TableCell>
               <TableCell>

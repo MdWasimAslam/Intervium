@@ -29,7 +29,11 @@ export function ScoringScreen({ sessionId }: { sessionId: string }) {
   return (
     <Container className="max-w-md py-24">
       <Card>
-        <CardContent className="flex flex-col items-center gap-4 p-10 text-center">
+        <CardContent
+          role="status"
+          aria-live="polite"
+          className="flex flex-col items-center gap-4 p-10 text-center"
+        >
           {error ? (
             <>
               <p className="text-sm text-[var(--destructive)]">{error}</p>

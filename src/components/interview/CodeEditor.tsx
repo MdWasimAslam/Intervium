@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Editor from "@monaco-editor/react";
+import dynamic from "next/dynamic";
 import { useTheme } from "next-themes";
 import { Loader2 } from "lucide-react";
 import {
@@ -12,6 +12,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+
+/**
+ * Monaco is heavy (~MBs). Load it only when a coding question actually renders,
+ * via next/dynamic with SSR disabled (Monaco is browser-only), so it never
+ * weighs down the interview client bundle for text/voice questions.
+ */
+const Editor = dynamic(() => import("@monaco-editor/react"), {
+  ssr: false,
+  loading: () => (
+    <div className="flex h-full min-h-[360px] items-center justify-center text-[var(--muted-foreground)]">
+      <Loader2 className="h-5 w-5 animate-spin" />
+    </div>
+  ),
+});
 
 /** Languages offered in the editor's selector (kept small to start). */
 export const EDITOR_LANGUAGES = [

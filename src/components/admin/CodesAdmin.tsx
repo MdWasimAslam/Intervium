@@ -64,11 +64,9 @@ export function CodesAdmin({ codes }: { codes: CodeRow[] }) {
               <TableCell className="font-mono">{c.code}</TableCell>
               <TableCell>
                 {c.isUsed ? (
-                  <span className="text-xs text-[var(--muted-foreground)]">
-                    Used
-                  </span>
+                  <Chip tone="neutral">Used</Chip>
                 ) : (
-                  <Chip>Unused</Chip>
+                  <Chip tone="success">Unused</Chip>
                 )}
               </TableCell>
               <TableCell className="text-[var(--muted-foreground)]">

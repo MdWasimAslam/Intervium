@@ -12,6 +12,7 @@ import {
   techStacks,
 } from "@db";
 import { getCurrentUser } from "@/lib/session";
+import { getSettings } from "@/lib/settings";
 import { allowAction } from "@/lib/rate-limit";
 
 const startSchema = z.object({
@@ -20,10 +21,9 @@ const startSchema = z.object({
   difficulty: z.string().trim().min(1).max(40),
   focusAreaId: z.string().uuid(),
   techStackId: z.string().uuid(),
-  questionCount: z.coerce
-    .number()
-    .int()
-    .refine((v) => [3, 5, 10].includes(v), "Invalid question count."),
+  // The set of allowed values is admin-configurable (appSettings.questionCounts),
+  // so we only enforce shape here and validate membership at action time.
+  questionCount: z.coerce.number().int().min(1).max(50),
   timerEnabled: z.boolean(),
   mode: z.enum(["text", "voice"]),
 });
@@ -52,6 +52,13 @@ export async function startInterview(
     };
   }
   const config = parsed.data;
+
+  // Validate the question count against the admin-configured allowed set,
+  // rather than a hardcoded list.
+  const { questionCounts } = await getSettings();
+  if (!questionCounts.includes(config.questionCount)) {
+    return { error: "Invalid question count." };
+  }
 
   // Validate the referenced rows exist, are active, and belong to the role.
   const [role] = await db
@@ -83,6 +90,20 @@ export async function startInterview(
       ),
     );
   if (!stack) return { error: "Tech stack does not match the selected role." };
+
+  // Don't accumulate dangling in-progress sessions: a user can only have one
+  // live interview at a time. Close any existing in-progress sessions before
+  // starting a new one. This is non-destructive — answers/feedback are kept,
+  // the session just moves to "completed" (the only other status available).
+  await db
+    .update(interviewSessions)
+    .set({ status: "completed", completedAt: new Date() })
+    .where(
+      and(
+        eq(interviewSessions.userId, user.id),
+        eq(interviewSessions.status, "in_progress"),
+      ),
+    );
 
   let sessionId: string;
   try {
@@ -166,7 +187,7 @@ export async function saveAnswer(
   }
 
   try {
-    await db
+    const result = await db
       .update(sessionQuestions)
       .set({
         userAnswer: answer,
@@ -181,6 +202,11 @@ export async function saveAnswer(
           eq(sessionQuestions.position, position),
         ),
       );
+    // No row at this (session, position) means the question doesn't exist —
+    // don't report a phantom success.
+    if (result.rowCount === 0) {
+      return { ok: false, error: "Question not found for this session." };
+    }
     return { ok: true };
   } catch (error) {
     console.error("[saveAnswer]", error);

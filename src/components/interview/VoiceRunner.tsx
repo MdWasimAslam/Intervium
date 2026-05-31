@@ -94,15 +94,38 @@ export function VoiceRunner({
   async function submit(auto: boolean, overrideText?: string) {
     if (finishing) return;
     if (!isLast && navigatedRef.current) return; // already advanced this one
-    if (transcription.recording) transcription.stop();
 
+    // Capture the question we're submitting for NOW — `q`/`index` may change
+    // (or this question be re-rendered) while we await the transcript, and the
+    // late transcript must never land in the next question's state.
     const position = q.position;
-    const value = overrideText ?? textareaRef.current?.value ?? text;
+    const submittingLast = isLast;
     const timeTaken = auto ? timerSeconds : elapsedSeconds();
+
+    // Claim the navigation guard up front for non-last submits so a racing
+    // submit (e.g. the timer firing while a click's stop() is awaited) can't
+    // also advance this question.
+    if (!submittingLast) navigatedRef.current = true;
 
     setError(undefined);
 
-    if (isLast) {
+    // Resolve the answer text. When recording, await stop() so the (possibly
+    // async, server-side) transcript is captured before we enqueue/advance —
+    // otherwise the spoken answer is lost on the Whisper provider.
+    let value: string;
+    if (overrideText !== undefined) {
+      // Explicit override (e.g. Skip → "") wins and we still stop recording.
+      if (transcription.recording) await transcription.stop();
+      value = overrideText;
+    } else if (transcription.recording) {
+      const finalText = await transcription.stop();
+      // Prefer any manual textarea edits if present, else the final transcript.
+      value = textareaRef.current?.value || finalText || text;
+    } else {
+      value = textareaRef.current?.value ?? text;
+    }
+
+    if (submittingLast) {
       // Final step: enqueue, then block just long enough to guarantee every
       // answer is saved before scoring runs.
       enqueue(position, { answer: value, timeTaken, transcript: value });
@@ -124,9 +147,9 @@ export function VoiceRunner({
     }
 
     // Not last: persist in the background and advance instantly.
-    navigatedRef.current = true;
+    // (navigatedRef was already claimed above to block racing submits.)
     enqueue(position, { answer: value, timeTaken, transcript: value });
-    const next = index + 1;
+    const next = questions.findIndex((qq) => qq.position === position) + 1;
     setHasRecorded(false);
     setText(initialAnswers[questions[next].position] ?? "");
     setIndex(next);
@@ -149,13 +172,13 @@ export function VoiceRunner({
             Question {index + 1} of {total}
           </span>
           <span className="text-[var(--muted-foreground)]">
-            {Math.round((index / total) * 100)}% complete
+            {Math.round(((index + 1) / total) * 100)}% complete
           </span>
         </div>
         <div className="h-2 w-full overflow-hidden rounded-full bg-[var(--secondary)]">
           <div
             className="h-full rounded-full bg-[var(--primary)] transition-all"
-            style={{ width: `${(index / total) * 100}%` }}
+            style={{ width: `${((index + 1) / total) * 100}%` }}
           />
         </div>
       </div>
@@ -192,7 +215,7 @@ export function VoiceRunner({
                     type="button"
                     variant="outline"
                     className="border-[var(--destructive)] text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
-                    onClick={() => transcription.stop()}
+                    onClick={() => void transcription.stop()}
                   >
                     <Square />
                     Stop recording
@@ -208,24 +231,30 @@ export function VoiceRunner({
                   </Button>
                 )}
 
-                {transcription.recording && (
-                  <span className="flex items-center gap-2 text-sm text-[var(--destructive)]">
-                    <span className="relative flex h-2.5 w-2.5">
-                      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--destructive)] opacity-75" />
-                      <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--destructive)]" />
+                <span role="status" aria-live="polite">
+                  {transcription.recording && (
+                    <span className="flex items-center gap-2 text-sm text-[var(--destructive)]">
+                      <span className="relative flex h-2.5 w-2.5">
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[var(--destructive)] opacity-75" />
+                        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-[var(--destructive)]" />
+                      </span>
+                      Listening…
                     </span>
-                    Listening…
-                  </span>
-                )}
-                {transcription.status === "transcribing" && (
-                  <span className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
-                    <Loader2 className="h-4 w-4 animate-spin" /> Transcribing…
-                  </span>
-                )}
+                  )}
+                  {transcription.status === "transcribing" && (
+                    <span className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
+                      <Loader2 className="h-4 w-4 animate-spin" /> Transcribing…
+                    </span>
+                  )}
+                </span>
               </div>
 
               {blocked && (
-                <p className="rounded-xl border border-[var(--border)] bg-[var(--muted)] px-3 py-2 text-sm text-[var(--muted-foreground)]">
+                <p
+                  role="alert"
+                  aria-live="assertive"
+                  className="rounded-xl border border-[var(--border)] bg-[var(--muted)] px-3 py-2 text-sm text-[var(--muted-foreground)]"
+                >
                   {transcription.status === "denied"
                     ? "Microphone access was denied."
                     : "Voice input isn't supported in this browser."}{" "}
@@ -235,7 +264,11 @@ export function VoiceRunner({
 
               {transcription.status === "error" &&
                 !transcription.recording && (
-                  <p className="rounded-xl border border-[var(--border)] bg-[var(--muted)] px-3 py-2 text-sm text-[var(--muted-foreground)]">
+                  <p
+                    role="alert"
+                    aria-live="assertive"
+                    className="rounded-xl border border-[var(--border)] bg-[var(--muted)] px-3 py-2 text-sm text-[var(--muted-foreground)]"
+                  >
                     Couldn&apos;t reach speech recognition (it needs an internet
                     connection). Type your answer below, or try recording again.
                   </p>

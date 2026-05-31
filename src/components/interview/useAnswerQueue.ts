@@ -12,6 +12,61 @@ export interface AnswerPayload {
 
 const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** sessionStorage key for a single pending answer (sessionId + position). */
+const storageKey = (sessionId: string, position: number) =>
+  `intervium:pending:${sessionId}:${position}`;
+
+const storagePrefix = (sessionId: string) =>
+  `intervium:pending:${sessionId}:`;
+
+/** Best-effort persistence so in-flight answers survive a crash/refresh. */
+function persistPending(
+  sessionId: string,
+  position: number,
+  payload: AnswerPayload,
+) {
+  try {
+    sessionStorage.setItem(
+      storageKey(sessionId, position),
+      JSON.stringify(payload),
+    );
+  } catch {
+    /* sessionStorage unavailable (private mode, quota) — ignore. */
+  }
+}
+
+function clearPending(sessionId: string, position: number) {
+  try {
+    sessionStorage.removeItem(storageKey(sessionId, position));
+  } catch {
+    /* ignore */
+  }
+}
+
+/** Read all pending answers for a session back out of sessionStorage. */
+function readPersisted(sessionId: string): Map<number, AnswerPayload> {
+  const out = new Map<number, AnswerPayload>();
+  try {
+    const prefix = storagePrefix(sessionId);
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (!key || !key.startsWith(prefix)) continue;
+      const raw = sessionStorage.getItem(key);
+      if (!raw) continue;
+      const position = Number(key.slice(prefix.length));
+      if (!Number.isFinite(position)) continue;
+      try {
+        out.set(position, JSON.parse(raw) as AnswerPayload);
+      } catch {
+        /* skip corrupt entry */
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return out;
+}
+
 /**
  * Optimistic background persistence for interview answers.
  *
@@ -53,6 +108,7 @@ export function useAnswerQueue(sessionId: string) {
       // (a newer answer may have been enqueued while this save was in flight).
       if (ok && pending.current.get(position) === payload) {
         pending.current.delete(position);
+        clearPending(sessionId, position);
       }
       // Soft indicator: a save just failed and answers are still queued.
       setHasFailure(!ok && pending.current.size > 0);
@@ -65,10 +121,12 @@ export function useAnswerQueue(sessionId: string) {
   const enqueue = useCallback(
     (position: number, payload: AnswerPayload) => {
       pending.current.set(position, payload);
+      // Mirror to sessionStorage so a crash/refresh mid-save doesn't lose it.
+      persistPending(sessionId, position, payload);
       sync();
       void trySave(position);
     },
-    [sync, trySave],
+    [sessionId, sync, trySave],
   );
 
   /** Block until the queue drains (or we give up after a few rounds). */
@@ -81,6 +139,21 @@ export function useAnswerQueue(sessionId: string) {
     setHasFailure(!drained);
     return drained;
   }, [trySave]);
+
+  // Rehydrate any answers left pending by a previous crash/refresh, then
+  // re-flush them. Runs once per session.
+  useEffect(() => {
+    const persisted = readPersisted(sessionId);
+    if (persisted.size === 0) return;
+    persisted.forEach((payload, position) => {
+      // Don't clobber a fresher in-memory answer for the same position.
+      if (!pending.current.has(position)) {
+        pending.current.set(position, payload);
+      }
+    });
+    sync();
+    persisted.forEach((_, position) => void trySave(position));
+  }, [sessionId, sync, trySave]);
 
   // Warn before leaving if answers are still saving, so none are lost silently.
   useEffect(() => {

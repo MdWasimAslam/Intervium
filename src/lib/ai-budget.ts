@@ -42,10 +42,11 @@ function today(): string {
  * Atomically reserve `n` AI calls against today's budget.
  *
  * Returns `true` if the reservation fits within the daily budget (and records
- * it), `false` if it would exceed the cap. On a DB error we fail OPEN (return
- * `true`) — the in-memory per-user rate limiter and Groq's own 429 remain as
- * backstops, and we'd rather not block a legitimate interview because the
- * counter table hiccuped.
+ * it), `false` if it would exceed the cap. On a DB error we fail CLOSED (return
+ * `false`) — this guard exists precisely for incident conditions, and a DB
+ * outage is exactly when an uncounted burst could blow past Groq's daily cap.
+ * Callers already degrade gracefully on `false` (serve cache / defer scoring),
+ * so rejecting the AI call is the safe choice.
  */
 export async function reserveAiCalls(n = 1): Promise<boolean> {
   const day = today();
@@ -70,8 +71,8 @@ export async function reserveAiCalls(n = 1): Promise<boolean> {
     }
     return true;
   } catch (error) {
-    console.error("[ai-budget] reserve failed, failing open:", error);
-    return true;
+    console.error("[ai-budget] reserve failed, failing closed:", error);
+    return false;
   }
 }
 

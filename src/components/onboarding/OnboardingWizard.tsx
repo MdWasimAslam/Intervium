@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowLeft,
   ArrowRight,
@@ -143,11 +143,11 @@ function bandFor(
   return match?.label ?? null;
 }
 
-const slideVariants = {
-  enter: (dir: number) => ({ opacity: 0, x: dir > 0 ? 40 : -40 }),
+const makeSlideVariants = (reduced: boolean) => ({
+  enter: (dir: number) => ({ opacity: 0, x: reduced ? 0 : dir > 0 ? 40 : -40 }),
   center: { opacity: 1, x: 0 },
-  exit: (dir: number) => ({ opacity: 0, x: dir > 0 ? -40 : 40 }),
-};
+  exit: (dir: number) => ({ opacity: 0, x: reduced ? 0 : dir > 0 ? -40 : 40 }),
+});
 
 export function OnboardingWizard({
   roles,
@@ -156,6 +156,8 @@ export function OnboardingWizard({
   initialValues,
   initialStep,
 }: Props) {
+  const reduced = useReducedMotion() ?? false;
+  const slideVariants = useMemo(() => makeSlideVariants(reduced), [reduced]);
   const [step, setStep] = useState(initialStep);
   const [direction, setDirection] = useState(1);
   const [values, setValues] = useState<WizardValues>(initialValues);
@@ -324,7 +326,7 @@ export function OnboardingWizard({
   }, [values.cvText]);
 
   if (finishing) {
-    return <Celebration name={firstName} />;
+    return <Celebration name={firstName} reduced={reduced} />;
   }
 
   const meta = STEP_META[step];
@@ -465,6 +467,8 @@ export function OnboardingWizard({
                   step={1}
                   value={[values.yearsExperience]}
                   onValueChange={([v]) => set("yearsExperience", v)}
+                  aria-label="Years of experience"
+                  aria-valuetext={`${values.yearsExperience}${values.yearsExperience >= MAX_YEARS ? "+" : ""} ${values.yearsExperience === 1 ? "year" : "years"}`}
                 />
 
                 <div className="flex flex-wrap gap-2">
@@ -773,23 +777,25 @@ function ReviewRow({
 }
 
 /** Full-screen "You're all set" moment shown while onboarding is finalised. */
-function Celebration({ name }: { name: string }) {
+function Celebration({ name, reduced }: { name: string; reduced: boolean }) {
   return (
     <Container className="flex min-h-[calc(100vh-4rem)] max-w-xl flex-col items-center justify-center py-10 text-center">
       <motion.div
-        initial={{ scale: 0, rotate: -20 }}
+        initial={reduced ? false : { scale: 0, rotate: -20 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 16 }}
         className="relative flex h-24 w-24 items-center justify-center rounded-full bg-[var(--primary)] text-[var(--primary-foreground)]"
       >
-        <motion.span
-          className="absolute inset-0 rounded-full bg-[var(--primary)]"
-          initial={{ opacity: 0.5, scale: 1 }}
-          animate={{ opacity: 0, scale: 1.6 }}
-          transition={{ duration: 1, repeat: Infinity, ease: "easeOut" }}
-        />
+        {!reduced && (
+          <motion.span
+            className="absolute inset-0 rounded-full bg-[var(--primary)]"
+            initial={{ opacity: 0.5, scale: 1 }}
+            animate={{ opacity: 0, scale: 1.6 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "easeOut" }}
+          />
+        )}
         <motion.div
-          initial={{ scale: 0 }}
+          initial={reduced ? false : { scale: 0 }}
           animate={{ scale: 1 }}
           transition={{ delay: 0.18, type: "spring", stiffness: 400, damping: 18 }}
         >
@@ -798,7 +804,7 @@ function Celebration({ name }: { name: string }) {
       </motion.div>
 
       <motion.h1
-        initial={{ opacity: 0, y: 10 }}
+        initial={reduced ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
         className="mt-6 text-2xl font-bold tracking-tight sm:text-3xl"
@@ -806,7 +812,7 @@ function Celebration({ name }: { name: string }) {
         You&apos;re all set, {name}!
       </motion.h1>
       <motion.p
-        initial={{ opacity: 0, y: 10 }}
+        initial={reduced ? false : { opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.42 }}
         className="mt-2 text-[var(--muted-foreground)]"

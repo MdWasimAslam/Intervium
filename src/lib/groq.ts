@@ -13,6 +13,31 @@ const GROQ_CHAT_COMPLETIONS_URL =
   "https://api.groq.com/openai/v1/chat/completions";
 type GroqModelTier = "fast" | "smart";
 
+/** HTTP statuses worth retrying — transient timeouts, rate limits, gateway/server errors. */
+const RETRYABLE_STATUSES = new Set([408, 429, 500, 502, 503, 504]);
+/** Per-request timeout, kept below the 60s function limit. */
+const GROQ_REQUEST_TIMEOUT_MS = 25_000;
+/** Transient-failure retry policy (layered under the JSON-validation retries). */
+const MAX_TRANSIENT_ATTEMPTS = 3;
+/** Cap any single backoff wait (incl. a Retry-After hint) so we stay under the function limit. */
+const MAX_BACKOFF_MS = 8_000;
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** Parse a `Retry-After` header (delta-seconds or HTTP-date) into ms, capped. */
+function parseRetryAfter(header: string | null): number | null {
+  if (!header) return null;
+  const seconds = Number(header);
+  if (Number.isFinite(seconds)) {
+    return Math.min(Math.max(0, seconds * 1000), MAX_BACKOFF_MS);
+  }
+  const when = Date.parse(header);
+  if (!Number.isNaN(when)) {
+    return Math.min(Math.max(0, when - Date.now()), MAX_BACKOFF_MS);
+  }
+  return null;
+}
+
 interface GroqChatResponse {
   choices?: Array<{ message?: { content?: string | null } }>;
   error?: { message?: string };
@@ -79,36 +104,85 @@ function getModel(
         ? "Return only valid JSON matching the user's requested shape. Do not include markdown, code fences, or explanatory prose."
         : "Follow the user's output instructions exactly. Keep the response concise.";
 
-      const res = await fetch(GROQ_CHAT_COMPLETIONS_URL, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${apiKey}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          model,
-          messages: [
-            { role: "system", content: systemPrompt },
-            { role: "user", content: prompt },
-          ],
-          temperature,
-          stream: false,
-        }),
+      const body = JSON.stringify({
+        model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt },
+        ],
+        temperature,
+        stream: false,
       });
 
-      if (!res.ok) {
-        const detail = await res.text().catch(() => "");
-        throw new Error(`Groq ${res.status}: ${detail.slice(0, 500)}`);
+      // Transient-retry loop (429/5xx/408 + network/timeout) with exponential
+      // backoff + jitter. The per-attempt timeout (25s) aborts a hung request
+      // so a single call can never eat the whole 60s function budget. The
+      // JSON-validation retry loops in the callers sit on top of this.
+      let lastError: unknown;
+      for (let attempt = 1; attempt <= MAX_TRANSIENT_ATTEMPTS; attempt++) {
+        let res: Response;
+        try {
+          res = await fetch(GROQ_CHAT_COMPLETIONS_URL, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              "Content-Type": "application/json",
+            },
+            body,
+            signal: AbortSignal.timeout(GROQ_REQUEST_TIMEOUT_MS),
+          });
+        } catch (error) {
+          // Network failure or the abort timeout firing — both are transient.
+          const isTimeout =
+            error instanceof Error &&
+            (error.name === "TimeoutError" || error.name === "AbortError");
+          lastError = isTimeout
+            ? new Error("Groq request timed out")
+            : error;
+          if (attempt < MAX_TRANSIENT_ATTEMPTS) {
+            await sleep(
+              Math.min(2 ** (attempt - 1) * 500, MAX_BACKOFF_MS) +
+                Math.random() * 200,
+            );
+            continue;
+          }
+          throw lastError;
+        }
+
+        if (!res.ok) {
+          const detail = await res.text().catch(() => "");
+          const err = new Error(`Groq ${res.status}: ${detail.slice(0, 500)}`);
+          if (
+            RETRYABLE_STATUSES.has(res.status) &&
+            attempt < MAX_TRANSIENT_ATTEMPTS
+          ) {
+            lastError = err;
+            const retryAfter =
+              res.status === 429
+                ? parseRetryAfter(res.headers.get("retry-after"))
+                : null;
+            const backoff =
+              retryAfter ?? Math.min(2 ** (attempt - 1) * 500, MAX_BACKOFF_MS);
+            await sleep(backoff + Math.random() * 200);
+            continue;
+          }
+          throw err;
+        }
+
+        const data = (await res.json()) as GroqChatResponse;
+        const text = data.choices?.[0]?.message?.content?.trim();
+        if (!text) {
+          throw new Error(
+            data.error?.message ?? "Groq returned an empty response.",
+          );
+        }
+        return text;
       }
 
-      const data = (await res.json()) as GroqChatResponse;
-      const text = data.choices?.[0]?.message?.content?.trim();
-      if (!text) {
-        throw new Error(
-          data.error?.message ?? "Groq returned an empty response.",
-        );
-      }
-      return text;
+      // Exhausted transient retries.
+      throw lastError instanceof Error
+        ? lastError
+        : new Error("Groq request failed after retries.");
     },
   };
 }
@@ -565,6 +639,10 @@ export async function scoreAnswersBatch(
   if (items.length === 0) return new Map();
 
   const model = getModel({ json: true, temperature: 0.3, tier: "smart" });
+  const requested = new Set(items.map((it) => it.id));
+  // Accumulate valid per-id scores ACROSS attempts so a partial response (or a
+  // second attempt that recovers some ids) is never discarded wholesale.
+  const map = new Map<string, AnswerScore>();
   let lastIssue: unknown;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
@@ -575,15 +653,20 @@ export async function scoreAnswersBatch(
       );
     } catch (error) {
       console.error("[groq:score-batch] request failed:", error);
+      // If a transient retry already recovered some scores, keep them rather
+      // than discarding the whole batch — the caller fills only missing ids.
+      if (map.size > 0) return map;
       throw new ScoringError("Batch scoring request failed.");
     }
 
     try {
       const parsed = batchScoreSchema.parse(parseModelJson(raw));
-      const map = new Map<string, AnswerScore>();
-      for (const { id, ...score } of parsed) map.set(id, score);
+      // Only accept ids we actually asked for; keep the first valid score seen.
+      for (const { id, ...score } of parsed) {
+        if (requested.has(id) && !map.has(id)) map.set(id, score);
+      }
 
-      // Every requested id must come back, else the mapping is unsafe — retry.
+      // All ids present — done. Otherwise retry only to recover the stragglers.
       if (items.every((it) => map.has(it.id))) return map;
       lastIssue = new Error("batch response missing one or more ids");
       console.warn(`[groq:score-batch] missing ids on attempt ${attempt}`);
@@ -594,6 +677,9 @@ export async function scoreAnswersBatch(
   }
 
   console.error("[groq:score-batch] giving up:", lastIssue);
+  // Return whatever valid per-id scores we did collect; the caller applies its
+  // fallback ONLY to the ids still missing (no all-or-nothing discard).
+  if (map.size > 0) return map;
   throw new ScoringError("Batch scoring produced invalid output.");
 }
 
@@ -682,6 +768,9 @@ export async function scoreCodeBatch(
   if (items.length === 0) return new Map();
 
   const model = getModel({ json: true, temperature: 0.2, tier: "smart" });
+  const requested = new Set(items.map((it) => it.id));
+  // Accumulate valid per-id scores ACROSS attempts (see scoreAnswersBatch).
+  const map = new Map<string, AnswerScore>();
   let lastIssue: unknown;
 
   for (let attempt = 1; attempt <= 2; attempt++) {
@@ -692,13 +781,15 @@ export async function scoreCodeBatch(
       );
     } catch (error) {
       console.error("[groq:score-code] request failed:", error);
+      if (map.size > 0) return map;
       throw new ScoringError("Code scoring request failed.");
     }
 
     try {
       const parsed = batchScoreSchema.parse(parseModelJson(raw));
-      const map = new Map<string, AnswerScore>();
-      for (const { id, ...score } of parsed) map.set(id, score);
+      for (const { id, ...score } of parsed) {
+        if (requested.has(id) && !map.has(id)) map.set(id, score);
+      }
 
       if (items.every((it) => map.has(it.id))) return map;
       lastIssue = new Error("code-batch response missing one or more ids");
@@ -710,6 +801,8 @@ export async function scoreCodeBatch(
   }
 
   console.error("[groq:score-code] giving up:", lastIssue);
+  // Keep the valid per-id scores collected; caller fills only the missing ids.
+  if (map.size > 0) return map;
   throw new ScoringError("Code scoring produced invalid output.");
 }
 

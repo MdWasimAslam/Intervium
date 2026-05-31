@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Check, FileText, Loader2, Target } from "lucide-react";
+import { Check, FileText, Loader2, Target, Undo2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { type CvData } from "@/lib/cv/types";
@@ -23,6 +23,8 @@ export function CvWorkspace({ initial }: { initial: CvData }) {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string>();
+  // Pre-optimization CV, stashed so an applied optimization can be undone.
+  const [previousCv, setPreviousCv] = useState<CvData | null>(null);
 
   const persist = useCallback(async (next: CvData) => {
     setSaving(true);
@@ -39,14 +41,28 @@ export function CvWorkspace({ initial }: { initial: CvData }) {
     return res.ok;
   }, []);
 
-  /** Replace the CV (e.g. accepting an optimized version) and persist it. */
+  /**
+   * Replace the CV (e.g. accepting an optimized version) and persist it.
+   * The pre-optimization CV is stashed so it can be restored via Undo.
+   */
   const applyAndSave = useCallback(
     (next: CvData) => {
-      setCv(next);
+      setCv((prev) => {
+        setPreviousCv(prev);
+        return next;
+      });
       void persist(next);
     },
     [persist],
   );
+
+  /** Restore the CV that was live before the last optimization was applied. */
+  const undoApply = useCallback(() => {
+    if (!previousCv) return;
+    setCv(previousCv);
+    void persist(previousCv);
+    setPreviousCv(null);
+  }, [previousCv, persist]);
 
   return (
     <div className="space-y-6">
@@ -72,6 +88,12 @@ export function CvWorkspace({ initial }: { initial: CvData }) {
         <div className="space-y-4">
           <div className="flex items-center justify-end gap-3">
             {error && <span className="text-sm text-[var(--destructive)]">{error}</span>}
+            {previousCv && (
+              <Button variant="outline" onClick={undoApply} disabled={saving}>
+                <Undo2 className="h-4 w-4" />
+                Undo optimization
+              </Button>
+            )}
             {saved && (
               <span className="flex items-center gap-1 text-sm text-[var(--primary)]">
                 <Check className="h-4 w-4" /> Saved

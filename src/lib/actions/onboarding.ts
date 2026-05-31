@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, jobRoles, profiles } from "@db";
 import { getCurrentUser } from "@/lib/session";
@@ -127,7 +127,9 @@ export async function completeOnboarding(data: unknown): Promise<StepResult> {
   const [role] = await db
     .select({ id: jobRoles.id })
     .from(jobRoles)
-    .where(eq(jobRoles.id, input.primaryRoleId));
+    .where(
+      and(eq(jobRoles.id, input.primaryRoleId), eq(jobRoles.isActive, true)),
+    );
   if (!role) {
     return { ok: false, error: "Selected role is no longer available." };
   }

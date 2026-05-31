@@ -4,6 +4,7 @@ import { AuthError } from "next-auth";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { signIn } from "@/auth";
+import { allowAction } from "@/lib/rate-limit";
 import { withTransaction } from "@db/tx";
 import { accessCodes, profiles, users } from "@db";
 
@@ -33,11 +34,20 @@ export async function registerAction(
   const password = String(formData.get("password") ?? "");
   const code = String(formData.get("code") ?? "").trim();
 
+  // Throttle by email to blunt automated registration / code-enumeration abuse.
+  if (!allowAction(`register:${email}`, 5, 60_000)) {
+    return { error: "Too many attempts. Please wait a minute and try again." };
+  }
+
   if (!EMAIL_REGEX.test(email)) {
     return { error: "Enter a valid email address." };
   }
   if (password.length < 8) {
     return { error: "Password must be at least 8 characters." };
+  }
+  // bcrypt truncates at 72 bytes; reject longer to avoid silent truncation.
+  if (password.length > 72) {
+    return { error: "Password must be at most 72 characters." };
   }
   if (!code) {
     return { error: "An access code is required." };
@@ -52,14 +62,17 @@ export async function registerAction(
         .where(eq(accessCodes.code, code))
         .for("update");
 
+      // Unified message across missing / used / expired so the response leaks
+      // no signal that helps an attacker enumerate valid codes.
+      const codeUnavailable = "Invalid or unavailable access code.";
       if (!accessCode) {
-        throw new RegistrationError("Invalid access code.");
+        throw new RegistrationError(codeUnavailable);
       }
       if (accessCode.isUsed) {
-        throw new RegistrationError("This access code has already been used.");
+        throw new RegistrationError(codeUnavailable);
       }
       if (accessCode.expiresAt && accessCode.expiresAt.getTime() < Date.now()) {
-        throw new RegistrationError("This access code has expired.");
+        throw new RegistrationError(codeUnavailable);
       }
 
       const [existing] = await tx
@@ -72,7 +85,7 @@ export async function registerAction(
         );
       }
 
-      const passwordHash = await bcrypt.hash(password, 10);
+      const passwordHash = await bcrypt.hash(password, 12);
 
       const [user] = await tx
         .insert(users)
@@ -121,6 +134,11 @@ export async function loginAction(
     .trim()
     .toLowerCase();
   const password = String(formData.get("password") ?? "");
+
+  // Throttle by email to slow credential-stuffing / brute-force attempts.
+  if (!allowAction(`login:${email}`, 5, 60_000)) {
+    return { error: "Too many attempts. Please wait a minute and try again." };
+  }
 
   if (!email || !password) {
     return { error: "Email and password are required." };

@@ -3,6 +3,8 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ChevronLeft,
+  ChevronRight,
   History,
   KeyRound,
   Pencil,
@@ -50,6 +52,10 @@ import {
   setUserActive,
   updateUser,
 } from "@/lib/actions/admin/users";
+import {
+  getUserSessions,
+  type AdminUserSession,
+} from "@/lib/actions/admin/sessions";
 
 export interface UserRow {
   id: string;
@@ -60,26 +66,25 @@ export interface UserRow {
   yearsExperience: number | null;
   primaryRole: string | null;
 }
-export interface SessionRow {
-  id: string;
-  userId: string;
-  role: string;
-  interviewType: string;
-  totalScore: number;
-  maxScore: number;
-  status: string;
-  startedAt: string;
-}
-
 export function UsersAdmin({
   users,
-  sessions,
+  page,
+  totalPages,
+  total,
 }: {
   users: UserRow[];
-  sessions: SessionRow[];
+  page: number;
+  totalPages: number;
+  total: number;
 }) {
   const router = useRouter();
   const [, start] = useTransition();
+
+  function goToPage(p: number) {
+    const params = new URLSearchParams(window.location.search);
+    params.set("page", String(p));
+    router.push(`?${params.toString()}`);
+  }
 
   return (
     <div>
@@ -87,7 +92,8 @@ export function UsersAdmin({
         <div>
           <h1 className="text-2xl font-bold">Users</h1>
           <p className="text-sm text-[var(--muted-foreground)]">
-            Deactivated users can&apos;t log in.
+            {total} user{total === 1 ? "" : "s"}. Deactivated users can&apos;t
+            log in.
           </p>
         </div>
         <UserFormDialog
@@ -144,10 +150,7 @@ export function UsersAdmin({
               </TableCell>
               <TableCell>
                 <div className="flex justify-end gap-1">
-                  <HistoryDialog
-                    email={u.email}
-                    sessions={sessions.filter((s) => s.userId === u.id)}
-                  />
+                  <HistoryDialog email={u.email} userId={u.id} />
                   <UserFormDialog
                     user={u}
                     trigger={
@@ -167,20 +170,56 @@ export function UsersAdmin({
           ))}
         </TableBody>
       </Table>
+
+      {/* Pagination ------------------------------------------------------- */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-sm text-[var(--muted-foreground)]">
+            Page {page} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => goToPage(page - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" /> Prev
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => goToPage(page + 1)}
+            >
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function HistoryDialog({
-  email,
-  sessions,
-}: {
-  email: string;
-  sessions: SessionRow[];
-}) {
+function HistoryDialog({ email, userId }: { email: string; userId: string }) {
   const [open, setOpen] = useState(false);
+  const [sessions, setSessions] = useState<AdminUserSession[] | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  // Load the user's sessions lazily, only when the dialog first opens.
+  function onOpenChange(next: boolean) {
+    setOpen(next);
+    if (next && sessions === null && !loading) {
+      setLoading(true);
+      getUserSessions(userId)
+        .then((rows) => setSessions(rows))
+        .catch(() => setSessions([]))
+        .finally(() => setLoading(false));
+    }
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" aria-label="Session history">
           <History className="h-4 w-4" />
@@ -190,7 +229,9 @@ function HistoryDialog({
         <DialogHeader>
           <DialogTitle>Sessions · {email}</DialogTitle>
         </DialogHeader>
-        {sessions.length === 0 ? (
+        {loading || sessions === null ? (
+          <p className="text-sm text-[var(--muted-foreground)]">Loading…</p>
+        ) : sessions.length === 0 ? (
           <p className="text-sm text-[var(--muted-foreground)]">
             No interview sessions yet.
           </p>

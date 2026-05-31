@@ -105,6 +105,12 @@ export async function getQuestionsForSession(
           eq(questionsCache.isActive, true),
         ),
       ),
+    // "Seen" questions for this user. We only ever pick from the current
+    // signature's pool, so questions outside it can never be selected — scope
+    // the scan to this signature instead of the user's ENTIRE session history.
+    // This keeps the result correct (any pool question the user has seen is
+    // still excluded) while letting the index on questions_cache.signature do
+    // the work rather than scanning every session_question the user ever had.
     db
       .select({ questionId: sessionQuestions.questionId })
       .from(sessionQuestions)
@@ -112,7 +118,16 @@ export async function getQuestionsForSession(
         interviewSessions,
         eq(interviewSessions.id, sessionQuestions.sessionId),
       )
-      .where(eq(interviewSessions.userId, session.userId)),
+      .innerJoin(
+        questionsCache,
+        eq(questionsCache.id, sessionQuestions.questionId),
+      )
+      .where(
+        and(
+          eq(interviewSessions.userId, session.userId),
+          eq(questionsCache.signature, signature),
+        ),
+      ),
   ]);
 
   const seen = new Set(seenRows.map((r) => r.questionId));
@@ -202,21 +217,44 @@ export async function getQuestionsForSession(
   }));
 
   if (ordered.length > 0) {
-    await db.insert(sessionQuestions).values(
-      ordered.map((q) => ({
-        sessionId: session.id,
-        questionId: q.id,
-        position: q.position,
-      })),
-    );
+    // Two requests for the same session can race between the idempotency SELECT
+    // (step 1) and this insert. `.onConflictDoNothing()` (relying on the unique
+    // constraint on session_questions(session_id, question_id)) makes a losing
+    // racer's insert a no-op instead of erroring or duplicating rows.
+    await db
+      .insert(sessionQuestions)
+      .values(
+        ordered.map((q) => ({
+          sessionId: session.id,
+          questionId: q.id,
+          position: q.position,
+        })),
+      )
+      .onConflictDoNothing();
   }
 
   console.log(
     `[question-engine] session=${session.id} cache=${fromCache} generated=${generatedCount} (pool=${pool.length}, unseen_before=${unseen.length})`,
   );
 
-  // 7) Return in order.
-  return ordered;
+  // 7) Re-read the persisted set as the authoritative answer. If we lost a race
+  // the winner's rows are already there; this guarantees both callers return
+  // the SAME committed question set (and ordering) rather than diverging.
+  const persisted = await db
+    .select({
+      id: sessionQuestions.questionId,
+      position: sessionQuestions.position,
+      questionText: questionsCache.questionText,
+    })
+    .from(sessionQuestions)
+    .innerJoin(
+      questionsCache,
+      eq(questionsCache.id, sessionQuestions.questionId),
+    )
+    .where(eq(sessionQuestions.sessionId, session.id))
+    .orderBy(asc(sessionQuestions.position));
+
+  return persisted.length > 0 ? persisted : ordered;
 }
 
 /** Assemble the Groq prompt context from the session + the user's profile. */

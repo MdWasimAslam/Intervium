@@ -25,16 +25,14 @@ export default auth((req) => {
   const isLoggedIn = Boolean(req.auth);
   const role = req.auth?.user?.role;
 
-  // Already authenticated → keep users out of the auth pages.
-  if (AUTH_ROUTES.has(path)) {
+  // Already authenticated → keep users off the marketing landing and the auth
+  // pages, sending them to the app instead. Handling this here (rather than in
+  // the page) lets "/" , "/login" and "/register" stay statically prerendered.
+  // Onboarding-incomplete users are funneled on by the dashboard's own guard.
+  if (AUTH_ROUTES.has(path) || PUBLIC_ROUTES.has(path)) {
     if (isLoggedIn) {
       return NextResponse.redirect(new URL("/dashboard", nextUrl));
     }
-    return NextResponse.next();
-  }
-
-  // Public routes are always allowed.
-  if (PUBLIC_ROUTES.has(path)) {
     return NextResponse.next();
   }
 

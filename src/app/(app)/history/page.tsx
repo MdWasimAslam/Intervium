@@ -24,9 +24,28 @@ const TYPE_LABEL: Record<string, string> = {
  * Full interview history (read-only). Every session the user has run, newest
  * first — completed sessions link to their results, in-progress ones resume.
  */
-export default async function HistoryPage() {
+const PAGE_SIZE = 20;
+
+export default async function HistoryPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const user = await requireAuth();
   if (!(await isOnboardingComplete(user.id))) redirect("/onboarding");
+
+  const sp = await searchParams;
+  const rawPage = Array.isArray(sp.page) ? sp.page[0] : sp.page;
+  const page = Math.max(1, Number(rawPage) || 1);
+
+  // Paginate: uses the interview_sessions_user_id_idx for both the count and
+  // the page slice, instead of pulling every session into memory.
+  const total = await db.$count(
+    interviewSessions,
+    eq(interviewSessions.userId, user.id),
+  );
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
 
   const sessions = await db
     .select({
@@ -44,7 +63,9 @@ export default async function HistoryPage() {
     .innerJoin(jobRoles, eq(jobRoles.id, interviewSessions.jobRoleId))
     .innerJoin(techStacks, eq(techStacks.id, interviewSessions.techStackId))
     .where(eq(interviewSessions.userId, user.id))
-    .orderBy(desc(interviewSessions.startedAt));
+    .orderBy(desc(interviewSessions.startedAt))
+    .limit(PAGE_SIZE)
+    .offset((safePage - 1) * PAGE_SIZE);
 
   return (
     <Container className="py-10 sm:py-12">
@@ -60,12 +81,12 @@ export default async function HistoryPage() {
         Interview history
       </h1>
       <p className="mb-8 text-[var(--muted-foreground)]">
-        {sessions.length === 0
+        {total === 0
           ? "Every interview you run will be listed here."
-          : `${sessions.length} interview${sessions.length === 1 ? "" : "s"} so far.`}
+          : `${total} interview${total === 1 ? "" : "s"} so far.`}
       </p>
 
-      {sessions.length === 0 ? (
+      {total === 0 ? (
         <EmptyState
           icon={<ClipboardList className="h-8 w-8" />}
           title="No interviews yet"
@@ -133,6 +154,38 @@ export default async function HistoryPage() {
             })}
           </ul>
         </Card>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-6 flex items-center justify-between">
+          <span className="text-sm text-[var(--muted-foreground)]">
+            Page {safePage} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            {safePage > 1 ? (
+              <Link href={`/history?page=${safePage - 1}`}>
+                <Button variant="outline" size="sm">
+                  <ArrowLeft className="h-4 w-4" /> Prev
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="outline" size="sm" disabled>
+                <ArrowLeft className="h-4 w-4" /> Prev
+              </Button>
+            )}
+            {safePage < totalPages ? (
+              <Link href={`/history?page=${safePage + 1}`}>
+                <Button variant="outline" size="sm">
+                  Next <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="outline" size="sm" disabled>
+                Next <ArrowRight className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
       )}
     </Container>
   );

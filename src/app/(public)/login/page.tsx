@@ -14,22 +14,20 @@ import { LogoMark } from "@/components/brand/Logo";
 import { AuthField } from "@/components/auth/AuthField";
 import { SubmitButton } from "@/components/auth/SubmitButton";
 import { FormError } from "@/components/auth/FormError";
-import { registerAction, type AuthFormState } from "@/lib/actions/auth";
+import { loginAction, type AuthFormState } from "@/lib/actions/auth";
 
 const initialState: AuthFormState = {};
 
-export default function RegisterPage() {
-  const [state, formAction] = useActionState(registerAction, initialState);
+export default function LoginPage() {
+  const [state, formAction] = useActionState(loginAction, initialState);
 
   return (
     <Container className="flex justify-center py-20">
       <Card className="w-full max-w-sm">
         <CardHeader className="items-center text-center">
           <LogoMark className="mb-2 h-12 w-12" />
-          <CardTitle>Create your account</CardTitle>
-          <CardDescription>
-            Registration requires a valid access code.
-          </CardDescription>
+          <CardTitle>Welcome back</CardTitle>
+          <CardDescription>Sign in to continue to Intervium.</CardDescription>
         </CardHeader>
         <CardContent>
           <form action={formAction} className="space-y-4">
@@ -48,30 +46,24 @@ export default function RegisterPage() {
               name="password"
               type="password"
               label="Password"
-              placeholder="At least 8 characters"
-              autoComplete="new-password"
-              minLength={8}
+              placeholder="••••••••"
+              autoComplete="current-password"
               required
             />
-            <AuthField
-              id="code"
-              name="code"
-              type="text"
-              label="Access code"
-              placeholder="INTV-XXXXX"
-              autoComplete="off"
-              required
-            />
-            <SubmitButton>Create account</SubmitButton>
+            <SubmitButton>Sign in</SubmitButton>
           </form>
 
+          <p className="mt-4 text-center text-xs text-[var(--muted-foreground)]">
+            Forgot your password? Contact your administrator to reset it.
+          </p>
+
           <p className="mt-6 text-center text-sm text-[var(--muted-foreground)]">
-            Already have an account?{" "}
+            Don&apos;t have an account?{" "}
             <Link
-              href="/login"
+              href="/register"
               className="font-medium text-[var(--primary)] hover:underline"
             >
-              Sign in
+              Register
             </Link>
           </p>
         </CardContent>

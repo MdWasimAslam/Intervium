@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Chip } from "@/components/ui/chip";
 import { FormError } from "@/components/auth/FormError";
 import { LogoMark } from "@/components/brand/Logo";
 import { startInterview } from "@/lib/actions/interview";
@@ -310,12 +311,7 @@ export function InterviewSetup({
           </p>
           <div className="flex flex-wrap gap-2">
             {pills.map((p, i) => (
-              <span
-                key={i}
-                className="inline-flex items-center rounded-full border border-[var(--border)] bg-[var(--accent)] px-3 py-1 text-xs font-medium text-[var(--accent-foreground)]"
-              >
-                {p}
-              </span>
+              <Chip key={i}>{p}</Chip>
             ))}
           </div>
         </div>

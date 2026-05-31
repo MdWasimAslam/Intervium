@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, difficultyBands } from "@db";
 import { requireAdmin } from "@/lib/session";
-import { zodError, type AdminResult } from "./util";
+import { isUniqueViolation, zodError, type AdminResult } from "./util";
 
 const schema = z
   .object({
@@ -59,7 +59,16 @@ export async function createBand(input: unknown): Promise<AdminResult> {
       ok: false,
       error: "This range overlaps an existing band for this role.",
     };
-  await db.insert(difficultyBands).values(p.data);
+  try {
+    await db.insert(difficultyBands).values(p.data);
+  } catch (error) {
+    // Backstops the overlap check against races: the DB enforces one label
+    // per role.
+    if (isUniqueViolation(error))
+      return { ok: false, error: "A band with that label already exists." };
+    console.error("[createBand]", error);
+    return { ok: false, error: "Could not create the band." };
+  }
   revalidatePath("/admin/difficulty");
   return { ok: true };
 }
@@ -74,7 +83,17 @@ export async function updateBand(input: unknown): Promise<AdminResult> {
       ok: false,
       error: "This range overlaps an existing band for this role.",
     };
-  await db.update(difficultyBands).set(data).where(eq(difficultyBands.id, id));
+  try {
+    await db
+      .update(difficultyBands)
+      .set(data)
+      .where(eq(difficultyBands.id, id));
+  } catch (error) {
+    if (isUniqueViolation(error))
+      return { ok: false, error: "A band with that label already exists." };
+    console.error("[updateBand]", error);
+    return { ok: false, error: "Could not update the band." };
+  }
   revalidatePath("/admin/difficulty");
   return { ok: true };
 }
