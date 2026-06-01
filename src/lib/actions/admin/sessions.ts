@@ -9,7 +9,7 @@ import { requireAdmin } from "@/lib/session";
 export interface AdminUserSession {
   id: string;
   role: string;
-  interviewType: string;
+  mode: string;
   totalScore: number;
   maxScore: number;
   status: string;
@@ -37,7 +37,7 @@ export async function getUserSessions(
     .select({
       id: interviewSessions.id,
       role: jobRoles.name,
-      interviewType: interviewSessions.interviewType,
+      mode: interviewSessions.mode,
       totalScore: interviewSessions.totalScore,
       maxScore: interviewSessions.maxScore,
       status: interviewSessions.status,

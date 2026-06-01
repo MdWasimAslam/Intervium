@@ -21,11 +21,15 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Slider } from "@/components/ui/slider";
 import { FormError } from "@/components/auth/FormError";
 import { StepProgress } from "@/components/onboarding/StepProgress";
+import { SAMPLE_CV_JSON } from "@/components/onboarding/sample-cv";
+import { CvImportButton } from "@/components/cv/CvImportButton";
+import { isCvJson } from "@/lib/cv/parse";
 import { cn } from "@/lib/utils";
 import {
   completeOnboarding,
@@ -33,7 +37,6 @@ import {
   type OnboardingDraft,
 } from "@/lib/actions/onboarding";
 import type {
-  BandOption,
   RoleOption,
   StackOption,
   WizardValues,
@@ -41,7 +44,7 @@ import type {
 
 const STEP_TITLES = [
   "Your name",
-  "Primary role",
+  "Primary profession",
   "Experience",
   "Skills",
   "Goal",
@@ -61,7 +64,7 @@ const STEP_META: { icon: LucideIcon; title: string; subtitle: string }[] = [
   },
   {
     icon: Briefcase,
-    title: "Which role are you preparing for?",
+    title: "Which profession are you preparing for?",
     subtitle: "Pick the one closest to your target. Tap to choose.",
   },
   {
@@ -94,25 +97,10 @@ const STEP_META: { icon: LucideIcon; title: string; subtitle: string }[] = [
 interface Props {
   roles: RoleOption[];
   stacks: StackOption[];
-  bands: BandOption[];
   initialValues: WizardValues;
   initialStep: number;
-}
-
-/** Find the difficulty band label for a role at a given years of experience. */
-function bandFor(
-  bands: BandOption[],
-  roleId: string,
-  years: number,
-): string | null {
-  const match = bands
-    .filter((b) => b.jobRoleId === roleId)
-    .find(
-      (b) =>
-        years >= (b.minYears ?? 0) &&
-        years <= (b.maxYears ?? Number.MAX_SAFE_INTEGER),
-    );
-  return match?.label ?? null;
+  /** Server-validated admin flag; gates the "Fill sample CV" shortcut. */
+  isAdmin?: boolean;
 }
 
 const makeSlideVariants = (reduced: boolean) => ({
@@ -124,9 +112,9 @@ const makeSlideVariants = (reduced: boolean) => ({
 export function OnboardingWizard({
   roles,
   stacks,
-  bands,
   initialValues,
   initialStep,
+  isAdmin = false,
 }: Props) {
   const reduced = useReducedMotion() ?? false;
   const slideVariants = useMemo(() => makeSlideVariants(reduced), [reduced]);
@@ -153,7 +141,6 @@ export function OnboardingWizard({
     () => stacks.filter((s) => s.jobRoleId === values.primaryRoleId),
     [stacks, values.primaryRoleId],
   );
-  const band = bandFor(bands, values.primaryRoleId, values.yearsExperience);
   const roleName =
     roles.find((r) => r.id === values.primaryRoleId)?.name ?? "—";
   const firstName = values.displayName.trim().split(/\s+/)[0] || "there";
@@ -176,7 +163,7 @@ export function OnboardingWizard({
         };
       case 1:
         if (!values.primaryRoleId) {
-          setError("Please choose a role.");
+          setError("Please choose a profession.");
           return { ok: false };
         }
         return { ok: true, partial: { primaryRoleId: values.primaryRoleId } };
@@ -190,6 +177,10 @@ export function OnboardingWizard({
       case 4:
         return { ok: true, partial: { targetRole: values.targetRole.trim() } };
       case 5:
+        if (cvIsJson === false) {
+          setError("Your CV must be valid JSON. Paste JSON only, or leave it empty.");
+          return { ok: false };
+        }
         return { ok: true, partial: { cvText: values.cvText } };
       default:
         return { ok: true };
@@ -271,16 +262,11 @@ export function OnboardingWizard({
     setSkillInput("");
   }
 
-  const cvIsJson = useMemo(() => {
-    const t = values.cvText.trim();
-    if (!t) return null;
-    try {
-      JSON.parse(t);
-      return true;
-    } catch {
-      return false;
-    }
-  }, [values.cvText]);
+  // null = empty (allowed, CV is optional), true = valid JSON object/array,
+  // false = present but not JSON. We accept JSON-format CVs only.
+  // Cheap enough to compute each render; the React Compiler memoizes as needed.
+  const cvTrimmed = values.cvText.trim();
+  const cvIsJson = cvTrimmed ? isCvJson(cvTrimmed) : null;
 
   if (finishing) {
     return <Celebration name={firstName} reduced={reduced} />;
@@ -327,6 +313,7 @@ export function OnboardingWizard({
                   }}
                   placeholder="e.g. Alex Carter"
                   className="h-14 text-lg"
+                  disabled={pending}
                   autoFocus
                 />
               </div>
@@ -406,16 +393,10 @@ export function OnboardingWizard({
                       {values.yearsExperience === 1 ? "year" : "years"}
                     </span>
                   </div>
-                  {band ? (
-                    <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)] px-3 py-1 text-sm font-medium text-[var(--accent-foreground)]">
-                      <Sparkles className="h-3.5 w-3.5" />
-                      {band} level
-                    </p>
-                  ) : (
-                    <p className="mt-3 text-sm text-[var(--muted-foreground)]">
-                      Difficulty will be set from your role.
-                    </p>
-                  )}
+                  <p className="mt-3 text-sm text-[var(--muted-foreground)]">
+                    For AI interviews you&apos;ll pick a skill level at the start
+                    of each session.
+                  </p>
                 </div>
 
                 <Slider
@@ -555,6 +536,7 @@ export function OnboardingWizard({
                   }}
                   placeholder="e.g. Senior Frontend at a product company"
                   className="h-14 text-lg"
+                  disabled={pending}
                   autoFocus
                 />
               </div>
@@ -563,17 +545,41 @@ export function OnboardingWizard({
             {/* Step 5 — CV */}
             {step === 5 && (
               <div>
+                <div className="mb-3 flex flex-wrap items-start justify-end gap-2">
+                  <CvImportButton
+                    onImported={(json) => set("cvText", json)}
+                    disabled={pending}
+                  />
+                  {isAdmin && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => set("cvText", SAMPLE_CV_JSON)}
+                      disabled={pending}
+                    >
+                      <Sparkles className="size-4" />
+                      Fill sample CV
+                    </Button>
+                  )}
+                </div>
                 <Textarea
                   rows={9}
                   value={values.cvText}
                   onChange={(e) => set("cvText", e.target.value)}
-                  placeholder="Paste plain text or JSON…"
+                  placeholder="Paste your CV as JSON, or upload a PDF…"
+                  disabled={pending}
                 />
                 <p className="mt-2 text-sm text-[var(--muted-foreground)]">
-                  Plain text or JSON both work.
+                  JSON only.
                   {cvIsJson === true && (
                     <span className="ml-1 font-medium text-[var(--primary)]">
                       Detected valid JSON ✓
+                    </span>
+                  )}
+                  {cvIsJson === false && (
+                    <span className="ml-1 font-medium text-[var(--destructive)]">
+                      Not valid JSON — paste JSON only.
                     </span>
                   )}
                 </p>
@@ -586,13 +592,12 @@ export function OnboardingWizard({
                 <ReviewRow label="Name" onEdit={() => jumpTo(0)}>
                   {values.displayName || "—"}
                 </ReviewRow>
-                <ReviewRow label="Primary role" onEdit={() => jumpTo(1)}>
+                <ReviewRow label="Primary profession" onEdit={() => jumpTo(1)}>
                   {roleName}
                 </ReviewRow>
                 <ReviewRow label="Experience" onEdit={() => jumpTo(2)}>
                   {values.yearsExperience}
                   {values.yearsExperience >= MAX_YEARS ? "+" : ""} years
-                  {band ? ` · ${band}` : ""}
                 </ReviewRow>
                 <ReviewRow label="Skills" onEdit={() => jumpTo(3)}>
                   {values.skills.length ? values.skills.join(", ") : "—"}
@@ -635,16 +640,25 @@ export function OnboardingWizard({
             {pending ? "Saving…" : "Tap an option to continue"}
           </span>
         ) : isLast ? (
-          <Button type="button" size="lg" onClick={handleFinish} disabled={pending}>
+          <LoadingButton
+            type="button"
+            size="lg"
+            onClick={handleFinish}
+            loading={pending}
+          >
             <Check />
             Complete setup
-          </Button>
+          </LoadingButton>
         ) : (
-          <Button type="button" onClick={handleNext} disabled={pending}>
-            {pending ? <Loader2 className="animate-spin" /> : null}
+          <LoadingButton
+            type="button"
+            onClick={handleNext}
+            loading={pending}
+            loadingText="Saving…"
+          >
             Continue
-            {!pending && <ArrowRight />}
-          </Button>
+            <ArrowRight />
+          </LoadingButton>
         )}
       </div>
     </Container>

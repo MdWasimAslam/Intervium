@@ -24,8 +24,8 @@ export default async function AdminTechStacksPage() {
   return (
     <TaxonomyAdmin
       kind="tech"
-      title="Tech Stacks"
-      description="Technologies within a role. Inactive ones are hidden from setup."
+      title="Specializations"
+      description="Specializations within a profession. Inactive ones are hidden from setup."
       roles={roles}
       items={items}
     />

@@ -1,30 +1,40 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Check, FileText, Loader2, Target, Undo2 } from "lucide-react";
+import { Check, FileText, Mail, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { type CvData } from "@/lib/cv/types";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { type AtsReviewSnapshot, type CvData } from "@/lib/cv/types";
 import { saveCv } from "@/lib/actions/cv";
 import { CvEditor } from "./CvEditor";
 import { CvPreview } from "./CvPreview";
 import { AtsPanel } from "./AtsPanel";
-import { CompletenessBanner } from "./CompletenessBanner";
+import { CvAiReview } from "./CvAiReview";
+import { CoverLetterPanel } from "./CoverLetterPanel";
 
-type Tab = "edit" | "ats";
+type Tab = "edit" | "ats" | "cover";
 
 /**
  * Top-level /cv client surface. Owns the working `CvData` and persistence;
- * delegates editing, preview, and ATS matching to child panels.
+ * delegates editing, preview, ATS matching, and cover letters to child panels.
+ *
+ * Optimizing a CV for a job is download-only and never touches the stored CV —
+ * only the explicit "Save changes" button below persists. The pasted job
+ * description is owned here so the Cover Letter tab can reuse it.
  */
-export function CvWorkspace({ initial }: { initial: CvData }) {
+export function CvWorkspace({
+  initial,
+  initialAts,
+}: {
+  initial: CvData;
+  initialAts: AtsReviewSnapshot | null;
+}) {
   const [cv, setCv] = useState<CvData>(initial);
   const [tab, setTab] = useState<Tab>("edit");
+  const [jd, setJd] = useState("");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string>();
-  // Pre-optimization CV, stashed so an applied optimization can be undone.
-  const [previousCv, setPreviousCv] = useState<CvData | null>(null);
 
   const persist = useCallback(async (next: CvData) => {
     setSaving(true);
@@ -41,45 +51,30 @@ export function CvWorkspace({ initial }: { initial: CvData }) {
     return res.ok;
   }, []);
 
-  /**
-   * Replace the CV (e.g. accepting an optimized version) and persist it.
-   * The pre-optimization CV is stashed so it can be restored via Undo.
-   */
-  const applyAndSave = useCallback(
-    (next: CvData) => {
-      setCv((prev) => {
-        setPreviousCv(prev);
-        return next;
-      });
-      void persist(next);
-    },
-    [persist],
-  );
-
-  /** Restore the CV that was live before the last optimization was applied. */
-  const undoApply = useCallback(() => {
-    if (!previousCv) return;
-    setCv(previousCv);
-    void persist(previousCv);
-    setPreviousCv(null);
-  }, [previousCv, persist]);
-
   return (
     <div className="space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">My CV</h1>
-          <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-            Edit, download, and tailor your CV to any job — keyword scoring is
-            instant and free; AI is used only to polish.
-          </p>
-        </div>
+      <header className="flex">
         <nav className="inline-flex shrink-0 rounded-full border border-[var(--border)] bg-[var(--card)] p-1">
-          <TabButton active={tab === "edit"} onClick={() => setTab("edit")} icon={<FileText className="h-4 w-4" />}>
+          <TabButton
+            active={tab === "edit"}
+            onClick={() => setTab("edit")}
+            icon={<FileText className="h-4 w-4" />}
+          >
             Edit & Preview
           </TabButton>
-          <TabButton active={tab === "ats"} onClick={() => setTab("ats")} icon={<Target className="h-4 w-4" />}>
+          <TabButton
+            active={tab === "ats"}
+            onClick={() => setTab("ats")}
+            icon={<Target className="h-4 w-4" />}
+          >
             ATS Match
+          </TabButton>
+          <TabButton
+            active={tab === "cover"}
+            onClick={() => setTab("cover")}
+            icon={<Mail className="h-4 w-4" />}
+          >
+            Cover Letter
           </TabButton>
         </nav>
       </header>
@@ -87,33 +82,35 @@ export function CvWorkspace({ initial }: { initial: CvData }) {
       {tab === "edit" ? (
         <div className="space-y-4">
           <div className="flex items-center justify-end gap-3">
-            {error && <span className="text-sm text-[var(--destructive)]">{error}</span>}
-            {previousCv && (
-              <Button variant="outline" onClick={undoApply} disabled={saving}>
-                <Undo2 className="h-4 w-4" />
-                Undo optimization
-              </Button>
+            {error && (
+              <span className="text-sm text-[var(--destructive)]">{error}</span>
             )}
             {saved && (
               <span className="flex items-center gap-1 text-sm text-[var(--primary)]">
                 <Check className="h-4 w-4" /> Saved
               </span>
             )}
-            <Button onClick={() => void persist(cv)} disabled={saving}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+            <LoadingButton
+              onClick={() => void persist(cv)}
+              loading={saving}
+              loadingText="Saving…"
+            >
+              <Check className="h-4 w-4" />
               Save changes
-            </Button>
+            </LoadingButton>
           </div>
-          <CompletenessBanner cv={cv} />
-          <div className="grid gap-6 lg:grid-cols-2">
+          <CvAiReview cv={cv} initial={initialAts} />
+          <div className="grid items-start gap-6 lg:grid-cols-2">
             <CvEditor cv={cv} onChange={setCv} />
-            <div className="lg:sticky lg:top-20 lg:self-start">
+            <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
               <CvPreview cv={cv} />
             </div>
           </div>
         </div>
+      ) : tab === "ats" ? (
+        <AtsPanel cv={cv} jd={jd} onJdChange={setJd} />
       ) : (
-        <AtsPanel cv={cv} onApplyOptimized={applyAndSave} />
+        <CoverLetterPanel initialJobDescription={jd} />
       )}
     </div>
   );

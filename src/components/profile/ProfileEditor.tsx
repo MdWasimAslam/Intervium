@@ -7,7 +7,7 @@ import {
   ArrowLeft,
   Check,
   FileText,
-  Loader2,
+  Palette,
   Plus,
   Sparkles,
   TrendingUp,
@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { Container } from "@/components/layout/Container";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -30,10 +31,16 @@ import {
 } from "@/components/ui/select";
 import { FormError } from "@/components/auth/FormError";
 import { Avatar } from "@/components/ui/avatar";
+import {
+  AVATAR_BACKGROUNDS,
+  AVATAR_ICONS,
+  type AvatarConfig,
+} from "@/components/ui/avatar-options";
 import { cn } from "@/lib/utils";
+import { isCvJson } from "@/lib/cv/parse";
+import { CvImportButton } from "@/components/cv/CvImportButton";
 import { updateProfile, type ProfileUpdate } from "@/lib/actions/profile";
 import type {
-  BandOption,
   RoleOption,
   StackOption,
 } from "@/components/onboarding/types";
@@ -47,43 +54,28 @@ interface ProfileValues {
   yearsExperience: number;
   skills: string[];
   cvText: string;
+  avatar: AvatarConfig;
 }
 
 interface Props {
   roles: RoleOption[];
   stacks: StackOption[];
-  bands: BandOption[];
   initial: ProfileValues;
   /** Stable seed for the user's generated avatar (their user id). */
   seed: string;
 }
 
-type SectionKey = "identity" | "role" | "skills" | "cv";
+type SectionKey = "avatar" | "identity" | "role" | "skills" | "cv";
 type Status = "idle" | "saving" | "saved" | "error";
-
-function bandFor(
-  bands: BandOption[],
-  roleId: string,
-  years: number,
-): string | null {
-  return (
-    bands
-      .filter((b) => b.jobRoleId === roleId)
-      .find(
-        (b) =>
-          years >= (b.minYears ?? 0) &&
-          years <= (b.maxYears ?? Number.MAX_SAFE_INTEGER),
-      )?.label ?? null
-  );
-}
 
 const sameSkills = (a: string[], b: string[]) =>
   a.length === b.length && a.every((s, i) => s === b[i]);
 
-export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
+export function ProfileEditor({ roles, stacks, initial, seed }: Props) {
   const [values, setValues] = useState<ProfileValues>(initial);
   const [saved, setSaved] = useState<ProfileValues>(initial);
   const [status, setStatus] = useState<Record<SectionKey, Status>>({
+    avatar: "idle",
     identity: "idle",
     role: "idle",
     skills: "idle",
@@ -102,13 +94,18 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
     value: ProfileValues[K],
   ) => setValues((v) => ({ ...v, [key]: value }));
 
+  const setAvatar = (patch: Partial<AvatarConfig>) =>
+    setValues((v) => ({ ...v, avatar: { ...v.avatar, ...patch } }));
+
   const roleStacks = useMemo(
     () => stacks.filter((s) => s.jobRoleId === values.primaryRoleId),
     [stacks, values.primaryRoleId],
   );
-  const band = bandFor(bands, values.primaryRoleId, values.yearsExperience);
 
   const dirty: Record<SectionKey, boolean> = {
+    avatar:
+      values.avatar.bg !== saved.avatar.bg ||
+      values.avatar.icon !== saved.avatar.icon,
     identity: values.displayName.trim() !== saved.displayName,
     role:
       values.primaryRoleId !== saved.primaryRoleId ||
@@ -119,6 +116,8 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
 
   function partialFor(key: SectionKey): ProfileUpdate {
     switch (key) {
+      case "avatar":
+        return { avatar: values.avatar };
       case "identity":
         return { displayName: values.displayName.trim() };
       case "role":
@@ -135,6 +134,15 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
 
   async function saveSection(key: SectionKey) {
     if (savedTimers.current[key]) clearTimeout(savedTimers.current[key]);
+    // CVs are JSON-only; block a non-JSON value before it reaches the server.
+    if (key === "cv" && cvIsJson === false) {
+      setStatus((s) => ({ ...s, cv: "error" }));
+      setErrors((e) => ({
+        ...e,
+        cv: "Your CV must be valid JSON. Paste JSON only, or leave it empty.",
+      }));
+      return;
+    }
     setErrors((e) => ({ ...e, [key]: undefined }));
     setStatus((s) => ({ ...s, [key]: "saving" }));
 
@@ -149,6 +157,7 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
     // Promote this section's edits into the saved baseline.
     setSaved((prev) => ({
       ...prev,
+      ...(key === "avatar" && { avatar: values.avatar }),
       ...(key === "identity" && { displayName: values.displayName.trim() }),
       ...(key === "role" && {
         primaryRoleId: values.primaryRoleId,
@@ -183,16 +192,11 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
     setSkillInput("");
   }
 
-  const cvIsJson = useMemo(() => {
-    const t = values.cvText.trim();
-    if (!t) return null;
-    try {
-      JSON.parse(t);
-      return true;
-    } catch {
-      return false;
-    }
-  }, [values.cvText]);
+  // null = empty (allowed, CV is optional), true = valid JSON object/array,
+  // false = present but not JSON. We accept JSON-format CVs only.
+  // Cheap enough to compute each render; the React Compiler memoizes as needed.
+  const cvTrimmed = values.cvText.trim();
+  const cvIsJson = cvTrimmed ? isCvJson(cvTrimmed) : null;
 
   return (
     <Container className="max-w-2xl py-10 sm:py-12">
@@ -207,8 +211,11 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
       <header className="mt-4 mb-8 flex items-center gap-4">
         <Avatar
           seed={seed}
+          name={values.displayName || initial.displayName}
+          bg={values.avatar.bg}
+          icon={values.avatar.icon}
           size={56}
-          alt={`Avatar for ${initial.displayName || "you"}`}
+          alt={`Avatar for ${values.displayName || initial.displayName || "you"}`}
           className="shrink-0"
         />
         <div>
@@ -223,6 +230,80 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
       </header>
 
       <div className="space-y-5">
+        {/* Avatar */}
+        <Section
+          icon={Palette}
+          title="Avatar"
+          description="Pick an icon and background colour, or keep your initials."
+          dirty={dirty.avatar}
+          status={status.avatar}
+          error={errors.avatar}
+          onSave={() => saveSection("avatar")}
+        >
+          <div className="space-y-5">
+            <div className="flex items-center gap-4">
+              <Avatar
+                seed={seed}
+                name={values.displayName || initial.displayName}
+                bg={values.avatar.bg}
+                icon={values.avatar.icon}
+                size={64}
+                alt="Avatar preview"
+                className="shrink-0"
+              />
+              <p className="text-sm text-[var(--muted-foreground)]">
+                Live preview — this is how you appear across the app.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Icon</Label>
+              <div className="flex flex-wrap gap-2">
+                <SwatchButton
+                  selected={!values.avatar.icon}
+                  label="Initials"
+                  onClick={() => setAvatar({ icon: null })}
+                >
+                  <span className="text-xs font-semibold">Aa</span>
+                </SwatchButton>
+                {AVATAR_ICONS.map(({ id, label, Icon }) => (
+                  <SwatchButton
+                    key={id}
+                    selected={values.avatar.icon === id}
+                    label={label}
+                    onClick={() => setAvatar({ icon: id })}
+                  >
+                    <Icon className="h-5 w-5" />
+                  </SwatchButton>
+                ))}
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Background</Label>
+              <div className="flex flex-wrap gap-2">
+                {AVATAR_BACKGROUNDS.map(({ id, label, base }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    aria-label={label}
+                    aria-pressed={values.avatar.bg === id}
+                    title={label}
+                    onClick={() => setAvatar({ bg: id })}
+                    style={{ backgroundColor: base }}
+                    className={cn(
+                      "h-8 w-8 rounded-full ring-offset-2 ring-offset-[var(--card)] transition-transform hover:scale-110",
+                      values.avatar.bg === id
+                        ? "ring-2 ring-[var(--foreground)]"
+                        : "ring-1 ring-black/10",
+                    )}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </Section>
+
         {/* Identity */}
         <Section
           icon={User}
@@ -248,8 +329,8 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
         {/* Role & experience */}
         <Section
           icon={TrendingUp}
-          title="Role & experience"
-          description="Sets the focus and difficulty of your sessions."
+          title="Profession & experience"
+          description="Used to tailor your AI interviews and set a default skill level."
           dirty={dirty.role}
           status={status.role}
           error={errors.role}
@@ -257,13 +338,13 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
         >
           <div className="space-y-6">
             <div className="space-y-2">
-              <Label>Primary role</Label>
+              <Label>Primary profession</Label>
               <Select
                 value={values.primaryRoleId || undefined}
                 onValueChange={(v) => set("primaryRoleId", v)}
               >
                 <SelectTrigger className="max-w-sm">
-                  <SelectValue placeholder="Choose a role" />
+                  <SelectValue placeholder="Choose a profession" />
                 </SelectTrigger>
                 <SelectContent>
                   {roles.map((role) => (
@@ -284,11 +365,6 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
                     {values.yearsExperience >= MAX_YEARS ? "+" : ""}{" "}
                     {values.yearsExperience === 1 ? "year" : "years"}
                   </span>
-                  {band && (
-                    <span className="rounded-full bg-[var(--accent)] px-2.5 py-0.5 text-xs font-medium text-[var(--accent-foreground)]">
-                      {band}
-                    </span>
-                  )}
                 </span>
               </div>
               <Slider
@@ -429,24 +505,32 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
         <Section
           icon={FileText}
           title="CV"
-          description="Paste your CV for sharper, tailored questions."
+          description="Paste your CV as JSON for sharper, tailored questions."
           dirty={dirty.cv}
           status={status.cv}
           error={errors.cv}
           onSave={() => saveSection("cv")}
         >
           <div className="space-y-2">
+            <div className="flex justify-end">
+              <CvImportButton onImported={(json) => set("cvText", json)} />
+            </div>
             <Textarea
               rows={8}
               value={values.cvText}
               onChange={(e) => set("cvText", e.target.value)}
-              placeholder="Paste plain text or JSON…"
+              placeholder="Paste your CV as JSON, or upload a PDF…"
             />
             <p className="text-sm text-[var(--muted-foreground)]">
-              Optional. Plain text or JSON both work.
+              Optional. JSON only.
               {cvIsJson === true && (
                 <span className="ml-1 font-medium text-[var(--primary)]">
                   Detected valid JSON ✓
+                </span>
+              )}
+              {cvIsJson === false && (
+                <span className="ml-1 font-medium text-[var(--destructive)]">
+                  Not valid JSON — paste JSON only.
                 </span>
               )}
             </p>
@@ -454,6 +538,37 @@ export function ProfileEditor({ roles, stacks, bands, initial, seed }: Props) {
         </Section>
       </div>
     </Container>
+  );
+}
+
+/** Square, selectable button used by the avatar icon picker. */
+function SwatchButton({
+  selected,
+  label,
+  onClick,
+  children,
+}: {
+  selected: boolean;
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      aria-pressed={selected}
+      title={label}
+      onClick={onClick}
+      className={cn(
+        "flex h-10 w-10 items-center justify-center rounded-xl border transition-colors",
+        selected
+          ? "border-[var(--primary)] bg-[var(--accent)] text-[var(--primary)]"
+          : "border-[var(--border)] text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]",
+      )}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -536,15 +651,16 @@ function Section({
           </AnimatePresence>
         </div>
 
-        <Button
+        <LoadingButton
           type="button"
           size="sm"
           onClick={onSave}
-          disabled={!dirty || saving}
+          loading={saving}
+          loadingText="Saving…"
+          disabled={!dirty}
         >
-          {saving && <Loader2 className="animate-spin" />}
-          {saving ? "Saving…" : "Save changes"}
-        </Button>
+          Save changes
+        </LoadingButton>
       </div>
     </section>
   );

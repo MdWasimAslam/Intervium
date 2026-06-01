@@ -4,6 +4,7 @@ import { db, profiles } from "@db";
 import { requireAuth } from "@/lib/session";
 import { Container } from "@/components/layout/Container";
 import { parseStoredCv } from "@/lib/cv/parse";
+import { type AtsReviewSnapshot } from "@/lib/cv/types";
 import { CvWorkspace } from "@/components/cv/CvWorkspace";
 
 export const metadata: Metadata = { title: "My CV" };
@@ -17,7 +18,13 @@ export default async function CvPage() {
   const user = await requireAuth();
 
   const [row] = await db
-    .select({ cvText: profiles.cvText, displayName: profiles.displayName })
+    .select({
+      cvText: profiles.cvText,
+      displayName: profiles.displayName,
+      atsReview: profiles.atsReview,
+      atsCvHash: profiles.atsCvHash,
+      atsCheckedAt: profiles.atsCheckedAt,
+    })
     .from(profiles)
     .where(eq(profiles.userId, user.id));
 
@@ -27,9 +34,18 @@ export default async function CvPage() {
     initial.contact.name = row.displayName;
   }
 
+  // Hydrate the last AI ATS review so the score shows on load (no AI call).
+  const initialAts: AtsReviewSnapshot | null = row?.atsReview
+    ? {
+        review: row.atsReview,
+        checkedAt: row.atsCheckedAt?.toISOString() ?? null,
+        cvHash: row.atsCvHash ?? null,
+      }
+    : null;
+
   return (
     <Container className="py-10 sm:py-12">
-      <CvWorkspace initial={initial} />
+      <CvWorkspace initial={initial} initialAts={initialAts} />
     </Container>
   );
 }

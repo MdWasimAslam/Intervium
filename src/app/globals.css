@@ -176,6 +176,34 @@
   font-family: var(--font-display), ui-serif, Georgia, "Times New Roman", serif;
 }
 
+/* ------------------------------------------------------------------ */
+/* CV embedded fonts (scoped to .cv-doc only).                         */
+/* `CvDocument`'s root carries `cv-doc` + a `font-serif`/`font-sans`    */
+/* design class. Binding the self-hosted next/font faces here (two-class*/
+/* selector beats Tailwind's single-class `.font-serif`) gives the CV   */
+/* identical metrics in preview and print without re-skinning the app.  */
+/* ------------------------------------------------------------------ */
+.cv-doc.font-serif {
+  font-family: var(--font-cv-serif), ui-serif, Georgia, "Times New Roman", serif;
+}
+.cv-doc.font-sans {
+  font-family: var(--font-cv-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* On-screen page-break guides: a faint rule at each A4 page boundary so the
+   user sees where pages will split before downloading. Approximate (it doesn't
+   model break-inside-avoid shifts) and never printed. Height set inline. */
+.cv-page-guides {
+  pointer-events: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--cv-page-h) - 1px),
+    color-mix(in srgb, var(--foreground) 18%, transparent) calc(var(--cv-page-h) - 1px),
+    color-mix(in srgb, var(--foreground) 18%, transparent) var(--cv-page-h)
+  );
+}
+
 .landing-grid {
   background-image:
     linear-gradient(
@@ -219,14 +247,51 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Pointer cursor for interactive controls                            */
+/* Tailwind v4's Preflight no longer sets `cursor: pointer` on buttons */
+/* and similar controls (they inherit the browser default arrow), so   */
+/* restore it for genuinely-clickable elements — native buttons, form  */
+/* controls, and the ARIA roles our Radix primitives render (slider,   */
+/* switch, tab, option, menuitem…). Scoped to the enabled state, and    */
+/* kept in @layer base so explicit cursor-* utilities (e.g.            */
+/* `disabled:cursor-not-allowed`) always win.                          */
+/* ------------------------------------------------------------------ */
+@layer base {
+  button:not(:disabled),
+  summary,
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled),
+  input[type="file"]:not(:disabled),
+  [role="button"]:not([data-disabled]):not([aria-disabled="true"]),
+  [role="tab"]:not([data-disabled]),
+  [role="option"]:not([data-disabled]),
+  [role="radio"]:not([data-disabled]),
+  [role="switch"]:not([data-disabled]),
+  [role="checkbox"]:not([data-disabled]),
+  [role="slider"]:not([data-disabled]),
+  [role="menuitem"]:not([data-disabled]),
+  [role="menuitemcheckbox"]:not([data-disabled]),
+  [role="menuitemradio"]:not([data-disabled]) {
+    cursor: pointer;
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Print-to-PDF for the /cv preview.                                  */
 /*                                                                    */
 /* The printable CV is rendered into a portal at the end of <body>    */
 /* (`.cv-print-root`). On screen it's hidden; when printing we hide   */
 /* every other top-level node and show only the CV — so there are no  */
-/* blank pages from invisible-but-laid-out app chrome. `@page margin: */
-/* 0` removes the browser's default date/URL/title header & footer;   */
-/* the page padding below restores comfortable margins.               */
+/* blank pages from invisible-but-laid-out app chrome.                */
+/*                                                                    */
+/* Margins: `@page { margin: 0 }` removes the browser's injected         */
+/* header/footer (date, document title, URL) entirely — there's no margin */
+/* box for them to print into. The per-page top/bottom gap is recreated   */
+/* by repeating <thead>/<tfoot> spacer rows in the print table (they      */
+/* repeat at the top and bottom of EVERY printed page), and the left/right */
+/* margins by the content cell's padding. This gives a clean, chrome-free  */
+/* PDF with consistent gaps on every page, page 2 included.               */
 /* ------------------------------------------------------------------ */
 .cv-print-root {
   display: none;
@@ -239,17 +304,67 @@
   body > .cv-print-root {
     display: block !important;
   }
-  .cv-print-page {
-    padding: 14mm 14mm;
+
+  /* Pin A4 so pagination doesn't depend on the print dialog's page-size
+     default, and zero margin → no browser header/footer (the spacer rows below
+     are the real margins). */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  .cv-print-table {
+    width: 100%;
+    border-collapse: collapse;
     color: #111111 !important;
     background: #ffffff !important;
+    /* Render accent colours (headings/rules) in the PDF, not just on screen. */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
-  /* Keep section headings with their following content where possible. */
-  .cv-print-page h2,
-  .cv-print-page h3 {
+  /* thead/tfoot repeat on every page, so these become the per-page top and
+     bottom gaps — including the top of page 2 and beyond. */
+  .cv-print-pad {
+    height: 18mm;
+  }
+  .cv-print-pad-bottom {
+    height: 14mm;
+  }
+  /* Left/right page margins live on the single content cell. */
+  .cv-print-cell {
+    padding: 0 14mm;
+  }
+
+  /* Keep headings with their following content, and never split a single
+     experience/education/project entry or bullet across a page boundary. */
+  .cv-print-table h1,
+  .cv-print-table h2,
+  .cv-print-table h3 {
     break-after: avoid;
   }
-  @page {
-    margin: 0;
+  .cv-print-table .break-inside-avoid,
+  .cv-print-table li {
+    break-inside: avoid;
+  }
+  .cv-print-table p {
+    orphans: 3;
+    widows: 3;
+  }
+}
+
+/* QA Center "Export PDF" — print only the report, hide the rest of the page so
+   the browser's "Save as PDF" produces a clean document. */
+@media print {
+  body:has(#qa-report) * {
+    visibility: hidden;
+  }
+  #qa-report,
+  #qa-report * {
+    visibility: visible;
+  }
+  #qa-report {
+    position: absolute;
+    inset: 0;
+    width: 100%;
   }
 }

@@ -33,7 +33,7 @@ const STEPS = [
     n: "01",
     Icon: SlidersHorizontal,
     title: "Set the scene",
-    body: "Pick a role, seniority, and focus — behavioral, system design, or coding. Intervium tailors every question to the job you’re chasing.",
+    body: "Pick a profession, specialization, and seniority — technical or not. Intervium tailors every question to the job you’re chasing.",
   },
   {
     n: "02",
@@ -84,7 +84,7 @@ export function Landing() {
       </div>
 
       {/* HERO — sized to fill the first screen below the sticky header */}
-      <section className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-6xl items-center px-6 py-20 lg:py-24">
+      <section className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-7xl items-center px-6 py-20 lg:py-24">
         <div className="grid w-full items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="animate-fade-up">
             <Chip>
@@ -127,7 +127,7 @@ export function Landing() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="relative mx-auto max-w-6xl px-6 py-20">
+      <section id="how-it-works" className="relative mx-auto max-w-7xl px-6 py-20">
         <div className="max-w-2xl">
           <span className="text-sm font-semibold text-[var(--primary)]">
             How it works
@@ -160,7 +160,7 @@ export function Landing() {
 
       {/* FEATURE HIGHLIGHTS */}
       <section className="relative border-y border-[var(--border)] bg-[var(--card)]">
-        <div className="mx-auto max-w-6xl px-6 py-16">
+        <div className="mx-auto max-w-7xl px-6 py-16">
           <div className="grid gap-10 md:grid-cols-3">
             {FEATURES.map(({ Icon, title, body }) => (
               <div key={title}>
@@ -178,7 +178,7 @@ export function Landing() {
       </section>
 
       {/* CLOSING CTA */}
-      <section className="relative mx-auto max-w-6xl px-6 py-24 text-center">
+      <section className="relative mx-auto max-w-7xl px-6 py-24 text-center">
         <div
           className="landing-glow absolute left-1/2 top-1/2 -z-10 h-72 w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70"
           aria-hidden
@@ -198,7 +198,7 @@ export function Landing() {
 
       {/* QUIET FOOTER */}
       <footer className="border-t border-[var(--border)]">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
           <span className="inline-flex items-center gap-2">
             <LogoMark className="h-7 w-7" />
             <span className="text-base font-bold tracking-tight">Intervium</span>

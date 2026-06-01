@@ -5,6 +5,11 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, jobRoles, profiles } from "@db";
 import { getCurrentUser } from "@/lib/session";
+import { isCvJson } from "@/lib/cv/parse";
+import {
+  VALID_BACKGROUND_IDS,
+  VALID_ICON_IDS,
+} from "@/components/ui/avatar-options";
 import type { OnboardingDraft } from "@/lib/actions/onboarding";
 
 /* -------------------------------------------------------------------------- */
@@ -19,10 +24,26 @@ import type { OnboardingDraft } from "@/lib/actions/onboarding";
 const profileUpdateSchema = z
   .object({
     displayName: z.string().trim().min(1, "Display name is required.").max(80),
-    primaryRoleId: z.string().uuid("Pick a role."),
+    primaryRoleId: z.string().uuid("Pick a profession."),
     yearsExperience: z.number().int().min(0).max(60),
     skills: z.array(z.string().trim().min(1).max(60)).max(50),
-    cvText: z.string().max(20000),
+    // CVs are JSON-only: empty, or a JSON object/array. Plain text is rejected.
+    cvText: z
+      .string()
+      .max(20000)
+      .refine(isCvJson, "Your CV must be valid JSON."),
+    // Avatar customization — ids must come from the curated sets; null clears.
+    avatar: z
+      .object({
+        bg: z.string().nullable().optional(),
+        icon: z.string().nullable().optional(),
+      })
+      .refine(
+        (a) =>
+          (a.bg == null || VALID_BACKGROUND_IDS.includes(a.bg)) &&
+          (a.icon == null || VALID_ICON_IDS.includes(a.icon)),
+        "Invalid avatar selection.",
+      ),
   })
   .partial();
 
@@ -70,7 +91,7 @@ export async function updateProfile(
         and(eq(jobRoles.id, data.primaryRoleId), eq(jobRoles.isActive, true)),
       );
     if (!role) {
-      return { ok: false, error: "Selected role is no longer available." };
+      return { ok: false, error: "Selected profession is no longer available." };
     }
   }
 
@@ -101,6 +122,8 @@ export async function updateProfile(
       set.yearsExperience = data.yearsExperience;
     if (data.skills !== undefined) set.skills = data.skills;
     if (data.cvText !== undefined) set.cvText = data.cvText ? data.cvText : null;
+    if (data.avatar !== undefined)
+      set.avatar = { bg: data.avatar.bg ?? null, icon: data.avatar.icon ?? null };
 
     await db.update(profiles).set(set).where(eq(profiles.userId, user.id));
 

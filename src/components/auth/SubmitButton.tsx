@@ -1,20 +1,19 @@
 "use client";
 
 import { useFormStatus } from "react-dom";
-import { Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 
 /**
  * Submit button that shows a spinner while the form action is pending.
- * Reads pending state from the enclosing <form> via useFormStatus.
+ * Reads pending state from the enclosing <form> via useFormStatus and
+ * delegates the spinner/disabled handling to the shared LoadingButton.
  */
 export function SubmitButton({ children }: { children: React.ReactNode }) {
   const { pending } = useFormStatus();
 
   return (
-    <Button type="submit" size="lg" className="w-full" disabled={pending}>
-      {pending && <Loader2 className="animate-spin" />}
+    <LoadingButton type="submit" size="lg" className="w-full" loading={pending}>
       {children}
-    </Button>
+    </LoadingButton>
   );
 }

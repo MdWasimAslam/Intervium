@@ -2,9 +2,9 @@ import { config } from "dotenv";
 config({ path: ".env.local" });
 
 import bcrypt from "bcryptjs";
-import { and, eq, inArray } from "drizzle-orm";
-import { neon } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { eq, inArray } from "drizzle-orm";
+import { drizzle } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 import * as schema from "./schema";
 
 /**
@@ -25,52 +25,35 @@ const NEW_USER = "demo-new@intervium.app";
 const POWER_USER = "demo-power@intervium.app";
 const DAY = 24 * 60 * 60 * 1000;
 
+const DEMO_Q = "Explain how you would design a rate limiter.";
+const DEMO_A = "Token bucket / sliding window, with tradeoffs.";
+
 async function main() {
   const databaseUrl = process.env.DATABASE_URL;
   if (!databaseUrl) throw new Error("DATABASE_URL is not set.");
-  const db = drizzle(neon(databaseUrl), { schema });
+  const pool = new Pool({
+    connectionString: databaseUrl,
+    ssl: /@(localhost|127\.0\.0\.1)/.test(databaseUrl)
+      ? false
+      : { rejectUnauthorized: false },
+  });
+  const db = drizzle(pool, { schema });
   const clean = process.argv.includes("--clean");
 
-  // Reference data created by the baseline seed.
   const [role] = await db
     .select()
     .from(schema.jobRoles)
     .where(eq(schema.jobRoles.slug, "software-developer"));
-  if (!role) throw new Error("Run `npm run db:seed` first (no job role found).");
+  if (!role)
+    throw new Error("Run `npm run db:seed` first (no job role found).");
 
   const stacks = await db
     .select()
     .from(schema.techStacks)
     .where(eq(schema.techStacks.jobRoleId, role.id));
-  const focuses = await db
-    .select()
-    .from(schema.focusAreas)
-    .where(eq(schema.focusAreas.jobRoleId, role.id));
   const stack = stacks.find((s) => s.name === "React") ?? stacks[0];
-  const focus = focuses.find((f) => f.name === "General") ?? focuses[0];
-  if (!stack || !focus) throw new Error("Seed tech stacks / focus areas first.");
-
-  // Ensure a question exists for the session_questions FK.
-  let [question] = await db
-    .select()
-    .from(schema.questionsCache)
-    .where(eq(schema.questionsCache.signature, "demo-signature"));
-  if (!question) {
-    [question] = await db
-      .insert(schema.questionsCache)
-      .values({
-        jobRoleId: role.id,
-        techStackId: stack.id,
-        focusAreaId: focus.id,
-        difficulty: "Senior",
-        type: "text",
-        questionText: "Explain how you would design a rate limiter.",
-        idealAnswer: "Token bucket / sliding window, with tradeoffs.",
-        signature: "demo-signature",
-        source: "admin",
-      })
-      .returning();
-  }
+  if (!stack)
+    throw new Error("Run `npm run db:seed` first (no tech stack found).");
 
   // Upsert the two demo users.
   const passwordHash = await bcrypt.hash(DEMO_PASSWORD, 10);
@@ -115,85 +98,66 @@ async function main() {
   }
 
   // Profiles (onboarding completed so the dashboard renders).
-  await db
-    .insert(schema.profiles)
-    .values({
-      userId: newId,
-      displayName: "Maya Chen",
-      primaryRole: role.id,
-      yearsExperience: 1,
-      skills: ["JavaScript", "React", "CSS"],
-      cvText: null,
-      onboarding: { completed: true },
-    })
-    .onConflictDoUpdate({
-      target: schema.profiles.userId,
-      set: {
-        displayName: "Maya Chen",
-        primaryRole: role.id,
-        yearsExperience: 1,
-        skills: ["JavaScript", "React", "CSS"],
-        cvText: null,
-        onboarding: { completed: true },
-        updatedAt: new Date(),
-      },
-    });
+  const profile = (
+    displayName: string,
+    years: number,
+    skills: string[],
+    cvText: string | null,
+  ) => ({
+    displayName,
+    primaryRole: role.id,
+    yearsExperience: years,
+    skills,
+    cvText,
+    onboarding: { completed: true },
+  });
 
   await db
     .insert(schema.profiles)
     .values({
-      userId: powerId,
-      displayName: "Alex Rivera",
-      primaryRole: role.id,
-      yearsExperience: 6,
-      skills: [
-        "React",
-        "TypeScript",
-        "Node.js",
-        "GraphQL",
-        "PostgreSQL",
-        "System Design",
-        "Jest",
-        "Docker",
-        "AWS",
-        "Redis",
-      ],
-      cvText: "Senior software developer with 6 years building web platforms.",
-      onboarding: { completed: true },
+      userId: newId,
+      ...profile("Maya Chen", 1, ["JavaScript", "React", "CSS"], null),
     })
     .onConflictDoUpdate({
       target: schema.profiles.userId,
       set: {
-        displayName: "Alex Rivera",
-        primaryRole: role.id,
-        yearsExperience: 6,
-        skills: [
-          "React",
-          "TypeScript",
-          "Node.js",
-          "GraphQL",
-          "PostgreSQL",
-          "System Design",
-          "Jest",
-          "Docker",
-          "AWS",
-          "Redis",
-        ],
-        cvText:
-          "Senior software developer with 6 years building web platforms.",
-        onboarding: { completed: true },
+        ...profile("Maya Chen", 1, ["JavaScript", "React", "CSS"], null),
+        updatedAt: new Date(),
+      },
+    });
+
+  const powerSkills = [
+    "React",
+    "TypeScript",
+    "Node.js",
+    "GraphQL",
+    "PostgreSQL",
+    "System Design",
+  ];
+  const powerCv =
+    "Senior software developer with 6 years building web platforms.";
+  await db
+    .insert(schema.profiles)
+    .values({
+      userId: powerId,
+      ...profile("Alex Rivera", 6, powerSkills, powerCv),
+    })
+    .onConflictDoUpdate({
+      target: schema.profiles.userId,
+      set: {
+        ...profile("Alex Rivera", 6, powerSkills, powerCv),
         updatedAt: new Date(),
       },
     });
 
   // Power user: 6 completed + scored sessions (upward trend) + 1 in-progress.
   const completed = [
-    { total: 30, daysAgo: 35, type: "technical" as const },
-    { total: 34, daysAgo: 28, type: "behavioral" as const },
-    { total: 38, daysAgo: 21, type: "mixed" as const },
-    { total: 40, daysAgo: 14, type: "technical" as const },
-    { total: 44, daysAgo: 7, type: "technical" as const },
-    { total: 46, daysAgo: 2, type: "mixed" as const },
+    { total: 30, daysAgo: 35, mode: "bank" as const },
+    { total: 34, daysAgo: 28, mode: "ai" as const },
+    { total: 38, daysAgo: 21, mode: "bank" as const },
+    { total: 40, daysAgo: 14, mode: "ai" as const },
+    { total: 44, daysAgo: 7, mode: "bank" as const },
+    { total: 46, daysAgo: 2, mode: "ai" as const },
   ];
   const MAX = 50;
   const Q = 5;
@@ -204,11 +168,10 @@ async function main() {
       .insert(schema.interviewSessions)
       .values({
         userId: powerId,
+        mode: c.mode,
         jobRoleId: role.id,
         techStackId: stack.id,
-        focusAreaId: focus.id,
-        interviewType: c.type,
-        difficulty: "Senior",
+        skillLevel: c.mode === "ai" ? "advanced" : null,
         questionCount: Q,
         status: "completed",
         totalScore: c.total,
@@ -220,13 +183,16 @@ async function main() {
       })
       .returning();
 
-    // Spread the total across Q answered questions.
+    // Spread the total across Q answered, self-contained transcript rows.
     const base = Math.floor(c.total / Q);
     const rem = c.total - base * Q;
     await db.insert(schema.sessionQuestions).values(
       Array.from({ length: Q }).map((_, i) => ({
         sessionId: session.id,
-        questionId: question.id,
+        bankQuestionId: null,
+        questionText: DEMO_Q,
+        idealAnswer: DEMO_A,
+        modality: "text" as const,
         position: i,
         userAnswer: "Demo answer.",
         score: base + (i < rem ? 1 : 0),
@@ -239,11 +205,10 @@ async function main() {
   // One in-progress session → drives the "Resume" button.
   await db.insert(schema.interviewSessions).values({
     userId: powerId,
+    mode: "ai",
     jobRoleId: role.id,
     techStackId: stack.id,
-    focusAreaId: focus.id,
-    interviewType: "technical",
-    difficulty: "Senior",
+    skillLevel: "advanced",
     questionCount: Q,
     status: "in_progress",
     totalScore: 0,

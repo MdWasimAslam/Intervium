@@ -1,14 +1,18 @@
 import "server-only";
-import { and, asc, count, desc, eq, isNotNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, isNotNull, sql } from "drizzle-orm";
 import {
   db,
-  difficultyBands,
   interviewSessions,
   jobRoles,
   profiles,
   sessionQuestions,
   techStacks,
 } from "@db";
+import {
+  toAvatarConfig,
+  type AvatarConfig,
+} from "@/components/ui/avatar-options";
+import { computeStreaks, type StreakInfo } from "@/lib/streaks";
 
 /**
  * Read-only dashboard data layer.
@@ -24,9 +28,14 @@ export interface DashboardProfile {
   displayName: string;
   roleName: string | null;
   yearsExperience: number;
-  band: string | null;
   skills: string[];
   hasCv: boolean;
+  /** Latest AI ATS score (0–100), or null if the CV was never checked. */
+  atsScore: number | null;
+  /** User-chosen avatar customization (background + icon). */
+  avatar: AvatarConfig;
+  /** Last time the profile/CV was saved — shown as a freshness hint. */
+  updatedAt: Date;
 }
 
 export interface DashboardStats {
@@ -44,23 +53,15 @@ export interface RecentSession {
   id: string;
   role: string;
   tech: string;
-  interviewType: string;
+  mode: string;
   totalScore: number;
   maxScore: number;
   pct: number;
   date: string;
 }
 
-export interface DashboardStreaks {
-  /** Consecutive days practised, counting back from today (UTC). */
-  current: number;
-  /** Longest consecutive-day run ever. */
-  longest: number;
-  /** Interviews started in the last 7 days. */
-  thisWeek: number;
-  /** Whether a session was started today (UTC) — drives the "active" flame. */
-  activeToday: boolean;
-}
+/** Practice cadence for the dashboard — see {@link StreakInfo}. */
+export type DashboardStreaks = StreakInfo;
 
 export interface DashboardMilestone {
   /** The most recent scored session set a new personal best. */
@@ -92,61 +93,6 @@ export interface DashboardData {
 const pct = (score: number, max: number) =>
   max > 0 ? Math.round((score / max) * 100) : 0;
 
-/** Resolve the difficulty band label for `years`, mirroring InterviewSetup. */
-function resolveBand(
-  bands: { label: string; minYears: number | null; maxYears: number | null }[],
-  years: number,
-): string | null {
-  return (
-    bands.find(
-      (b) =>
-        years >= (b.minYears ?? 0) &&
-        years <= (b.maxYears ?? Number.MAX_SAFE_INTEGER),
-    )?.label ?? null
-  );
-}
-
-/** UTC day index for a timestamp (days since epoch), for streak arithmetic. */
-const dayNum = (d: Date) => Math.floor(d.getTime() / 86_400_000);
-
-/**
- * Derive practice streaks and cadence from the days the user started sessions.
- * Streaks are measured in UTC days, matching the date convention used for the
- * dashboard's session dates.
- */
-function computeStreaks(startedAts: Date[], now: Date): DashboardStreaks {
-  const todayNum = dayNum(now);
-  const weekAgoMs = now.getTime() - 7 * 86_400_000;
-  const thisWeek = startedAts.filter((d) => d.getTime() >= weekAgoMs).length;
-
-  const days = [...new Set(startedAts.map(dayNum))].sort((a, b) => a - b);
-
-  let longest = 0;
-  let run = 0;
-  let prev: number | null = null;
-  for (const di of days) {
-    run = prev !== null && di === prev + 1 ? run + 1 : 1;
-    longest = Math.max(longest, run);
-    prev = di;
-  }
-
-  const present = new Set(days);
-  let current = 0;
-  // Count back from today; allow the streak to still be "alive" if the most
-  // recent day was yesterday (today just hasn't been practised yet).
-  let cursor = present.has(todayNum)
-    ? todayNum
-    : present.has(todayNum - 1)
-      ? todayNum - 1
-      : null;
-  while (cursor !== null && present.has(cursor)) {
-    current++;
-    cursor--;
-  }
-
-  return { current, longest, thisWeek, activeToday: present.has(todayNum) };
-}
-
 /**
  * Returns the composed dashboard view, or `null` if the user has no profile /
  * hasn't completed onboarding (callers redirect to /onboarding in that case).
@@ -163,7 +109,10 @@ export async function getDashboardData(
       skills: profiles.skills,
       // Presence only — never read the CV content into the dashboard.
       hasCv: sql<boolean>`(${profiles.cvText} IS NOT NULL AND length(${profiles.cvText}) > 0)`,
+      atsScore: profiles.atsScore,
+      avatar: profiles.avatar,
       onboarding: profiles.onboarding,
+      updatedAt: profiles.updatedAt,
     })
     .from(profiles)
     .leftJoin(jobRoles, eq(jobRoles.id, profiles.primaryRole))
@@ -174,36 +123,33 @@ export async function getDashboardData(
       ?.completed === true;
   if (!profileRow || !completed) return null;
 
-  const roleId = profileRow.roleId;
-
   // Trend/streak/milestone read the most recent N sessions rather than the
   // user's entire history — bounds the JS-side work without changing the shape
   // of these (recency-weighted) views for any realistic user.
   const TREND_SCAN_LIMIT = 200;
 
-  const [statRows, recentRows, answeredRows, bandRows, aggRow] =
-    await Promise.all([
-      // Bounded scan of recent sessions for trend, streak and milestone.
-      db
-        .select({
-          id: interviewSessions.id,
-          status: interviewSessions.status,
-          totalScore: interviewSessions.totalScore,
-          maxScore: interviewSessions.maxScore,
-          scoredAt: interviewSessions.scoredAt,
-          startedAt: interviewSessions.startedAt,
-        })
-        .from(interviewSessions)
-        .where(eq(interviewSessions.userId, userId))
-        .orderBy(desc(interviewSessions.startedAt))
-        .limit(TREND_SCAN_LIMIT),
+  const [statRows, recentRows, answeredRows, aggRow] = await Promise.all([
+    // Bounded scan of recent sessions for trend, streak and milestone.
+    db
+      .select({
+        id: interviewSessions.id,
+        status: interviewSessions.status,
+        totalScore: interviewSessions.totalScore,
+        maxScore: interviewSessions.maxScore,
+        scoredAt: interviewSessions.scoredAt,
+        startedAt: interviewSessions.startedAt,
+      })
+      .from(interviewSessions)
+      .where(eq(interviewSessions.userId, userId))
+      .orderBy(desc(interviewSessions.startedAt))
+      .limit(TREND_SCAN_LIMIT),
     // Most recent completed + scored sessions, with display joins.
     db
       .select({
         id: interviewSessions.id,
         role: jobRoles.name,
         tech: techStacks.name,
-        interviewType: interviewSessions.interviewType,
+        mode: interviewSessions.mode,
         totalScore: interviewSessions.totalScore,
         maxScore: interviewSessions.maxScore,
         scoredAt: interviewSessions.scoredAt,
@@ -233,17 +179,6 @@ export async function getDashboardData(
           isNotNull(sessionQuestions.answeredAt),
         ),
       ),
-    roleId
-      ? db
-          .select({
-            label: difficultyBands.label,
-            minYears: difficultyBands.minYears,
-            maxYears: difficultyBands.maxYears,
-          })
-          .from(difficultyBands)
-          .where(eq(difficultyBands.jobRoleId, roleId))
-          .orderBy(asc(difficultyBands.minYears))
-      : Promise.resolve([]),
     // Completed count + scored average/best computed in SQL over ALL sessions,
     // so these headline stats stay exact regardless of the trend-scan bound.
     db
@@ -276,7 +211,7 @@ export async function getDashboardData(
     id: r.id,
     role: r.role,
     tech: r.tech,
-    interviewType: r.interviewType,
+    mode: r.mode,
     totalScore: r.totalScore,
     maxScore: r.maxScore,
     pct: pct(r.totalScore, r.maxScore),
@@ -328,11 +263,13 @@ export async function getDashboardData(
       displayName: profileRow.displayName ?? "there",
       roleName: profileRow.roleName,
       yearsExperience: profileRow.yearsExperience,
-      band: resolveBand(bandRows, profileRow.yearsExperience),
       skills: Array.isArray(profileRow.skills)
         ? (profileRow.skills as string[])
         : [],
       hasCv: Boolean(profileRow.hasCv),
+      atsScore: profileRow.atsScore ?? null,
+      avatar: toAvatarConfig(profileRow.avatar),
+      updatedAt: profileRow.updatedAt ?? new Date(),
     },
     stats,
     recent,

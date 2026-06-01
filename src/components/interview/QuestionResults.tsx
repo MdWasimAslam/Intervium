@@ -1,7 +1,16 @@
 "use client";
 
+import { type ReactNode } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { Check, TrendingUp } from "lucide-react";
+import {
+  BookOpenCheck,
+  Check,
+  Lightbulb,
+  ListChecks,
+  MessageSquareText,
+  TrendingUp,
+  type LucideIcon,
+} from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { QuestionPrompt } from "@/components/interview/QuestionPrompt";
 import { cn } from "@/lib/utils";
@@ -29,13 +38,43 @@ export interface QuestionResult {
   feedback: string;
   strengths: string[];
   improvements: string[];
+  /** Concepts from the ideal answer the candidate missed (may be empty). */
+  missingConcepts?: string[];
+  /** Coding only: a stronger alternative solution, when the model suggested one. */
+  betterApproach?: string | null;
   /** Interviewer rubric breakdown — one of these is set per question type. */
   rubric?: TextRubric | null;
   codeRubric?: CodeRubric | null;
   /** Coding questions render the answer as code and show the ideal solution. */
   isCoding?: boolean;
   language?: string | null;
+  /** Expected/ideal answer for text questions (prose). */
+  idealAnswer?: string | null;
+  /** Ideal solution for coding questions (code). */
   idealSolution?: string | null;
+}
+
+/** Small uppercase section label with a leading icon. */
+function SectionLabel({
+  icon: Icon,
+  children,
+  className,
+}: {
+  icon: LucideIcon;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <p
+      className={cn(
+        "mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]",
+        className,
+      )}
+    >
+      <Icon className="h-3.5 w-3.5" />
+      {children}
+    </p>
+  );
 }
 
 /** Monospace, scrollable code block used for coding answers and solutions. */
@@ -94,7 +133,13 @@ function RubricPill({
 }
 
 /** Structured rubric breakdown — text (4/3/2/1) or weighted coding (each /10). */
-function RubricBreakdown({ result }: { result: QuestionResult }) {
+function RubricBreakdown({
+  result,
+  isTechnical = true,
+}: {
+  result: QuestionResult;
+  isTechnical?: boolean;
+}) {
   if (result.codeRubric) {
     const c = result.codeRubric;
     return (
@@ -126,7 +171,7 @@ function RubricBreakdown({ result }: { result: QuestionResult }) {
     return (
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <RubricPill
-          label="Technical accuracy"
+          label={isTechnical ? "Technical accuracy" : "Accuracy"}
           value={r.technicalAccuracy}
           max={4}
         />
@@ -144,7 +189,13 @@ function RubricBreakdown({ result }: { result: QuestionResult }) {
 }
 
 /** Animated per-question breakdown cards. */
-export function QuestionResults({ results }: { results: QuestionResult[] }) {
+export function QuestionResults({
+  results,
+  isTechnical = true,
+}: {
+  results: QuestionResult[];
+  isTechnical?: boolean;
+}) {
   const reduced = useReducedMotion() ?? false;
   return (
     <div className="space-y-4">
@@ -206,18 +257,67 @@ export function QuestionResults({ results }: { results: QuestionResult[] }) {
                   )}
                 </div>
 
-                <RubricBreakdown result={r} />
+                <RubricBreakdown result={r} isTechnical={isTechnical} />
 
-                <div className="rounded-xl bg-[var(--muted)] p-3 text-sm">
-                  {r.feedback}
+                {/* Why this score — the model's rationale for the breakdown. */}
+                <div>
+                  <SectionLabel icon={MessageSquareText}>
+                    Why this score
+                  </SectionLabel>
+                  <div className="rounded-xl bg-[var(--muted)] p-3 text-sm">
+                    {r.feedback}
+                  </div>
                 </div>
 
+                {/* Missing concepts — what a complete answer would have covered. */}
+                {r.missingConcepts && r.missingConcepts.length > 0 && (
+                  <div>
+                    <SectionLabel
+                      icon={ListChecks}
+                      className="text-amber-600 dark:text-amber-400"
+                    >
+                      Missing concepts
+                    </SectionLabel>
+                    <div className="flex flex-wrap gap-1.5">
+                      {r.missingConcepts.map((c, j) => (
+                        <span
+                          key={j}
+                          className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
+                        >
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Expected / ideal answer (text questions). */}
+                {!r.isCoding && r.idealAnswer?.trim() && (
+                  <div>
+                    <SectionLabel icon={BookOpenCheck}>
+                      Expected answer
+                    </SectionLabel>
+                    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 text-sm leading-relaxed whitespace-pre-wrap text-[var(--muted-foreground)]">
+                      {r.idealAnswer.trim()}
+                    </div>
+                  </div>
+                )}
+
+                {/* Ideal solution + better approach (coding questions). */}
                 {r.isCoding && r.idealSolution && (
                   <div>
-                    <p className="mb-1 text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
+                    <SectionLabel icon={BookOpenCheck}>
                       Ideal solution
-                    </p>
+                    </SectionLabel>
                     <CodeBlock code={r.idealSolution} />
+                  </div>
+                )}
+                {r.isCoding && r.betterApproach?.trim() && (
+                  <div>
+                    <SectionLabel icon={Lightbulb}>Better approach</SectionLabel>
+                    <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 text-sm leading-relaxed whitespace-pre-wrap text-[var(--muted-foreground)]">
+                      {r.betterApproach.trim()}
+                    </div>
                   </div>
                 )}
 
@@ -225,9 +325,12 @@ export function QuestionResults({ results }: { results: QuestionResult[] }) {
                   <div className="grid gap-4 sm:grid-cols-2">
                     {r.strengths.length > 0 && (
                       <div>
-                        <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-[var(--primary)]">
-                          <Check className="h-3.5 w-3.5" /> Strengths
-                        </p>
+                        <SectionLabel
+                          icon={Check}
+                          className="text-[var(--primary)]"
+                        >
+                          Strengths
+                        </SectionLabel>
                         <ul className="space-y-1 text-sm">
                           {r.strengths.map((s, j) => (
                             <li
@@ -242,9 +345,12 @@ export function QuestionResults({ results }: { results: QuestionResult[] }) {
                     )}
                     {r.improvements.length > 0 && (
                       <div>
-                        <p className="mb-1.5 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
-                          <TrendingUp className="h-3.5 w-3.5" /> To improve
-                        </p>
+                        <SectionLabel
+                          icon={TrendingUp}
+                          className="text-amber-600 dark:text-amber-400"
+                        >
+                          Areas for improvement
+                        </SectionLabel>
                         <ul className="space-y-1 text-sm">
                           {r.improvements.map((s, j) => (
                             <li

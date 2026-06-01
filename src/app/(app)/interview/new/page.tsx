@@ -3,8 +3,6 @@ import { redirect } from "next/navigation";
 import { and, asc, desc, eq, isNotNull } from "drizzle-orm";
 import {
   db,
-  difficultyBands,
-  focusAreas,
   interviewSessions,
   jobRoles,
   profiles,
@@ -20,6 +18,16 @@ import {
 } from "@/components/interview/LatestResult";
 
 export const metadata: Metadata = { title: "New interview" };
+
+/** Sensible default skill level for the AI interview, from profile years. */
+function skillFromYears(
+  years: number,
+): "beginner" | "intermediate" | "advanced" | "expert" {
+  if (years <= 1) return "beginner";
+  if (years <= 3) return "intermediate";
+  if (years <= 5) return "advanced";
+  return "expert";
+}
 
 /**
  * Interview setup screen (Server Component).
@@ -41,20 +49,13 @@ export default async function NewInterviewPage() {
   const onboarding = (profile?.onboarding ?? {}) as { completed?: boolean };
   if (!onboarding.completed) redirect("/onboarding");
 
-  const [roles, focuses, stacks, bands, latestRows] = await Promise.all([
+  // Fetch all setup data — including settings — in one concurrent batch.
+  const [roles, stacks, latestRows, settings] = await Promise.all([
     db
       .select({ id: jobRoles.id, name: jobRoles.name })
       .from(jobRoles)
       .where(eq(jobRoles.isActive, true))
       .orderBy(asc(jobRoles.sortOrder)),
-    db
-      .select({
-        id: focusAreas.id,
-        jobRoleId: focusAreas.jobRoleId,
-        name: focusAreas.name,
-      })
-      .from(focusAreas)
-      .where(eq(focusAreas.isActive, true)),
     db
       .select({
         id: techStacks.id,
@@ -65,17 +66,9 @@ export default async function NewInterviewPage() {
       .where(eq(techStacks.isActive, true)),
     db
       .select({
-        jobRoleId: difficultyBands.jobRoleId,
-        label: difficultyBands.label,
-        minYears: difficultyBands.minYears,
-        maxYears: difficultyBands.maxYears,
-      })
-      .from(difficultyBands),
-    db
-      .select({
         totalScore: interviewSessions.totalScore,
         maxScore: interviewSessions.maxScore,
-        interviewType: interviewSessions.interviewType,
+        mode: interviewSessions.mode,
         techStack: techStacks.name,
       })
       .from(interviewSessions)
@@ -89,12 +82,12 @@ export default async function NewInterviewPage() {
       )
       .orderBy(desc(interviewSessions.scoredAt))
       .limit(1),
+    getSettings(),
   ]);
 
   const defaultRoleId =
     roles.find((r) => r.id === profile?.primaryRole)?.id ?? roles[0]?.id ?? "";
   const latest: LatestSession | null = latestRows[0] ?? null;
-  const settings = await getSettings();
 
   return (
     <Container className="py-10">
@@ -102,13 +95,13 @@ export default async function NewInterviewPage() {
         <div className="lg:col-span-2">
           <InterviewSetup
             roles={roles}
-            focusAreas={focuses}
             techStacks={stacks}
-            bands={bands}
             defaultRoleId={defaultRoleId}
-            defaultYears={profile?.yearsExperience ?? 0}
-            questionCounts={settings.questionCounts}
-            timerSeconds={settings.defaultTimerSeconds}
+            defaultSkillLevel={skillFromYears(profile?.yearsExperience ?? 0)}
+            timerPresets={settings.timerPresets}
+            defaultTimerPresetId={settings.defaultTimerPresetId}
+            lengthPresets={settings.lengthPresets}
+            defaultLengthPresetId={settings.defaultLengthPresetId}
           />
         </div>
         <div>

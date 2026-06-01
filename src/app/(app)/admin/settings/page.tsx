@@ -7,8 +7,11 @@ export default async function AdminSettingsPage() {
   const settings = await getSettings();
   return (
     <SettingsAdmin
-      defaultTimerSeconds={settings.defaultTimerSeconds}
-      questionCounts={settings.questionCounts}
+      timerPresets={settings.timerPresets}
+      defaultTimerPresetId={settings.defaultTimerPresetId}
+      lengthPresets={settings.lengthPresets}
+      defaultLengthPresetId={settings.defaultLengthPresetId}
+      scoringProvider={settings.scoringProvider}
     />
   );
 }

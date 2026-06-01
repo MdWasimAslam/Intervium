@@ -1,0 +1,2 @@
+CREATE TYPE "public"."profession_type" AS ENUM('technical', 'hr', 'sales', 'marketing', 'other');--> statement-breakpoint
+ALTER TABLE "job_roles" ADD COLUMN "profession_type" "profession_type" DEFAULT 'technical' NOT NULL;

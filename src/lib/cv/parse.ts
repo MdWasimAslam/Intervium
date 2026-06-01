@@ -38,6 +38,19 @@ export function parseStoredCv(cvText: string | null | undefined): CvData {
   return parsePlainText(text);
 }
 
+/**
+ * Whether a string is an acceptable CV input. We accept JSON-format CVs only:
+ * a non-empty value must parse as a JSON object or array. Empty/whitespace is
+ * allowed because a CV is optional; plain text is rejected. Use this to gate
+ * input on the client and to validate server actions.
+ */
+export function isCvJson(cvText: string | null | undefined): boolean {
+  const text = (cvText ?? "").trim();
+  if (!text) return true;
+  const json = tryParseJson(text);
+  return json !== null && typeof json === "object";
+}
+
 /** Serialize to the JSON envelope stored in `cv_text` (preserves `raw`). */
 export function serializeCv(data: CvData, raw?: string): string {
   const envelope: CvEnvelope = {
@@ -60,7 +73,9 @@ export function cvPlainText(cvText: string | null | undefined): string {
   if (json && typeof json === "object") {
     if ((json as CvEnvelope)._iv === 1) {
       const env = json as CvEnvelope;
-      return (env.raw && env.raw.trim()) || cvToPlainText(coerceCvData(env.data));
+      return (
+        (env.raw && env.raw.trim()) || cvToPlainText(coerceCvData(env.data))
+      );
     }
     return cvToPlainText(coerceCvData(json));
   }
@@ -73,7 +88,13 @@ export function cvToPlainText(data: CvData): string {
   const { contact, summary, experience, projects, skills, education } = data;
   const { certifications, languages } = data;
 
-  const contactLine = [contact.name, contact.title, contact.email, contact.phone, contact.location]
+  const contactLine = [
+    contact.name,
+    contact.title,
+    contact.email,
+    contact.phone,
+    contact.location,
+  ]
     .filter(Boolean)
     .join(" · ");
   if (contactLine) parts.push(contactLine);
@@ -81,7 +102,9 @@ export function cvToPlainText(data: CvData): string {
   if (summary) parts.push(summary);
 
   for (const exp of experience) {
-    const head = [exp.title, exp.company, exp.period].filter(Boolean).join(" — ");
+    const head = [exp.title, exp.company, exp.period]
+      .filter(Boolean)
+      .join(" — ");
     if (head) parts.push(head);
     if (exp.description) parts.push(exp.description);
     for (const b of exp.bullets) parts.push(b);
@@ -110,6 +133,64 @@ export function cvToPlainText(data: CvData): string {
   return parts.filter(Boolean).join("\n");
 }
 
+/** Stable, cheap FNV-1a hash of any string. Pure — safe on client and server. */
+export function fnv1a(text: string): string {
+  let hash = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    hash ^= text.charCodeAt(i);
+    hash = Math.imul(hash, 0x01000193);
+  }
+  return (hash >>> 0).toString(16);
+}
+
+/**
+ * Stable, cheap fingerprint of a CV's textual content (FNV-1a). Used to detect
+ * whether the CV changed since its last AI ATS review, so the UI can flag a
+ * stored score as stale. Pure & deterministic — safe on client and server.
+ */
+export function cvFingerprint(data: CvData): string {
+  return fnv1a(cvToPlainText(data));
+}
+
+/**
+ * Deterministic `JSON.stringify` with object keys sorted recursively, so an
+ * identical logical value always serializes to the same string regardless of
+ * key insertion order. Used to build stable, content-addressed AI cache keys.
+ */
+export function stableStringify(value: unknown): string {
+  return JSON.stringify(sortKeysDeep(value));
+}
+
+function sortKeysDeep(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortKeysDeep);
+  if (value && typeof value === "object") {
+    const src = value as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    for (const key of Object.keys(src).sort()) out[key] = sortKeysDeep(src[key]);
+    return out;
+  }
+  return value;
+}
+
+/**
+ * De-duplicate strings case-insensitively while preserving first-seen order and
+ * the first-seen original casing. Blank/whitespace-only entries are dropped.
+ * Shared by skills/languages/links handling so the same value never appears
+ * twice (e.g. "React" + "react" from a categorized skills object).
+ */
+export function dedupePreserveOrder(items: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const item of items) {
+    const trimmed = item.trim();
+    const key = trimmed.toLowerCase();
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(trimmed);
+  }
+  return out;
+}
+
 /* -------------------------------------------------------------------------- */
 /* JSON coercion                                                              */
 /* -------------------------------------------------------------------------- */
@@ -128,12 +209,19 @@ const str = (v: unknown): string =>
 const strArray = (v: unknown): string[] =>
   Array.isArray(v) ? v.map((x) => str(x)).filter(Boolean) : [];
 
-/** Flatten skills given as either a flat array or a categorized object. */
+/**
+ * Flatten skills given as either a flat array or a categorized object, then
+ * de-duplicate case-insensitively. A categorized object (e.g.
+ * `{ frontend: ["React"], fullstack: ["React", "Node"] }`) routinely repeats a
+ * skill across groups, so the dedup is essential — not cosmetic.
+ */
 function coerceSkills(v: unknown): string[] {
-  if (Array.isArray(v)) return strArray(v);
+  if (Array.isArray(v)) return dedupePreserveOrder(strArray(v));
   if (v && typeof v === "object") {
-    return Object.values(v as Record<string, unknown>).flatMap((group) =>
-      Array.isArray(group) ? strArray(group) : str(group) ? [str(group)] : [],
+    return dedupePreserveOrder(
+      Object.values(v as Record<string, unknown>).flatMap((group) =>
+        Array.isArray(group) ? strArray(group) : str(group) ? [str(group)] : [],
+      ),
     );
   }
   return [];
@@ -141,10 +229,22 @@ function coerceSkills(v: unknown): string[] {
 
 /** Gather profile URLs from a `links` array plus common single-URL keys. */
 const LINK_KEYS = [
-  "github", "linkedin", "twitter", "x", "website", "portfolio", "url",
-  "gitlab", "dribbble", "behance", "blog",
+  "github",
+  "linkedin",
+  "twitter",
+  "x",
+  "website",
+  "portfolio",
+  "url",
+  "gitlab",
+  "dribbble",
+  "behance",
+  "blog",
 ];
-function coerceLinks(contact: Record<string, unknown>, o: Record<string, unknown>): string[] {
+function coerceLinks(
+  contact: Record<string, unknown>,
+  o: Record<string, unknown>,
+): string[] {
   const links = new Set<string>(strArray(contact.links ?? o.links));
   for (const src of [contact, o]) {
     for (const k of LINK_KEYS) {
@@ -163,14 +263,19 @@ function coerceCvData(input: unknown): CvData {
   const contact = (o.contact ?? {}) as Record<string, unknown>;
   base.contact = {
     name: str(contact.name) || str(o.name),
-    title: str(o.title) || str(contact.title) || str(o.headline) || str(contact.headline),
+    title:
+      str(o.title) ||
+      str(contact.title) ||
+      str(o.headline) ||
+      str(contact.headline),
     email: str(contact.email) || str(o.email),
     phone: str(contact.phone) || str(o.phone),
     location: str(contact.location) || str(o.location),
     links: coerceLinks(contact, o),
   };
 
-  base.summary = str(o.summary) || str(o.profile) || str(o.objective) || str(o.about);
+  base.summary =
+    str(o.summary) || str(o.profile) || str(o.objective) || str(o.about);
 
   // Accept both `experience` and `workExperience`.
   const exp = Array.isArray(o.experience)
@@ -234,7 +339,7 @@ function coerceCvData(input: unknown): CvData {
     };
   });
 
-  base.languages = strArray(o.languages);
+  base.languages = dedupePreserveOrder(strArray(o.languages));
 
   return base;
 }
@@ -245,22 +350,46 @@ function coerceCvData(input: unknown): CvData {
 
 const EMAIL_RE = /[\w.+-]+@[\w-]+\.[\w.-]+/;
 const PHONE_RE = /(\+?\d[\d\s().-]{7,}\d)/;
-const URL_RE = /\b((?:https?:\/\/|www\.)\S+|(?:linkedin\.com|github\.com)\/\S+)/gi;
+const URL_RE =
+  /\b((?:https?:\/\/|www\.)\S+|(?:linkedin\.com|github\.com)\/\S+)/gi;
 const BULLET_RE = /^\s*[•·▪◦*\-–—]\s+/;
 
-type SectionKind = "summary" | "experience" | "skills" | "education" | "contact";
+type SectionKind =
+  | "summary"
+  | "experience"
+  | "skills"
+  | "education"
+  | "contact";
 
 const HEADING_PATTERNS: { kind: SectionKind; re: RegExp }[] = [
-  { kind: "summary", re: /^(summary|profile|objective|about( me)?|professional summary)\b/i },
-  { kind: "experience", re: /^(experience|work experience|professional experience|employment|work history|career)\b/i },
-  { kind: "skills", re: /^(skills|technical skills|technologies|tech stack|core competencies)\b/i },
-  { kind: "education", re: /^(education|academic background|qualifications)\b/i },
-  { kind: "contact", re: /^(contact|contact (info|details)|personal details)\b/i },
+  {
+    kind: "summary",
+    re: /^(summary|profile|objective|about( me)?|professional summary)\b/i,
+  },
+  {
+    kind: "experience",
+    re: /^(experience|work experience|professional experience|employment|work history|career)\b/i,
+  },
+  {
+    kind: "skills",
+    re: /^(skills|technical skills|technologies|tech stack|core competencies)\b/i,
+  },
+  {
+    kind: "education",
+    re: /^(education|academic background|qualifications)\b/i,
+  },
+  {
+    kind: "contact",
+    re: /^(contact|contact (info|details)|personal details)\b/i,
+  },
 ];
 
 /** Is this line a section heading? Short lines that match a known keyword. */
 function matchHeading(line: string): SectionKind | null {
-  const trimmed = line.trim().replace(/[:#]+$/, "").trim();
+  const trimmed = line
+    .trim()
+    .replace(/[:#]+$/, "")
+    .trim();
   if (!trimmed || trimmed.length > 40) return null;
   if (BULLET_RE.test(line)) return null;
   for (const { kind, re } of HEADING_PATTERNS) {
@@ -290,10 +419,9 @@ function parsePlainText(text: string): CvData {
   }
 
   // Contact: scan header first, then the whole document as a fallback.
-  const contactSource = [
-    ...header,
-    ...(sections.get("contact") ?? []),
-  ].join("\n");
+  const contactSource = [...header, ...(sections.get("contact") ?? [])].join(
+    "\n",
+  );
   fillContact(cv, contactSource, text);
 
   // Header leftovers (no section) become the summary if none was given.
@@ -320,7 +448,8 @@ function isLinkLine(line: string): boolean {
 }
 
 function fillContact(cv: CvData, source: string, fullText: string) {
-  const email = source.match(EMAIL_RE)?.[0] ?? fullText.match(EMAIL_RE)?.[0] ?? "";
+  const email =
+    source.match(EMAIL_RE)?.[0] ?? fullText.match(EMAIL_RE)?.[0] ?? "";
   const phone = source.match(PHONE_RE)?.[0]?.trim() ?? "";
 
   const links = new Set<string>();
@@ -383,7 +512,14 @@ function parseExperience(lines: string[] | undefined): CvExperience[] {
     if (BULLET_RE.test(line)) {
       // A bullet belongs to the current entry (create one if needed).
       if (!current) {
-        current = { title: "", company: "", period: "", link: "", description: "", bullets: [] };
+        current = {
+          title: "",
+          company: "",
+          period: "",
+          link: "",
+          description: "",
+          bullets: [],
+        };
         entries.push(current);
       }
       current.bullets.push(trimmed.replace(BULLET_RE, "").trim());
@@ -391,7 +527,9 @@ function parseExperience(lines: string[] | undefined): CvExperience[] {
     }
 
     // A non-bullet header line starts a new entry. Split "Title — Company — Period".
-    const parts = trimmed.split(/\s+[—|·]\s+|\s+-\s+|,\s*/).map((p) => p.trim());
+    const parts = trimmed
+      .split(/\s+[—|·]\s+|\s+-\s+|,\s*/)
+      .map((p) => p.trim());
     current = {
       title: parts[0] ?? trimmed,
       company: parts[1] ?? "",

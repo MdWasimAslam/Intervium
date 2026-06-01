@@ -1,0 +1,1 @@
+ALTER TABLE "profiles" ADD COLUMN "avatar" jsonb DEFAULT '{}'::jsonb NOT NULL;

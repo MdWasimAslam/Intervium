@@ -5,12 +5,11 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
-  Copy,
   Pencil,
   Plus,
   Search,
-  Sparkles,
   Trash2,
+  Upload,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -51,22 +50,21 @@ import {
   bulkSetActive,
   createQuestion,
   deleteQuestion,
-  duplicateQuestion,
-  generateForConfig,
+  importQuestionsFromJson,
   toggleQuestion,
   updateQuestion,
 } from "@/lib/actions/admin/questions";
+import type { ImportReport } from "@/lib/questions/import";
 
 /* --------------------------------- Types ---------------------------------- */
+
+type Category = "technical" | "behavioral";
+type Modality = "text" | "coding";
 
 interface Taxon {
   id: string;
   jobRoleId: string;
   name: string;
-}
-interface BandRef {
-  jobRoleId: string;
-  label: string;
 }
 interface RoleRef {
   id: string;
@@ -74,16 +72,12 @@ interface RoleRef {
 }
 export interface QuestionRow {
   id: string;
-  jobRoleId: string;
+  roleId: string;
   techStackId: string;
-  focusAreaId: string;
   roleName: string;
   techName: string;
-  focusName: string;
-  difficulty: string;
-  type: "text" | "coding";
-  language: string | null;
-  source: "ai" | "admin";
+  category: Category;
+  modality: Modality;
   isActive: boolean;
   questionText: string;
   idealAnswer: string;
@@ -91,18 +85,12 @@ export interface QuestionRow {
 export interface QuestionFilters {
   role: string;
   tech: string;
-  focus: string;
-  difficulty: string;
-  type: string;
-  source: string;
-  active: string;
+  category: string;
   q: string;
 }
 interface Props {
   roles: RoleRef[];
   techStacks: Taxon[];
-  focusAreas: Taxon[];
-  bands: BandRef[];
   questions: QuestionRow[];
   filters: QuestionFilters;
   total: number;
@@ -111,26 +99,26 @@ interface Props {
   totalPages: number;
 }
 
-const INTERVIEW_TYPES = [
+const CATEGORIES = [
   { value: "technical", label: "Technical" },
   { value: "behavioral", label: "Behavioral" },
-  { value: "mixed", label: "Mixed" },
-  { value: "coding", label: "Coding" },
 ] as const;
 
-/** Editor languages offered for coding questions (mirrors the interview editor). */
-const CODE_LANGUAGES = [
-  { value: "javascript", label: "JavaScript" },
-  { value: "typescript", label: "TypeScript" },
+const MODALITIES = [
+  { value: "text", label: "Text" },
+  { value: "coding", label: "Code" },
 ] as const;
+
+const label = (
+  opts: readonly { value: string; label: string }[],
+  v: string,
+) => opts.find((o) => o.value === v)?.label ?? v;
 
 /* ------------------------------- Component -------------------------------- */
 
 export function QuestionsAdmin({
   roles,
   techStacks,
-  focusAreas,
-  bands,
   questions,
   filters,
   total,
@@ -142,7 +130,6 @@ export function QuestionsAdmin({
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
-  /** Merge updates into the URL query. Any filter change resets to page 1. */
   const setParams = useCallback(
     (updates: Record<string, string | undefined>) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -156,41 +143,18 @@ export function QuestionsAdmin({
     [pathname, router, searchParams],
   );
 
-  // Dependent option lists — narrow to the selected role when one is chosen.
   const roleScope = filters.role === "all" ? null : filters.role;
   const techOptions = useMemo(
     () => techStacks.filter((t) => !roleScope || t.jobRoleId === roleScope),
     [techStacks, roleScope],
   );
-  const focusOptions = useMemo(
-    () => focusAreas.filter((f) => !roleScope || f.jobRoleId === roleScope),
-    [focusAreas, roleScope],
-  );
-  const difficultyOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          bands
-            .filter((b) => !roleScope || b.jobRoleId === roleScope)
-            .map((b) => b.label),
-        ),
-      ),
-    [bands, roleScope],
-  );
 
-  // When the role changes, drop now-invalid tech/focus/difficulty selections.
   function onRoleChange(value: string) {
-    setParams({
-      role: value,
-      tech: "all",
-      focus: "all",
-      difficulty: "all",
-    });
+    setParams({ role: value, tech: "all" });
   }
 
-  // ---- Search box (debounced → URL) -------------------------------------
+  // Debounced search → URL.
   const [searchText, setSearchText] = useState(filters.q);
-  // Re-sync the box when the URL's q changes externally (e.g. "Clear filters").
   const [prevQ, setPrevQ] = useState(filters.q);
   if (prevQ !== filters.q) {
     setPrevQ(filters.q);
@@ -202,11 +166,9 @@ export function QuestionsAdmin({
     return () => clearTimeout(t);
   }, [searchText, filters.q, setParams]);
 
-  // ---- Row selection (current page only) --------------------------------
+  // Row selection (current page only).
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const pageIds = useMemo(() => questions.map((q) => q.id), [questions]);
-  // Drop selections that left the page (filter/page change) — done during
-  // render rather than in an effect to avoid a cascading re-render.
   const pageKey = pageIds.join(",");
   const [prevPageKey, setPrevPageKey] = useState(pageKey);
   if (prevPageKey !== pageKey) {
@@ -216,27 +178,12 @@ export function QuestionsAdmin({
       return next.size === prev.size ? prev : next;
     });
   }
-
   const allSelected = questions.length > 0 && selected.size === questions.length;
-  function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(pageIds));
-  }
-  function toggleOne(id: string) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-  }
 
   const hasFilters =
     filters.role !== "all" ||
     filters.tech !== "all" ||
-    filters.focus !== "all" ||
-    filters.difficulty !== "all" ||
-    filters.type !== "all" ||
-    filters.source !== "all" ||
-    filters.active !== "all" ||
+    filters.category !== "all" ||
     filters.q !== "";
 
   const start = total === 0 ? 0 : (page - 1) * pageSize + 1;
@@ -248,22 +195,15 @@ export function QuestionsAdmin({
         <div>
           <h1 className="text-2xl font-bold">Question Bank</h1>
           <p className="text-sm text-[var(--muted-foreground)]">
-            Curate questions. Hand-authored ones join the matching pool by
-            signature; inactive ones are skipped during interviews.
+            Curated questions served in Question Bank interviews. Inactive ones
+            are skipped.
           </p>
         </div>
-        <div className="flex gap-2">
-          <AiGenerateDialog
-            roles={roles}
-            techStacks={techStacks}
-            focusAreas={focusAreas}
-            bands={bands}
-          />
+        <div className="flex flex-wrap gap-2">
+          <ImportDialog />
           <QuestionDialog
             roles={roles}
             techStacks={techStacks}
-            focusAreas={focusAreas}
-            bands={bands}
             trigger={
               <Button>
                 <Plus /> Add question
@@ -273,62 +213,28 @@ export function QuestionsAdmin({
         </div>
       </div>
 
-      {/* Filters ---------------------------------------------------------- */}
-      <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+      {/* Filters: Role · Tech · Category · Search */}
+      <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <FilterSelect
-          label="Role"
+          label="Profession"
           value={filters.role}
           onChange={onRoleChange}
-          allLabel="All roles"
+          allLabel="All professions"
           options={roles.map((r) => ({ value: r.id, label: r.name }))}
         />
         <FilterSelect
-          label="Tech stack"
+          label="Specialization"
           value={filters.tech}
           onChange={(v) => setParams({ tech: v })}
-          allLabel="All tech stacks"
+          allLabel="All specializations"
           options={techOptions.map((t) => ({ value: t.id, label: t.name }))}
         />
         <FilterSelect
-          label="Focus area"
-          value={filters.focus}
-          onChange={(v) => setParams({ focus: v })}
-          allLabel="All focus areas"
-          options={focusOptions.map((f) => ({ value: f.id, label: f.name }))}
-        />
-        <FilterSelect
-          label="Difficulty"
-          value={filters.difficulty}
-          onChange={(v) => setParams({ difficulty: v })}
-          allLabel="All difficulties"
-          options={difficultyOptions.map((d) => ({ value: d, label: d }))}
-        />
-        <FilterSelect
-          label="Interview type"
-          value={filters.type}
-          onChange={(v) => setParams({ type: v })}
-          allLabel="All types"
-          options={INTERVIEW_TYPES.map((t) => ({ value: t.value, label: t.label }))}
-        />
-        <FilterSelect
-          label="Source"
-          value={filters.source}
-          onChange={(v) => setParams({ source: v })}
-          allLabel="All sources"
-          options={[
-            { value: "admin", label: "Admin" },
-            { value: "ai", label: "AI" },
-          ]}
-        />
-        <FilterSelect
-          label="Status"
-          value={filters.active}
-          onChange={(v) => setParams({ active: v })}
-          allLabel="Active & inactive"
-          options={[
-            { value: "active", label: "Active only" },
-            { value: "inactive", label: "Inactive only" },
-          ]}
+          label="Category"
+          value={filters.category}
+          onChange={(v) => setParams({ category: v })}
+          allLabel="All categories"
+          options={CATEGORIES.map((c) => ({ value: c.value, label: c.label }))}
         />
         <div className="space-y-1.5">
           <Label>Search</Label>
@@ -344,7 +250,6 @@ export function QuestionsAdmin({
         </div>
       </div>
 
-      {/* Result count + clear --------------------------------------------- */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 text-sm text-[var(--muted-foreground)]">
         <span>
           {total === 0
@@ -352,108 +257,100 @@ export function QuestionsAdmin({
             : `Showing ${start}–${end} of ${total} question${total === 1 ? "" : "s"}`}
         </span>
         {hasFilters && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push(pathname)}
-          >
+          <Button variant="ghost" size="sm" onClick={() => router.push(pathname)}>
             <X className="h-4 w-4" /> Clear filters
           </Button>
         )}
       </div>
 
-      {/* Bulk action bar -------------------------------------------------- */}
       {selected.size > 0 && (
         <BulkBar ids={[...selected]} onCleared={() => setSelected(new Set())} />
       )}
 
-      {/* Table ------------------------------------------------------------ */}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-8">
-              <CheckBox
-                checked={allSelected}
-                onChange={toggleAll}
-                aria-label="Select all on page"
-              />
-            </TableHead>
-            <TableHead>Question</TableHead>
-            <TableHead>Role / Tech / Focus</TableHead>
-            <TableHead>Difficulty</TableHead>
-            <TableHead>Source</TableHead>
-            <TableHead>Active</TableHead>
-            <TableHead className="text-right">Actions</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {questions.map((q) => (
-            <TableRow key={q.id} data-selected={selected.has(q.id)}>
-              <TableCell>
-                <CheckBox
-                  checked={selected.has(q.id)}
-                  onChange={() => toggleOne(q.id)}
-                  aria-label="Select question"
-                />
-              </TableCell>
-              <TableCell className="max-w-xs">
-                <span className="line-clamp-2 text-sm">{q.questionText}</span>
-              </TableCell>
-              <TableCell className="text-xs text-[var(--muted-foreground)]">
-                {q.roleName} · {q.techName} · {q.focusName}
-              </TableCell>
-              <TableCell>{q.difficulty}</TableCell>
-              <TableCell>
-                <Chip>{q.source}</Chip>
-              </TableCell>
-              <TableCell>
-                <Switch
-                  checked={q.isActive}
-                  onCheckedChange={(v) =>
-                    toggleQuestion({ id: q.id, isActive: v }).then((res) => {
-                      if (!res.ok) {
-                        window.alert(res.error ?? "Could not update the question.");
-                        return;
-                      }
-                      router.refresh();
-                    })
-                  }
-                  aria-label="Toggle active"
-                />
-              </TableCell>
-              <TableCell>
-                <div className="flex justify-end gap-1">
-                  <DuplicateButton id={q.id} />
-                  <EditQuestionDialog
-                    question={q}
-                    trigger={
-                      <Button variant="ghost" size="sm" aria-label="Edit">
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
-                  <ConfirmDelete
-                    title="Delete this question?"
-                    action={() => deleteQuestion({ id: q.id })}
-                  />
-                </div>
-              </TableCell>
-            </TableRow>
-          ))}
-          {questions.length === 0 && (
+      <div className="overflow-x-auto">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell
-                colSpan={7}
-                className="py-8 text-center text-[var(--muted-foreground)]"
-              >
-                No questions match these filters.
-              </TableCell>
+              <TableHead className="w-8">
+                <CheckBox
+                  checked={allSelected}
+                  onChange={() =>
+                    setSelected(allSelected ? new Set() : new Set(pageIds))
+                  }
+                  aria-label="Select all on page"
+                />
+              </TableHead>
+              <TableHead className="w-full">Question</TableHead>
+              <TableHead className="whitespace-nowrap">Category</TableHead>
+              <TableHead className="whitespace-nowrap">Answers</TableHead>
+              <TableHead className="whitespace-nowrap">Active</TableHead>
+              <TableHead className="whitespace-nowrap text-right">Actions</TableHead>
             </TableRow>
-          )}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {questions.map((q) => (
+              <TableRow key={q.id} data-selected={selected.has(q.id)}>
+                <TableCell className="align-top">
+                  <CheckBox
+                    checked={selected.has(q.id)}
+                    onChange={() =>
+                      setSelected((prev) => {
+                        const next = new Set(prev);
+                        next.has(q.id) ? next.delete(q.id) : next.add(q.id);
+                        return next;
+                      })
+                    }
+                    aria-label="Select question"
+                  />
+                </TableCell>
+                <TableCell className="py-3">
+                  <span className="line-clamp-2 text-sm font-medium">
+                    {q.questionText}
+                  </span>
+                  <span className="mt-1 block text-xs text-[var(--muted-foreground)]">
+                    {q.roleName} · {q.techName}
+                  </span>
+                </TableCell>
+                <TableCell className="whitespace-nowrap align-top">
+                  <Chip tone={q.category === "behavioral" ? "neutral" : "accent"}>
+                    {label(CATEGORIES, q.category)}
+                  </Chip>
+                </TableCell>
+                <TableCell className="align-top text-xs">
+                  {label(MODALITIES, q.modality)}
+                </TableCell>
+                <TableCell className="align-top">
+                  <ToggleActive id={q.id} isActive={q.isActive} />
+                </TableCell>
+                <TableCell className="align-top">
+                  <div className="flex justify-end gap-0.5">
+                    <EditQuestionDialog
+                      question={q}
+                      roles={roles}
+                      techStacks={techStacks}
+                    />
+                    <ConfirmDelete
+                      title="Delete this question?"
+                      action={() => deleteQuestion({ id: q.id })}
+                    />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+            {questions.length === 0 && (
+              <TableRow>
+                <TableCell
+                  colSpan={6}
+                  className="py-8 text-center text-[var(--muted-foreground)]"
+                >
+                  No questions match these filters.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-      {/* Pagination ------------------------------------------------------- */}
       {totalPages > 1 && (
         <div className="mt-4 flex items-center justify-between">
           <span className="text-sm text-[var(--muted-foreground)]">
@@ -518,7 +415,6 @@ function FilterSelect({
   );
 }
 
-/** Native checkbox styled to the design tokens (no checkbox primitive exists). */
 function CheckBox({
   checked,
   onChange,
@@ -538,6 +434,32 @@ function CheckBox({
   );
 }
 
+function ToggleActive({ id, isActive }: { id: string; isActive: boolean }) {
+  const router = useRouter();
+  const [pending, start] = useTransition();
+  return (
+    <Switch
+      checked={isActive}
+      disabled={pending}
+      aria-label="Toggle active"
+      onCheckedChange={(v) =>
+        start(async () => {
+          try {
+            const res = await toggleQuestion({ id, isActive: v });
+            if (!res.ok) {
+              window.alert(res.error ?? "Could not update the question.");
+              return;
+            }
+            router.refresh();
+          } catch {
+            window.alert("Could not update the question.");
+          }
+        })
+      }
+    />
+  );
+}
+
 function BulkBar({ ids, onCleared }: { ids: string[]; onCleared: () => void }) {
   const router = useRouter();
   const [pending, start] = useTransition();
@@ -549,9 +471,6 @@ function BulkBar({ ids, onCleared }: { ids: string[]; onCleared: () => void }) {
       const res = await fn();
       if (res.error) setMessage(res.error);
       if (res.ok) {
-        // Clear the selection only on a clean run. A partial result (e.g. some
-        // rows kept because they're used in sessions) keeps those rows selected
-        // so the explanatory message stays visible after the refresh.
         if (!res.error) onCleared();
         router.refresh();
       }
@@ -578,11 +497,15 @@ function BulkBar({ ids, onCleared }: { ids: string[]; onCleared: () => void }) {
         >
           Deactivate
         </Button>
-        <BulkDeleteDialog
-          count={ids.length}
+        <Button
+          variant="outline"
+          size="sm"
+          className="border-[var(--destructive)] text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
           disabled={pending}
-          onConfirm={() => run(() => bulkDelete({ ids }))}
-        />
+          onClick={() => run(() => bulkDelete({ ids }))}
+        >
+          <Trash2 className="h-4 w-4" /> Delete
+        </Button>
       </div>
       {message && (
         <p className="w-full text-xs text-[var(--muted-foreground)]">{message}</p>
@@ -591,329 +514,168 @@ function BulkBar({ ids, onCleared }: { ids: string[]; onCleared: () => void }) {
   );
 }
 
-function BulkDeleteDialog({
-  count,
-  disabled,
-  onConfirm,
-}: {
-  count: number;
-  disabled: boolean;
-  onConfirm: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          variant="outline"
-          size="sm"
-          className="border-[var(--destructive)] text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
-          disabled={disabled}
-        >
-          <Trash2 className="h-4 w-4" /> Delete
-        </Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Delete {count} question{count === 1 ? "" : "s"}?</DialogTitle>
-          <DialogDescription>
-            Questions used in past sessions are kept automatically — only unused
-            ones are removed.
-          </DialogDescription>
-        </DialogHeader>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
-          </DialogClose>
-          <Button
-            variant="outline"
-            className="border-[var(--destructive)] text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
-            onClick={() => {
-              setOpen(false);
-              onConfirm();
-            }}
-          >
-            Delete
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+/* --------------------------- Add / Edit dialogs ---------------------------- */
+
+interface QuestionFormValue {
+  roleId: string;
+  techStackId: string;
+  category: Category;
+  modality: Modality;
+  questionText: string;
+  idealAnswer: string;
 }
 
-function DuplicateButton({ id }: { id: string }) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
-  return (
-    <Button
-      variant="ghost"
-      size="sm"
-      aria-label="Duplicate"
-      disabled={pending}
-      onClick={() =>
-        start(async () => {
-          const res = await duplicateQuestion({ id });
-          if (!res.ok) {
-            window.alert(res.error ?? "Could not duplicate the question.");
-            return;
-          }
-          router.refresh();
-        })
-      }
-    >
-      <Copy className="h-4 w-4" />
-    </Button>
-  );
-}
-
-/* --------------------------- Config picker (shared) ------------------------ */
-
-function useConfigState(
-  roles: RoleRef[],
-  techStacks: Taxon[],
-  focusAreas: Taxon[],
-  bands: BandRef[],
-) {
-  const [jobRoleId, setJobRoleId] = useState(roles[0]?.id ?? "");
-  const roleTech = techStacks.filter((t) => t.jobRoleId === jobRoleId);
-  const roleFocus = focusAreas.filter((f) => f.jobRoleId === jobRoleId);
-  const roleBands = bands.filter((b) => b.jobRoleId === jobRoleId);
-
-  const [techStackId, setTechStackId] = useState(roleTech[0]?.id ?? "");
-  const [focusAreaId, setFocusAreaId] = useState(roleFocus[0]?.id ?? "");
-  const [difficulty, setDifficulty] = useState(roleBands[0]?.label ?? "");
-  const [interviewType, setInterviewType] = useState<
-    "technical" | "behavioral" | "mixed" | "coding"
-  >("technical");
-
-  function onRole(id: string) {
-    setJobRoleId(id);
-    setTechStackId(techStacks.find((t) => t.jobRoleId === id)?.id ?? "");
-    setFocusAreaId(focusAreas.find((f) => f.jobRoleId === id)?.id ?? "");
-    setDifficulty(bands.find((b) => b.jobRoleId === id)?.label ?? "");
-  }
-
-  return {
-    jobRoleId,
-    techStackId,
-    focusAreaId,
-    difficulty,
-    interviewType,
-    roleTech,
-    roleFocus,
-    roleBands,
-    onRole,
-    setTechStackId,
-    setFocusAreaId,
-    setDifficulty,
-    setInterviewType,
-  };
-}
-
-function AiGenerateDialog({
+function QuestionFields({
   roles,
   techStacks,
-  focusAreas,
-  bands,
+  value,
+  onChange,
 }: {
   roles: RoleRef[];
   techStacks: Taxon[];
-  focusAreas: Taxon[];
-  bands: BandRef[];
+  value: QuestionFormValue;
+  onChange: (v: QuestionFormValue) => void;
 }) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string>();
-  const [notice, setNotice] = useState<string>();
-  const [count, setCount] = useState(5);
-  const [pending, start] = useTransition();
-  const c = useConfigState(roles, techStacks, focusAreas, bands);
-
-  function submit() {
-    setError(undefined);
-    setNotice(undefined);
-    start(async () => {
-      const res = await generateForConfig({
-        jobRoleId: c.jobRoleId,
-        techStackId: c.techStackId,
-        focusAreaId: c.focusAreaId,
-        difficulty: c.difficulty,
-        interviewType: c.interviewType,
-        count,
-      });
-      if (res.ok) {
-        setNotice(`Added ${res.inserted ?? 0} question(s) to the bank.`);
-        router.refresh();
-      } else {
-        setError(res.error);
-      }
-    });
-  }
+  const roleTech = techStacks.filter((t) => t.jobRoleId === value.roleId);
+  const isCoding = value.modality === "coding";
+  const set = (patch: Partial<QuestionFormValue>) =>
+    onChange({ ...value, ...patch });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Sparkles /> AI generate
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
-          <DialogTitle>AI-generate questions</DialogTitle>
-          <DialogDescription>
-            Generate new questions for one exact config and write them into the
-            bank (source: AI). Duplicates are skipped automatically.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Role">
-              <Select value={c.jobRoleId} onValueChange={c.onRole}>
-                <SelectTrigger aria-label="Gen Role">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Interview type">
-              <Select
-                value={c.interviewType}
-                onValueChange={(v) =>
-                  c.setInterviewType(v as typeof c.interviewType)
-                }
-              >
-                <SelectTrigger aria-label="Gen Type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {INTERVIEW_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Tech stack">
-              <Select value={c.techStackId} onValueChange={c.setTechStackId}>
-                <SelectTrigger aria-label="Gen Tech">
-                  <SelectValue placeholder="—" />
-                </SelectTrigger>
-                <SelectContent>
-                  {c.roleTech.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Focus area">
-              <Select value={c.focusAreaId} onValueChange={c.setFocusAreaId}>
-                <SelectTrigger aria-label="Gen Focus">
-                  <SelectValue placeholder="—" />
-                </SelectTrigger>
-                <SelectContent>
-                  {c.roleFocus.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Difficulty">
-              <Select value={c.difficulty} onValueChange={c.setDifficulty}>
-                <SelectTrigger aria-label="Gen Difficulty">
-                  <SelectValue placeholder="—" />
-                </SelectTrigger>
-                <SelectContent>
-                  {c.roleBands.map((b) => (
-                    <SelectItem key={b.label} value={b.label}>
-                      {b.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="How many (1–20)">
-              <Input
-                type="number"
-                min={1}
-                max={20}
-                value={count}
-                onChange={(e) =>
-                  setCount(
-                    Math.max(1, Math.min(20, Number(e.target.value) || 1)),
-                  )
-                }
-              />
-            </Field>
-          </div>
-          {notice && <p className="text-sm text-[var(--primary)]">{notice}</p>}
-          {error && <FormError message={error} />}
-        </div>
-        <DialogFooter>
-          <Button
-            onClick={submit}
-            disabled={pending || !c.techStackId || !c.focusAreaId || !c.difficulty}
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3">
+        <Field label="Role">
+          <Select
+            value={value.roleId}
+            onValueChange={(v) =>
+              set({
+                roleId: v,
+                techStackId:
+                  techStacks.find((t) => t.jobRoleId === v)?.id ?? "",
+              })
+            }
           >
-            {pending ? "Generating…" : "Generate"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+            <SelectTrigger aria-label="Profession">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {roles.map((r) => (
+                <SelectItem key={r.id} value={r.id}>
+                  {r.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Specialization">
+          <Select
+            value={value.techStackId}
+            onValueChange={(v) => set({ techStackId: v })}
+          >
+            <SelectTrigger aria-label="Specialization">
+              <SelectValue placeholder="—" />
+            </SelectTrigger>
+            <SelectContent>
+              {roleTech.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  {t.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Category">
+          <Select
+            value={value.category}
+            onValueChange={(v) => set({ category: v as Category })}
+          >
+            <SelectTrigger aria-label="Category">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {CATEGORIES.map((c) => (
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="How candidate answers">
+          <Select
+            value={value.modality}
+            onValueChange={(v) => set({ modality: v as Modality })}
+          >
+            <SelectTrigger aria-label="Modality">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {MODALITIES.map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </Field>
+      </div>
+      <Field label={isCoding ? "Problem prompt" : "Question"}>
+        <Textarea
+          rows={3}
+          value={value.questionText}
+          onChange={(e) => set({ questionText: e.target.value })}
+          placeholder={
+            isCoding ? "State the task, inputs/outputs, and an example…" : undefined
+          }
+        />
+      </Field>
+      <Field label={isCoding ? "Ideal solution" : "Ideal answer"}>
+        <Textarea
+          rows={isCoding ? 6 : 3}
+          value={value.idealAnswer}
+          onChange={(e) => set({ idealAnswer: e.target.value })}
+          className={isCoding ? "font-mono text-sm" : undefined}
+          placeholder={isCoding ? "A complete reference solution (JavaScript)…" : undefined}
+        />
+      </Field>
+      {isCoding && (
+        <p className="text-xs text-[var(--muted-foreground)]">
+          Coding questions are answered in a JavaScript editor.
+        </p>
+      )}
+    </div>
   );
 }
 
 function QuestionDialog({
   roles,
   techStacks,
-  focusAreas,
-  bands,
   trigger,
 }: {
   roles: RoleRef[];
   techStacks: Taxon[];
-  focusAreas: Taxon[];
-  bands: BandRef[];
   trigger: React.ReactNode;
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string>();
   const [pending, start] = useTransition();
-  const c = useConfigState(roles, techStacks, focusAreas, bands);
-  const [type, setType] = useState<"text" | "coding">("text");
-  const [language, setLanguage] = useState<string>("javascript");
-  const [questionText, setQuestionText] = useState("");
-  const [idealAnswer, setIdealAnswer] = useState("");
-  const isCoding = type === "coding";
+  const [value, setValue] = useState<QuestionFormValue>(() => ({
+    roleId: roles[0]?.id ?? "",
+    techStackId: techStacks.find((t) => t.jobRoleId === roles[0]?.id)?.id ?? "",
+    category: "technical",
+    modality: "text",
+    questionText: "",
+    idealAnswer: "",
+  }));
 
   function submit() {
     setError(undefined);
     start(async () => {
-      const res = await createQuestion({
-        jobRoleId: c.jobRoleId,
-        techStackId: c.techStackId,
-        focusAreaId: c.focusAreaId,
-        difficulty: c.difficulty,
-        interviewType: c.interviewType,
-        type,
-        language: isCoding ? language : undefined,
-        questionText,
-        idealAnswer,
-      });
+      const res = await createQuestion(value);
       if (res.ok) {
         setOpen(false);
-        setQuestionText("");
-        setIdealAnswer("");
+        setValue((v) => ({ ...v, questionText: "", idealAnswer: "" }));
         router.refresh();
       } else setError(res.error);
     });
@@ -926,141 +688,18 @@ function QuestionDialog({
         <DialogHeader>
           <DialogTitle>Add question</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
-            <Field label="Role">
-              <Select value={c.jobRoleId} onValueChange={c.onRole}>
-                <SelectTrigger aria-label="Q Role">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {roles.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Interview type (pool)">
-              <Select
-                value={c.interviewType}
-                onValueChange={(v) =>
-                  c.setInterviewType(v as typeof c.interviewType)
-                }
-              >
-                <SelectTrigger aria-label="Q Type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {INTERVIEW_TYPES.map((t) => (
-                    <SelectItem key={t.value} value={t.value}>
-                      {t.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Tech stack">
-              <Select value={c.techStackId} onValueChange={c.setTechStackId}>
-                <SelectTrigger aria-label="Q Tech">
-                  <SelectValue placeholder="—" />
-                </SelectTrigger>
-                <SelectContent>
-                  {c.roleTech.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Focus area">
-              <Select value={c.focusAreaId} onValueChange={c.setFocusAreaId}>
-                <SelectTrigger aria-label="Q Focus">
-                  <SelectValue placeholder="—" />
-                </SelectTrigger>
-                <SelectContent>
-                  {c.roleFocus.map((f) => (
-                    <SelectItem key={f.id} value={f.id}>
-                      {f.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Difficulty">
-              <Select value={c.difficulty} onValueChange={c.setDifficulty}>
-                <SelectTrigger aria-label="Q Difficulty">
-                  <SelectValue placeholder="—" />
-                </SelectTrigger>
-                <SelectContent>
-                  {c.roleBands.map((b) => (
-                    <SelectItem key={b.label} value={b.label}>
-                      {b.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-            <Field label="Answer modality">
-              <Select
-                value={type}
-                onValueChange={(v) => setType(v as typeof type)}
-              >
-                <SelectTrigger aria-label="Q Modality">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="text">Text</SelectItem>
-                  <SelectItem value="coding">Coding</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-            {isCoding && (
-              <Field label="Language">
-                <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger aria-label="Q Language">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CODE_LANGUAGES.map((l) => (
-                      <SelectItem key={l.value} value={l.value}>
-                        {l.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            )}
-          </div>
-          <Field label={isCoding ? "Problem prompt" : "Question"}>
-            <Textarea
-              rows={3}
-              value={questionText}
-              onChange={(e) => setQuestionText(e.target.value)}
-              placeholder={
-                isCoding
-                  ? "State the task, inputs/outputs, and an example…"
-                  : undefined
-              }
-            />
-          </Field>
-          <Field label={isCoding ? "Ideal solution" : "Ideal answer"}>
-            <Textarea
-              rows={isCoding ? 6 : 3}
-              value={idealAnswer}
-              onChange={(e) => setIdealAnswer(e.target.value)}
-              className={isCoding ? "font-mono text-sm" : undefined}
-              placeholder={
-                isCoding ? "A complete reference solution…" : undefined
-              }
-            />
-          </Field>
-          {error && <FormError message={error} />}
-        </div>
+        <QuestionFields
+          roles={roles}
+          techStacks={techStacks}
+          value={value}
+          onChange={setValue}
+        />
+        {error && <FormError message={error} />}
         <DialogFooter>
-          <Button onClick={submit} disabled={pending}>
+          <Button
+            onClick={submit}
+            disabled={pending || !value.techStackId}
+          >
             Create question
           </Button>
         </DialogFooter>
@@ -1071,35 +710,31 @@ function QuestionDialog({
 
 function EditQuestionDialog({
   question,
-  trigger,
+  roles,
+  techStacks,
 }: {
   question: QuestionRow;
-  trigger: React.ReactNode;
+  roles: RoleRef[];
+  techStacks: Taxon[];
 }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string>();
   const [pending, start] = useTransition();
-  const [questionText, setQuestionText] = useState(question.questionText);
-  const [idealAnswer, setIdealAnswer] = useState(question.idealAnswer);
-  const [type, setType] = useState(question.type);
-  const [language, setLanguage] = useState<string>(
-    question.language ?? "javascript",
-  );
   const [isActive, setIsActive] = useState(question.isActive);
-  const isCoding = type === "coding";
+  const [value, setValue] = useState<QuestionFormValue>({
+    roleId: question.roleId,
+    techStackId: question.techStackId,
+    category: question.category,
+    modality: question.modality,
+    questionText: question.questionText,
+    idealAnswer: question.idealAnswer,
+  });
 
   function submit() {
     setError(undefined);
     start(async () => {
-      const res = await updateQuestion({
-        id: question.id,
-        questionText,
-        idealAnswer,
-        type,
-        language: isCoding ? language : undefined,
-        isActive,
-      });
+      const res = await updateQuestion({ id: question.id, ...value, isActive });
       if (res.ok) {
         setOpen(false);
         router.refresh();
@@ -1109,56 +744,170 @@ function EditQuestionDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm" aria-label="Edit">
+          <Pencil className="h-4 w-4" />
+        </Button>
+      </DialogTrigger>
       <DialogContent className="max-w-xl">
         <DialogHeader>
           <DialogTitle>Edit question</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
-          {isCoding && (
-            <Field label="Language">
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger aria-label="Edit Q Language">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CODE_LANGUAGES.map((l) => (
-                    <SelectItem key={l.value} value={l.value}>
-                      {l.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-          )}
-          <Field label={isCoding ? "Problem prompt" : "Question"}>
-            <Textarea
-              rows={3}
-              value={questionText}
-              onChange={(e) => setQuestionText(e.target.value)}
-            />
-          </Field>
-          <Field label={isCoding ? "Ideal solution" : "Ideal answer"}>
-            <Textarea
-              rows={isCoding ? 6 : 3}
-              value={idealAnswer}
-              onChange={(e) => setIdealAnswer(e.target.value)}
-              className={isCoding ? "font-mono text-sm" : undefined}
-            />
-          </Field>
-          <div className="flex items-center gap-2">
-            <Switch checked={isActive} onCheckedChange={setIsActive} />
-            <span className="text-sm">Active</span>
-          </div>
-          {error && <FormError message={error} />}
+        <QuestionFields
+          roles={roles}
+          techStacks={techStacks}
+          value={value}
+          onChange={setValue}
+        />
+        <div className="mt-3 flex items-center gap-2">
+          <Switch checked={isActive} onCheckedChange={setIsActive} />
+          <span className="text-sm">Active</span>
         </div>
+        {error && <FormError message={error} />}
         <DialogFooter>
-          <Button onClick={submit} disabled={pending}>
+          <Button onClick={submit} disabled={pending || !value.techStackId}>
             Save changes
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/* ------------------------------ Import dialog ------------------------------ */
+
+const IMPORT_SAMPLE = `[
+  {
+    "role": "Software Developer",
+    "techStack": "React",
+    "category": "technical",
+    "modality": "text",
+    "questions": [
+      { "questionText": "…", "idealAnswer": "…" }
+    ]
+  }
+]`;
+
+function ImportDialog() {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [json, setJson] = useState("");
+  const [report, setReport] = useState<ImportReport>();
+  const [error, setError] = useState<string>();
+  const [pending, start] = useTransition();
+
+  function run(dryRun: boolean) {
+    setError(undefined);
+    start(async () => {
+      const res = await importQuestionsFromJson({ json, dryRun });
+      if (!res.ok) {
+        setError(res.error);
+        setReport(undefined);
+        return;
+      }
+      setReport(res.report);
+      if (!dryRun) router.refresh();
+    });
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (!o) {
+          setReport(undefined);
+          setError(undefined);
+        }
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <Upload /> Bulk JSON import
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Import questions from JSON</DialogTitle>
+          <DialogDescription>
+            Paste an array of blocks. Profession and specialization are matched{" "}
+            <strong>by name</strong> (case-insensitive). Re-importing the same
+            file inserts nothing new. Validate first to preview.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-3">
+          <Textarea
+            rows={10}
+            value={json}
+            onChange={(e) => setJson(e.target.value)}
+            placeholder={IMPORT_SAMPLE}
+            className="font-mono text-xs"
+            aria-label="Import JSON"
+          />
+          <details className="text-xs text-[var(--muted-foreground)]">
+            <summary className="cursor-pointer">Expected format</summary>
+            <pre className="mt-2 overflow-x-auto rounded-lg bg-[var(--muted)] p-2">
+              {IMPORT_SAMPLE}
+            </pre>
+            <p className="mt-1">
+              <code>category</code>: technical · behavioral.{" "}
+              <code>modality</code> (optional): text · coding (default text).
+            </p>
+          </details>
+          {report && <ImportReportView report={report} />}
+          {error && <FormError message={error} />}
+        </div>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="ghost">Close</Button>
+          </DialogClose>
+          <Button
+            variant="outline"
+            disabled={pending || !json.trim()}
+            onClick={() => run(true)}
+          >
+            {pending ? "Working…" : "Validate (dry run)"}
+          </Button>
+          <Button disabled={pending || !json.trim()} onClick={() => run(false)}>
+            {pending ? "Working…" : "Import"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ImportReportView({ report }: { report: ImportReport }) {
+  return (
+    <div className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 p-3 text-sm">
+      <p className="font-medium">
+        {report.dryRun ? "Dry run — nothing written." : "Imported."}{" "}
+        <span className="text-[var(--primary)]">
+          {report.dryRun ? "Would insert" : "Inserted"} {report.inserted}
+        </span>
+        , {report.duplicates} duplicate(s) skipped
+        {report.blocksFailed > 0 && (
+          <span className="text-[var(--destructive)]">
+            , {report.blocksFailed} block(s) failed
+          </span>
+        )}
+        .
+      </p>
+      <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto text-xs">
+        {report.blocks.map((b) => (
+          <li
+            key={b.index}
+            className={
+              b.status === "error" ? "text-[var(--destructive)]" : undefined
+            }
+          >
+            {b.status === "ok" && `✓ ${b.label}: +${b.inserted}`}
+            {b.status === "empty" && `• ${b.label}: nothing new`}
+            {b.status === "error" && `✗ ${b.label}: ${b.error}`}
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 

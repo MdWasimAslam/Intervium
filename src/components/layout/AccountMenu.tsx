@@ -6,6 +6,8 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { LogOut, UserCog } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Avatar } from "@/components/ui/avatar";
+import { type AvatarConfig } from "@/components/ui/avatar-options";
+import { navFor } from "@/components/layout/nav-links";
 
 /**
  * Account dropdown: an avatar trigger that opens a small menu with a link to
@@ -13,12 +15,23 @@ import { Avatar } from "@/components/ui/avatar";
  * passed in from the (server) Header so this stays a thin client wrapper.
  */
 export function AccountMenu({
+  userId,
   email,
+  avatar,
+  isAdmin = false,
   signOutAction,
 }: {
+  /** Drives the avatar colour — kept identical to every other avatar in the app. */
+  userId: string;
   email: string;
+  /** The user's chosen avatar customization (background + icon). */
+  avatar?: AvatarConfig;
+  isAdmin?: boolean;
   signOutAction: () => Promise<void>;
 }) {
+  // Primary destinations, excluding "Edit profile" — that lives in the Account
+  // group below alongside Sign out.
+  const navLinks = navFor(isAdmin).filter((l) => l.href !== "/profile");
   const [open, setOpen] = useState(false);
   const reduced = useReducedMotion() ?? false;
   const ref = useRef<HTMLDivElement>(null);
@@ -106,7 +119,14 @@ export function AccountMenu({
           "focus-visible:ring-2 focus-visible:ring-[var(--ring)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--background)]",
         )}
       >
-        <Avatar seed={email} size={36} alt={`Avatar for ${email}`} />
+        <Avatar
+          seed={userId}
+          name={email}
+          bg={avatar?.bg}
+          icon={avatar?.icon}
+          size={36}
+          alt={`Avatar for ${email}`}
+        />
       </button>
 
       <AnimatePresence>
@@ -126,6 +146,23 @@ export function AccountMenu({
                 Signed in as
               </p>
               <p className="truncate text-sm font-medium">{email}</p>
+            </div>
+
+            {/* Primary navigation — mirrors the desktop header nav so every
+                destination stays reachable on mobile and from any page. */}
+            <div className="border-b border-[var(--border)] p-1 md:hidden">
+              {navLinks.map(({ href, label, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  role="menuitem"
+                  onClick={close}
+                  className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-[var(--muted)] focus-visible:bg-[var(--muted)] outline-none"
+                >
+                  <Icon className="h-4 w-4 text-[var(--muted-foreground)]" />
+                  {label}
+                </Link>
+              ))}
             </div>
 
             <div className="p-1">

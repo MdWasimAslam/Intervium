@@ -12,15 +12,13 @@ import { ScoreRing } from "@/components/interview/ScoreRing";
 export interface LatestSession {
   totalScore: number;
   maxScore: number;
-  interviewType: string;
+  mode: string;
   techStack: string;
 }
 
-const TYPE_LABEL: Record<string, string> = {
-  technical: "Technical",
-  behavioral: "Behavioral",
-  mixed: "Mixed",
-  coding: "Coding",
+const MODE_LABEL: Record<string, string> = {
+  bank: "Question Bank",
+  ai: "AI",
 };
 
 /**
@@ -63,9 +61,7 @@ export function LatestResult({
               <div className="space-y-2">
                 <div className="flex flex-wrap justify-center gap-1.5">
                   {role && <Chip>{role}</Chip>}
-                  <Chip>
-                    {TYPE_LABEL[latest.interviewType] ?? latest.interviewType}
-                  </Chip>
+                  <Chip>{MODE_LABEL[latest.mode] ?? latest.mode}</Chip>
                   <Chip>{latest.techStack}</Chip>
                 </div>
                 {date && (
@@ -112,8 +108,7 @@ export function LatestResult({
               </span>
             </p>
             <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-              {TYPE_LABEL[latest.interviewType] ?? latest.interviewType} ·{" "}
-              {latest.techStack}
+              {MODE_LABEL[latest.mode] ?? latest.mode} · {latest.techStack}
             </p>
           </div>
         ) : (

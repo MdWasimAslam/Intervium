@@ -5,27 +5,40 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import {
   db,
-  focusAreas,
   interviewSessions,
   jobRoles,
   sessionQuestions,
   techStacks,
 } from "@db";
 import { getCurrentUser } from "@/lib/session";
-import { getSettings } from "@/lib/settings";
+import {
+  CUSTOM_TIMER_ID,
+  getSettings,
+  questionCountForPreset,
+  timerSecondsForPreset,
+} from "@/lib/settings";
 import { allowAction } from "@/lib/rate-limit";
 
-const startSchema = z.object({
-  jobRoleId: z.string().uuid(),
-  interviewType: z.enum(["technical", "behavioral", "mixed", "coding"]),
-  difficulty: z.string().trim().min(1).max(40),
-  focusAreaId: z.string().uuid(),
-  techStackId: z.string().uuid(),
-  // The set of allowed values is admin-configurable (appSettings.questionCounts),
-  // so we only enforce shape here and validate membership at action time.
-  questionCount: z.coerce.number().int().min(1).max(50),
-  timerEnabled: z.boolean(),
-});
+const startSchema = z
+  .object({
+    mode: z.enum(["bank", "ai"]),
+    jobRoleId: z.string().uuid(),
+    techStackId: z.string().uuid(),
+    // AI mode only — the calibration target for live generation.
+    skillLevel: z
+      .enum(["beginner", "intermediate", "advanced", "expert"])
+      .optional(),
+    // Preset choices; resolved to a question count / timer seconds at action
+    // time against the admin-configured presets.
+    lengthPresetId: z.string().trim().min(1),
+    timerPresetId: z.string().trim().min(1),
+    // Only meaningful when timerPresetId === "custom".
+    customTimerSeconds: z.coerce.number().int().min(5).max(7200).optional(),
+  })
+  .refine((d) => d.mode !== "ai" || !!d.skillLevel, {
+    message: "Pick a skill level for an AI interview.",
+    path: ["skillLevel"],
+  });
 
 export type StartInterviewInput = z.infer<typeof startSchema>;
 
@@ -52,31 +65,36 @@ export async function startInterview(
   }
   const config = parsed.data;
 
-  // Validate the question count against the admin-configured allowed set,
-  // rather than a hardcoded list.
-  const { questionCounts } = await getSettings();
-  if (!questionCounts.includes(config.questionCount)) {
-    return { error: "Invalid question count." };
+  // Resolve the preset choices against the admin-configured presets.
+  const settings = await getSettings();
+  const questionCount = questionCountForPreset(settings, config.lengthPresetId);
+  if (!questionCount) {
+    return { error: "Invalid interview length." };
   }
+
+  const isCustomTimer = config.timerPresetId === CUSTOM_TIMER_ID;
+  const timerKnown =
+    isCustomTimer ||
+    settings.timerPresets.some((t) => t.id === config.timerPresetId);
+  if (!timerKnown) {
+    return { error: "Invalid timer option." };
+  }
+  if (isCustomTimer && !config.customTimerSeconds) {
+    return { error: "Enter a custom timer duration." };
+  }
+  const timerSeconds = timerSecondsForPreset(
+    settings,
+    config.timerPresetId,
+    config.customTimerSeconds,
+  );
+  const timerEnabled = timerSeconds != null && timerSeconds > 0;
 
   // Validate the referenced rows exist, are active, and belong to the role.
   const [role] = await db
     .select({ id: jobRoles.id })
     .from(jobRoles)
     .where(and(eq(jobRoles.id, config.jobRoleId), eq(jobRoles.isActive, true)));
-  if (!role) return { error: "Selected role is unavailable." };
-
-  const [focus] = await db
-    .select({ id: focusAreas.id })
-    .from(focusAreas)
-    .where(
-      and(
-        eq(focusAreas.id, config.focusAreaId),
-        eq(focusAreas.jobRoleId, config.jobRoleId),
-        eq(focusAreas.isActive, true),
-      ),
-    );
-  if (!focus) return { error: "Focus area does not match the selected role." };
+  if (!role) return { error: "Selected profession is unavailable." };
 
   const [stack] = await db
     .select({ id: techStacks.id })
@@ -88,7 +106,8 @@ export async function startInterview(
         eq(techStacks.isActive, true),
       ),
     );
-  if (!stack) return { error: "Tech stack does not match the selected role." };
+  if (!stack)
+    return { error: "Specialization does not match the selected profession." };
 
   // Don't accumulate dangling in-progress sessions: a user can only have one
   // live interview at a time. Close any existing in-progress sessions before
@@ -110,13 +129,18 @@ export async function startInterview(
       .insert(interviewSessions)
       .values({
         userId: user.id,
+        mode: config.mode,
         jobRoleId: config.jobRoleId,
         techStackId: config.techStackId,
-        focusAreaId: config.focusAreaId,
-        interviewType: config.interviewType,
-        difficulty: config.difficulty,
-        questionCount: config.questionCount,
-        timerEnabled: config.timerEnabled,
+        // Skill level applies to AI interviews only.
+        skillLevel: config.mode === "ai" ? config.skillLevel : null,
+        questionCount,
+        timerEnabled,
+        timerPresetId: config.timerPresetId,
+        // Snapshot the resolved seconds (null = no timer) so a later admin edit
+        // to the presets can't retroactively change this in-progress session.
+        customTimerSeconds: timerSeconds,
+        lengthPresetId: config.lengthPresetId,
         status: "in_progress",
       })
       .returning({ id: interviewSessions.id });
@@ -292,13 +316,15 @@ export async function retakeSession(input: {
   const [src] = await db
     .select({
       userId: interviewSessions.userId,
+      mode: interviewSessions.mode,
       jobRoleId: interviewSessions.jobRoleId,
       techStackId: interviewSessions.techStackId,
-      focusAreaId: interviewSessions.focusAreaId,
-      interviewType: interviewSessions.interviewType,
-      difficulty: interviewSessions.difficulty,
+      skillLevel: interviewSessions.skillLevel,
       questionCount: interviewSessions.questionCount,
       timerEnabled: interviewSessions.timerEnabled,
+      timerPresetId: interviewSessions.timerPresetId,
+      customTimerSeconds: interviewSessions.customTimerSeconds,
+      lengthPresetId: interviewSessions.lengthPresetId,
     })
     .from(interviewSessions)
     .where(eq(interviewSessions.id, parsed.data));

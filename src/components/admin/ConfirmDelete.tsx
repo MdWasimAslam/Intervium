@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { FormError } from "@/components/auth/FormError";
 import {
   Dialog,
@@ -20,17 +21,25 @@ interface Props {
   action: () => Promise<{ ok: boolean; error?: string }>;
   title: string;
   description?: string;
+  /** Runs after a successful delete, before the router refresh. */
+  onSuccess?: () => void;
 }
 
 /** Reusable destructive confirm dialog used across admin tables. */
-export function ConfirmDelete({ action, title, description }: Props) {
+export function ConfirmDelete({ action, title, description, onSuccess }: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string>();
   const [pending, start] = useTransition();
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        // Don't let the dialog close mid-delete (backdrop/Esc/Cancel).
+        if (!pending) setOpen(o);
+      }}
+    >
       <DialogTrigger asChild>
         <Button
           variant="ghost"
@@ -49,17 +58,21 @@ export function ConfirmDelete({ action, title, description }: Props) {
         {error && <FormError message={error} />}
         <DialogFooter>
           <DialogClose asChild>
-            <Button variant="outline">Cancel</Button>
+            <Button variant="outline" disabled={pending}>
+              Cancel
+            </Button>
           </DialogClose>
-          <Button
+          <LoadingButton
             variant="outline"
             className="border-[var(--destructive)] text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
-            disabled={pending}
+            loading={pending}
+            loadingText="Deleting…"
             onClick={() =>
               start(async () => {
                 const res = await action();
                 if (res.ok) {
                   setOpen(false);
+                  onSuccess?.();
                   router.refresh();
                 } else {
                   setError(res.error ?? "Delete failed.");
@@ -68,7 +81,7 @@ export function ConfirmDelete({ action, title, description }: Props) {
             }
           >
             Delete
-          </Button>
+          </LoadingButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

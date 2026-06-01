@@ -3,30 +3,29 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BarChart3,
   Briefcase,
   Code2,
+  Dumbbell,
+  Gauge,
   KeyRound,
   ListChecks,
   Settings as SettingsIcon,
-  SlidersHorizontal,
-  Target,
   Users as UsersIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
-  { href: "/admin/roles", label: "Job Roles", icon: Briefcase },
-  { href: "/admin/focus-areas", label: "Focus Areas", icon: Target },
-  { href: "/admin/tech-stacks", label: "Tech Stacks", icon: Code2 },
-  {
-    href: "/admin/difficulty",
-    label: "Difficulty Bands",
-    icon: SlidersHorizontal,
-  },
+  { href: "/admin/roles", label: "Professions", icon: Briefcase },
+  { href: "/admin/tech-stacks", label: "Specializations", icon: Code2 },
   { href: "/admin/access-codes", label: "Access Codes", icon: KeyRound },
   { href: "/admin/questions", label: "Question Bank", icon: ListChecks },
+  { href: "/admin/dojo", label: "Code Dojo", icon: Dumbbell },
+  { href: "/admin/ai-usage", label: "AI Usage", icon: BarChart3 },
   { href: "/admin/settings", label: "Settings", icon: SettingsIcon },
   { href: "/admin/users", label: "Users", icon: UsersIcon },
+  // Developer-only Production Readiness Dashboard (admin-gated, outside /admin).
+  { href: "/qa", label: "QA Center", icon: Gauge },
 ];
 
 export function AdminSidebar() {

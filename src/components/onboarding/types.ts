@@ -11,13 +11,6 @@ export interface StackOption {
   name: string;
 }
 
-export interface BandOption {
-  jobRoleId: string;
-  label: string;
-  minYears: number | null;
-  maxYears: number | null;
-}
-
 /** Wizard form state. */
 export interface WizardValues {
   displayName: string;

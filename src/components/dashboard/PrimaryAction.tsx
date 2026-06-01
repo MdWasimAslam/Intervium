@@ -38,8 +38,8 @@ export function PrimaryAction({
           </h2>
           <p className="mt-2 max-w-md text-sm opacity-90">
             {isFirst
-              ? "Pick a role, stack and difficulty, then answer AI-generated questions and get instant, scored feedback."
-              : "Choose your role, stack and focus — get fresh questions and a scored breakdown in minutes."}
+              ? "Pick a profession and specialization, then answer questions and get instant, scored feedback."
+              : "Choose your profession and specialization — get questions and a scored breakdown in minutes."}
           </p>
         </div>
 

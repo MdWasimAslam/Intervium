@@ -1,11 +1,10 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Code2, Loader2, Zap } from "lucide-react";
+import { Database, Sparkles, Zap } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Slider } from "@/components/ui/slider";
-import { Switch } from "@/components/ui/switch";
+import { LoadingButton } from "@/components/ui/loading-button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -18,143 +17,123 @@ import { Chip } from "@/components/ui/chip";
 import { FormError } from "@/components/auth/FormError";
 import { LogoMark } from "@/components/brand/Logo";
 import { startInterview } from "@/lib/actions/interview";
-import type { BandOption } from "@/components/onboarding/types";
+import type { LengthPreset, TimerPreset } from "@db";
 
 interface RoleOption {
   id: string;
   name: string;
 }
-interface FocusOption {
+interface StackOption {
   id: string;
   jobRoleId: string;
   name: string;
 }
-type StackOption = FocusOption;
 
-const INTERVIEW_TYPES = [
-  { value: "technical", label: "Technical" },
-  { value: "behavioral", label: "Behavioral" },
-  { value: "mixed", label: "Mixed" },
-  { value: "coding", label: "Coding" },
-] as const;
+type Mode = "bank" | "ai";
+type SkillLevel = "beginner" | "intermediate" | "advanced" | "expert";
 
-const MAX_YEARS = 20;
+/** Must match CUSTOM_TIMER_ID in src/lib/settings.ts (kept here to avoid
+ *  importing the server-only settings module into this client component). */
+const CUSTOM_TIMER_ID = "custom";
+const MAX_CUSTOM_MINUTES = 120;
+
+const SKILL_LEVELS: { value: SkillLevel; label: string }[] = [
+  { value: "beginner", label: "Beginner" },
+  { value: "intermediate", label: "Intermediate" },
+  { value: "advanced", label: "Advanced" },
+  { value: "expert", label: "Expert" },
+];
 
 interface Props {
   roles: RoleOption[];
-  focusAreas: FocusOption[];
   techStacks: StackOption[];
-  bands: BandOption[];
   defaultRoleId: string;
-  defaultYears: number;
-  questionCounts: number[];
-  timerSeconds: number;
-}
-
-function bandFor(bands: BandOption[], roleId: string, years: number) {
-  return (
-    bands
-      .filter((b) => b.jobRoleId === roleId)
-      .find(
-        (b) =>
-          years >= (b.minYears ?? 0) &&
-          years <= (b.maxYears ?? Number.MAX_SAFE_INTEGER),
-      )?.label ?? ""
-  );
+  defaultSkillLevel: SkillLevel;
+  timerPresets: TimerPreset[];
+  defaultTimerPresetId: string;
+  lengthPresets: LengthPreset[];
+  defaultLengthPresetId: string;
 }
 
 export function InterviewSetup({
   roles,
-  focusAreas,
   techStacks,
-  bands,
   defaultRoleId,
-  defaultYears,
-  questionCounts,
-  timerSeconds,
+  defaultSkillLevel,
+  timerPresets,
+  defaultTimerPresetId,
+  lengthPresets,
+  defaultLengthPresetId,
 }: Props) {
-  const firstFocus = (roleId: string) =>
-    focusAreas.find((f) => f.jobRoleId === roleId)?.id ?? "";
   const firstStack = (roleId: string) =>
     techStacks.find((s) => s.jobRoleId === roleId)?.id ?? "";
 
+  const [mode, setMode] = useState<Mode>("bank");
   const [jobRoleId, setJobRoleId] = useState(defaultRoleId);
-  const [interviewType, setInterviewType] =
-    useState<(typeof INTERVIEW_TYPES)[number]["value"]>("technical");
-  const [years, setYears] = useState(defaultYears);
-  const [difficulty, setDifficulty] = useState(() =>
-    bandFor(bands, defaultRoleId, defaultYears),
-  );
-  const [focusAreaId, setFocusAreaId] = useState(() =>
-    firstFocus(defaultRoleId),
-  );
   const [techStackId, setTechStackId] = useState(() =>
     firstStack(defaultRoleId),
   );
-  const [questionCount, setQuestionCount] = useState(
-    questionCounts.includes(5) ? 5 : (questionCounts[0] ?? 5),
+  const [skillLevel, setSkillLevel] = useState<SkillLevel>(defaultSkillLevel);
+  const [lengthPresetId, setLengthPresetId] = useState(
+    lengthPresets.some((l) => l.id === defaultLengthPresetId)
+      ? defaultLengthPresetId
+      : (lengthPresets[0]?.id ?? ""),
   );
-  const [timerEnabled, setTimerEnabled] = useState(false);
+  const [timerPresetId, setTimerPresetId] = useState(
+    timerPresets.some((t) => t.id === defaultTimerPresetId)
+      ? defaultTimerPresetId
+      : (timerPresets[0]?.id ?? "no-timer"),
+  );
+  const [customMinutes, setCustomMinutes] = useState(2);
   const [error, setError] = useState<string>();
   const [pending, startTransition] = useTransition();
 
-  const roleFocus = useMemo(
-    () => focusAreas.filter((f) => f.jobRoleId === jobRoleId),
-    [focusAreas, jobRoleId],
-  );
   const roleStacks = useMemo(
     () => techStacks.filter((s) => s.jobRoleId === jobRoleId),
     [techStacks, jobRoleId],
   );
-  const roleBands = useMemo(
-    () =>
-      bands
-        .filter((b) => b.jobRoleId === jobRoleId)
-        .sort((a, b) => (a.minYears ?? 0) - (b.minYears ?? 0)),
-    [bands, jobRoleId],
-  );
 
-  const resolvedBand = bandFor(bands, jobRoleId, years);
-
-  // Role change → refilter & reset focus/stack/difficulty for the new role.
   function handleRoleChange(roleId: string) {
     setJobRoleId(roleId);
-    setFocusAreaId(firstFocus(roleId));
     setTechStackId(firstStack(roleId));
-    setDifficulty(bandFor(bands, roleId, years));
-  }
-
-  // Slider change → update resolved difficulty band live.
-  function handleYearsChange(value: number) {
-    setYears(value);
-    setDifficulty(bandFor(bands, jobRoleId, value));
   }
 
   const roleName = roles.find((r) => r.id === jobRoleId)?.name ?? "—";
-  const focusName = roleFocus.find((f) => f.id === focusAreaId)?.name ?? "—";
-  const typeLabel =
-    INTERVIEW_TYPES.find((t) => t.value === interviewType)?.label ?? "—";
+  const stackName = roleStacks.find((s) => s.id === techStackId)?.name ?? "—";
+
+  const lengthPreset = lengthPresets.find((l) => l.id === lengthPresetId);
+  const isCustomTimer = timerPresetId === CUSTOM_TIMER_ID;
+  const timerPreset = timerPresets.find((t) => t.id === timerPresetId);
+  const timerLabel = isCustomTimer
+    ? `${customMinutes} min`
+    : (timerPreset?.label ?? "No Timer");
 
   const pills = [
+    mode === "bank" ? "Question Bank" : "AI",
     roleName,
-    typeLabel,
-    focusName,
-    `${years}${years >= MAX_YEARS ? "+" : ""} yrs${resolvedBand ? ` · ${resolvedBand}` : ""}`,
-    difficulty || "—",
-    `${questionCount} questions`,
+    stackName,
+    ...(mode === "ai"
+      ? [SKILL_LEVELS.find((s) => s.value === skillLevel)?.label ?? skillLevel]
+      : []),
+    lengthPreset
+      ? `${lengthPreset.label} · ${lengthPreset.questionCount} questions`
+      : "Length",
+    timerLabel,
   ];
 
   function handleStart() {
     setError(undefined);
     startTransition(async () => {
       const res = await startInterview({
+        mode,
         jobRoleId,
-        interviewType,
-        difficulty,
-        focusAreaId,
         techStackId,
-        questionCount,
-        timerEnabled,
+        skillLevel: mode === "ai" ? skillLevel : undefined,
+        lengthPresetId,
+        timerPresetId,
+        customTimerSeconds: isCustomTimer
+          ? Math.round(customMinutes * 60)
+          : undefined,
       });
       if (res?.error) setError(res.error);
     });
@@ -173,11 +152,29 @@ export function InterviewSetup({
       </CardHeader>
 
       <CardContent className="space-y-5">
+        {/* Mode picker */}
+        <div className="grid grid-cols-2 gap-3">
+          <ModeCard
+            active={mode === "bank"}
+            onClick={() => setMode("bank")}
+            icon={<Database className="h-5 w-5" />}
+            title="Question Bank"
+            subtitle="Curated questions for your role & stack."
+          />
+          <ModeCard
+            active={mode === "ai"}
+            onClick={() => setMode("ai")}
+            icon={<Sparkles className="h-5 w-5" />}
+            title="AI Interview"
+            subtitle="Fresh questions generated for your level."
+          />
+        </div>
+
         <div className="grid gap-5 sm:grid-cols-2">
-          <Field label="Role">
+          <Field label="Profession">
             <Select value={jobRoleId} onValueChange={handleRoleChange}>
-              <SelectTrigger aria-label="Role">
-                <SelectValue placeholder="Select a role" />
+              <SelectTrigger aria-label="Profession">
+                <SelectValue placeholder="Select a profession" />
               </SelectTrigger>
               <SelectContent>
                 {roles.map((r) => (
@@ -189,43 +186,10 @@ export function InterviewSetup({
             </Select>
           </Field>
 
-          <Field label="Interview type">
-            <Select
-              value={interviewType}
-              onValueChange={(v) => setInterviewType(v as typeof interviewType)}
-            >
-              <SelectTrigger aria-label="Interview type">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {INTERVIEW_TYPES.map((t) => (
-                  <SelectItem key={t.value} value={t.value}>
-                    {t.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <Field label="Focus area">
-            <Select value={focusAreaId} onValueChange={setFocusAreaId}>
-              <SelectTrigger aria-label="Focus area">
-                <SelectValue placeholder="Select a focus area" />
-              </SelectTrigger>
-              <SelectContent>
-                {roleFocus.map((f) => (
-                  <SelectItem key={f.id} value={f.id}>
-                    {f.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </Field>
-
-          <Field label="Tech stack">
+          <Field label="Specialization">
             <Select value={techStackId} onValueChange={setTechStackId}>
-              <SelectTrigger aria-label="Tech stack">
-                <SelectValue placeholder="Select a tech stack" />
+              <SelectTrigger aria-label="Specialization">
+                <SelectValue placeholder="Select a specialization" />
               </SelectTrigger>
               <SelectContent>
                 {roleStacks.map((s) => (
@@ -237,68 +201,78 @@ export function InterviewSetup({
             </Select>
           </Field>
 
-          <Field label="Difficulty">
-            <Select value={difficulty} onValueChange={setDifficulty}>
-              <SelectTrigger aria-label="Difficulty">
-                <SelectValue placeholder="Select difficulty" />
+          {/* Skill level — AI mode only */}
+          {mode === "ai" && (
+            <Field label="Skill level">
+              <Select
+                value={skillLevel}
+                onValueChange={(v) => setSkillLevel(v as SkillLevel)}
+              >
+                <SelectTrigger aria-label="Skill level">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SKILL_LEVELS.map((s) => (
+                    <SelectItem key={s.value} value={s.value}>
+                      {s.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </Field>
+          )}
+
+          <Field label="Interview length">
+            <Select value={lengthPresetId} onValueChange={setLengthPresetId}>
+              <SelectTrigger aria-label="Interview length">
+                <SelectValue placeholder="Choose a length" />
               </SelectTrigger>
               <SelectContent>
-                {roleBands.map((b) => (
-                  <SelectItem key={b.label} value={b.label}>
-                    {b.label}
+                {lengthPresets.map((l) => (
+                  <SelectItem key={l.id} value={l.id}>
+                    {l.label} · {l.questionCount} questions
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </Field>
 
-          <Field label="Number of questions">
-            <Select
-              value={String(questionCount)}
-              onValueChange={(v) => setQuestionCount(Number(v))}
-            >
-              <SelectTrigger aria-label="Number of questions">
-                <SelectValue />
+          <Field label="Timer">
+            <Select value={timerPresetId} onValueChange={setTimerPresetId}>
+              <SelectTrigger aria-label="Timer">
+                <SelectValue placeholder="Choose a timer" />
               </SelectTrigger>
               <SelectContent>
-                {questionCounts.map((n) => (
-                  <SelectItem key={n} value={String(n)}>
-                    {n} questions
+                {timerPresets.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.label}
                   </SelectItem>
                 ))}
+                <SelectItem value={CUSTOM_TIMER_ID}>Custom…</SelectItem>
               </SelectContent>
             </Select>
           </Field>
-        </div>
 
-        {/* Experience slider */}
-        <Field
-          label={`Experience level — ${years}${years >= MAX_YEARS ? "+" : ""} years${resolvedBand ? ` (${resolvedBand})` : ""}`}
-        >
-          <Slider
-            className="py-2"
-            min={0}
-            max={MAX_YEARS}
-            step={1}
-            value={[years]}
-            onValueChange={([v]) => handleYearsChange(v)}
-          />
-        </Field>
-
-        {/* Timer toggle */}
-        <div className="flex items-center justify-between rounded-xl border border-[var(--border)] px-4 py-3">
-          <div>
-            <p className="text-sm font-medium">Timed mode</p>
-            <p className="text-sm text-[var(--muted-foreground)]">
-              {Math.round((timerSeconds / 60) * 10) / 10} minutes per question
-              when enabled.
-            </p>
-          </div>
-          <Switch
-            checked={timerEnabled}
-            onCheckedChange={setTimerEnabled}
-            aria-label="Toggle timed mode"
-          />
+          {/* Custom timer minutes — only when "Custom…" is chosen. */}
+          {isCustomTimer && (
+            <Field label="Custom minutes per question">
+              <Input
+                type="number"
+                min={1}
+                max={MAX_CUSTOM_MINUTES}
+                value={customMinutes}
+                onChange={(e) =>
+                  setCustomMinutes(
+                    Math.min(
+                      MAX_CUSTOM_MINUTES,
+                      Math.max(1, Number(e.target.value) || 1),
+                    ),
+                  )
+                }
+                aria-label="Custom minutes per question"
+              />
+            </Field>
+          )}
         </div>
 
         {/* Setup summary */}
@@ -315,30 +289,52 @@ export function InterviewSetup({
 
         {error && <FormError message={error} />}
 
-        {/* Start action. Coding interviews are editor-only. */}
-        {interviewType === "coding" ? (
-          <div className="flex flex-col gap-2">
-            <Button size="lg" disabled={pending} onClick={handleStart}>
-              {pending ? <Loader2 className="animate-spin" /> : <Code2 />}
-              Start Coding Interview
-            </Button>
-            <p className="text-center text-xs text-[var(--muted-foreground)]">
-              You&apos;ll solve problems in a code editor. Best on a laptop.
-            </p>
-          </div>
-        ) : (
-          <Button
-            size="lg"
-            className="w-full"
-            disabled={pending}
-            onClick={handleStart}
-          >
-            {pending ? <Loader2 className="animate-spin" /> : <Zap />}
-            Start Interview
-          </Button>
-        )}
+        <LoadingButton
+          size="lg"
+          className="w-full"
+          loading={pending}
+          disabled={!techStackId || !lengthPresetId}
+          loadingText="Starting…"
+          onClick={handleStart}
+        >
+          <Zap />
+          Start Interview
+        </LoadingButton>
       </CardContent>
     </Card>
+  );
+}
+
+function ModeCard({
+  active,
+  onClick,
+  icon,
+  title,
+  subtitle,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      className={`flex flex-col gap-1.5 rounded-xl border p-4 text-left transition-colors ${
+        active
+          ? "border-[var(--primary)] bg-[var(--accent)]"
+          : "border-[var(--border)] hover:bg-[var(--muted)]/50"
+      }`}
+    >
+      <span className="flex items-center gap-2 font-medium">
+        {icon}
+        {title}
+      </span>
+      <span className="text-xs text-[var(--muted-foreground)]">{subtitle}</span>
+    </button>
   );
 }
 

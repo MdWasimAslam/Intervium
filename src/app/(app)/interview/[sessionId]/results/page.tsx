@@ -6,7 +6,6 @@ import {
   db,
   interviewSessions,
   jobRoles,
-  questionsCache,
   sessionQuestions,
   techStacks,
 } from "@db";
@@ -29,11 +28,9 @@ export const metadata: Metadata = { title: "Results" };
 // makes Groq calls; give it headroom within Vercel's Hobby function limit.
 export const maxDuration = 60;
 
-const TYPE_LABEL: Record<string, string> = {
-  technical: "Technical",
-  behavioral: "Behavioral",
-  mixed: "Mixed",
-  coding: "Coding",
+const MODE_LABEL: Record<string, string> = {
+  bank: "Question Bank",
+  ai: "AI",
 };
 
 /**
@@ -59,8 +56,9 @@ export default async function ResultsPage({
       summary: interviewSessions.summary,
       role: jobRoles.name,
       tech: techStacks.name,
-      interviewType: interviewSessions.interviewType,
-      difficulty: interviewSessions.difficulty,
+      professionType: jobRoles.professionType,
+      mode: interviewSessions.mode,
+      skillLevel: interviewSessions.skillLevel,
     })
     .from(interviewSessions)
     .innerJoin(jobRoles, eq(jobRoles.id, interviewSessions.jobRoleId))
@@ -83,10 +81,9 @@ export default async function ResultsPage({
   const rows = await db
     .select({
       position: sessionQuestions.position,
-      questionText: questionsCache.questionText,
-      idealAnswer: questionsCache.idealAnswer,
-      type: questionsCache.type,
-      language: questionsCache.language,
+      questionText: sessionQuestions.questionText,
+      idealAnswer: sessionQuestions.idealAnswer,
+      modality: sessionQuestions.modality,
       userAnswer: sessionQuestions.userAnswer,
       score: sessionQuestions.score,
       maxScore: sessionQuestions.maxScore,
@@ -94,10 +91,6 @@ export default async function ResultsPage({
       feedbackDetail: sessionQuestions.feedbackDetail,
     })
     .from(sessionQuestions)
-    .innerJoin(
-      questionsCache,
-      eq(questionsCache.id, sessionQuestions.questionId),
-    )
     .where(eq(sessionQuestions.sessionId, sessionId))
     .orderBy(asc(sessionQuestions.position));
 
@@ -110,11 +103,15 @@ export default async function ResultsPage({
     feedback: r.feedback ?? "",
     strengths: r.feedbackDetail?.strengths ?? [],
     improvements: r.feedbackDetail?.improvements ?? [],
+    missingConcepts: r.feedbackDetail?.missingConcepts ?? [],
+    betterApproach: r.feedbackDetail?.betterApproach ?? null,
     rubric: r.feedbackDetail?.rubric ?? null,
     codeRubric: r.feedbackDetail?.codeRubric ?? null,
-    isCoding: r.type === "coding",
-    language: r.language,
-    idealSolution: r.type === "coding" ? r.idealAnswer : null,
+    isCoding: r.modality === "coding",
+    language: r.modality === "coding" ? "javascript" : null,
+    // Expected/ideal answer: prose for text questions, a code block for coding.
+    idealAnswer: r.modality === "coding" ? null : r.idealAnswer,
+    idealSolution: r.modality === "coding" ? r.idealAnswer : null,
   }));
 
   return (
@@ -126,11 +123,11 @@ export default async function ResultsPage({
           <div className="text-center sm:text-left">
             <div className="mb-2 flex flex-wrap justify-center gap-2 sm:justify-start">
               <Chip>{session.role}</Chip>
-              <Chip>
-                {TYPE_LABEL[session.interviewType] ?? session.interviewType}
-              </Chip>
               <Chip>{session.tech}</Chip>
-              <Chip>{session.difficulty}</Chip>
+              <Chip>{MODE_LABEL[session.mode] ?? session.mode}</Chip>
+              {session.skillLevel && (
+                <Chip className="capitalize">{session.skillLevel}</Chip>
+              )}
             </div>
             <h1 className="text-2xl font-bold">Interview complete</h1>
             {session.summary && (
@@ -143,7 +140,10 @@ export default async function ResultsPage({
       </Card>
 
       {/* Per-question breakdown */}
-      <QuestionResults results={results} />
+      <QuestionResults
+        results={results}
+        isTechnical={session.professionType === "technical"}
+      />
 
       {/* Actions */}
       <div className="mt-8 flex flex-wrap gap-3">

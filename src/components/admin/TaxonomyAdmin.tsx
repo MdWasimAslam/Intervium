@@ -33,14 +33,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ConfirmDelete } from "@/components/admin/ConfirmDelete";
-import {
-  createFocus,
-  createTech,
-  deleteFocus,
-  deleteTech,
-  updateFocus,
-  updateTech,
-} from "@/lib/actions/admin/taxonomy";
+import { createTech, deleteTech, updateTech } from "@/lib/actions/admin/taxonomy";
 import type { AdminResult } from "@/lib/actions/admin/util";
 
 export interface TaxonomyItem {
@@ -55,7 +48,7 @@ export interface RoleRef {
 }
 
 interface Props {
-  kind: "focus" | "tech";
+  kind: "tech";
   title: string;
   description: string;
   roles: RoleRef[];
@@ -63,7 +56,6 @@ interface Props {
 }
 
 const ACTIONS = {
-  focus: { create: createFocus, update: updateFocus, remove: deleteFocus },
   tech: { create: createTech, update: updateTech, remove: deleteTech },
 };
 
@@ -108,11 +100,11 @@ export function TaxonomyAdmin({
 
       <div className="mb-4 w-56">
         <Select value={filter} onValueChange={setFilter}>
-          <SelectTrigger aria-label="Filter by role">
+          <SelectTrigger aria-label="Filter by profession">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All roles</SelectItem>
+            <SelectItem value="all">All professions</SelectItem>
             {roles.map((r) => (
               <SelectItem key={r.id} value={r.id}>
                 {r.name}
@@ -126,7 +118,7 @@ export function TaxonomyAdmin({
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
-            <TableHead>Role</TableHead>
+            <TableHead>Profession</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
@@ -230,7 +222,7 @@ function ItemDialog({
         <DialogHeader>
           <DialogTitle>
             {item ? "Edit" : "Add"}{" "}
-            {kind === "focus" ? "focus area" : "tech stack"}
+            {kind === "focus" ? "focus area" : "specialization"}
           </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
@@ -243,10 +235,10 @@ function ItemDialog({
             />
           </div>
           <div className="space-y-1.5">
-            <Label>Role</Label>
+            <Label>Profession</Label>
             <Select value={jobRoleId} onValueChange={setJobRoleId}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a role" />
+                <SelectValue placeholder="Select a profession" />
               </SelectTrigger>
               <SelectContent>
                 {roles.map((r) => (

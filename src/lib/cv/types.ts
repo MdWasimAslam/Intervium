@@ -70,10 +70,46 @@ export interface CvEnvelope {
   data: CvData;
 }
 
+/** ATS-readiness band for the AI review (mirrors the AI output enum). */
+export type AtsLevel = "strong" | "good" | "needs-work";
+
+/**
+ * The AI ATS review as persisted on `profiles` (one latest review per user).
+ * Structurally matches `CvAtsReview` from the AI layer; kept here so both the
+ * DB schema and the client can share the type without importing server code.
+ */
+export interface StoredAtsReview {
+  atsScore: number;
+  level: AtsLevel;
+  remarks: string;
+  strengths: string[];
+  issues: string[];
+  suggestions: string[];
+}
+
+/**
+ * A stored ATS review plus the metadata the UI needs to show "last checked"
+ * and detect staleness (the CV changed since the review was generated).
+ */
+export interface AtsReviewSnapshot {
+  review: StoredAtsReview;
+  /** ISO timestamp of when the review was generated, or null if never. */
+  checkedAt: string | null;
+  /** {@link cvFingerprint} of the CV at review time, for staleness checks. */
+  cvHash: string | null;
+}
+
 /** An empty, well-formed CV — used as the fallback / new-CV starting point. */
 export function emptyCv(): CvData {
   return {
-    contact: { name: "", title: "", email: "", phone: "", location: "", links: [] },
+    contact: {
+      name: "",
+      title: "",
+      email: "",
+      phone: "",
+      location: "",
+      links: [],
+    },
     summary: "",
     experience: [],
     projects: [],

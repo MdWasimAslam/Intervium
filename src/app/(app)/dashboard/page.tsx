@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Container } from "@/components/layout/Container";
 import { requireAuth } from "@/lib/session";
 import { getDashboardData } from "@/lib/dashboard";
-import { getInsights } from "@/lib/insights";
 import { Greeting } from "@/components/dashboard/Greeting";
 import { PrimaryAction } from "@/components/dashboard/PrimaryAction";
 import { StatTile } from "@/components/dashboard/StatTile";
@@ -25,8 +24,6 @@ import { ProfileSummary } from "@/components/dashboard/ProfileSummary";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { QuickLinks } from "@/components/dashboard/QuickLinks";
 import { MilestoneBanner } from "@/components/dashboard/MilestoneBanner";
-import { WeakAreaCard } from "@/components/dashboard/WeakAreaCard";
-import { RetryWeakCard } from "@/components/dashboard/RetryWeakCard";
 import { LatestResult } from "@/components/interview/LatestResult";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -34,8 +31,9 @@ export const metadata: Metadata = { title: "Dashboard" };
 export default async function DashboardPage() {
   const user = await requireAuth();
 
-  // Respect the onboarding guard — same rule as the interview setup page.
   const data = await getDashboardData(user.id);
+
+  // Respect the onboarding guard — same rule as the interview setup page.
   if (!data) redirect("/onboarding");
 
   const {
@@ -52,21 +50,39 @@ export default async function DashboardPage() {
   const hasResults = scoredCount > 0;
   const isAdmin = user.role === "admin";
 
-  // Study insights (weak-area + retry) — only meaningful once there are scores.
-  const insights = hasResults ? await getInsights(user.id) : null;
-
-  const level = profile.band
-    ? `${profile.band}-level`
-    : `${profile.yearsExperience} yr${profile.yearsExperience === 1 ? "" : "s"} experience`;
-  const subline = profile.roleName ? `${profile.roleName} · ${level}` : level;
+  const level = `${profile.yearsExperience} yr${profile.yearsExperience === 1 ? "" : "s"} experience`;
+  const sep = <span aria-hidden className="text-[var(--border)]">·</span>;
 
   return (
     <Container className="py-10 sm:py-12">
       <div className="space-y-8">
         {/* Greeting */}
-        <header className="animate-fade-up">
+        <header className="animate-fade-up space-y-2">
           <Greeting name={profile.displayName} />
-          <p className="mt-2 text-[var(--muted-foreground)]">{subline}</p>
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1 text-sm text-[var(--muted-foreground)]">
+            <span className="font-medium text-[var(--foreground)]">
+              {profile.roleName ?? "Candidate"}
+            </span>
+            {sep}
+            <span>{level}</span>
+            {streaks.current > 0 && (
+              <>
+                {sep}
+                <span className="inline-flex items-center gap-1 font-medium text-amber-600 dark:text-amber-400">
+                  <Flame className="h-3.5 w-3.5" />
+                  {streaks.current}-day streak
+                </span>
+              </>
+            )}
+            {hasResults && (
+              <>
+                {sep}
+                <span>
+                  {stats.completed} interview{stats.completed === 1 ? "" : "s"}
+                </span>
+              </>
+            )}
+          </div>
         </header>
 
         {/* Hero + latest result */}
@@ -86,7 +102,7 @@ export default async function DashboardPage() {
                 latest={{
                   totalScore: latest.totalScore,
                   maxScore: latest.maxScore,
-                  interviewType: latest.interviewType,
+                  mode: latest.mode,
                   techStack: latest.tech,
                 }}
                 role={latest.role}
@@ -192,23 +208,6 @@ export default async function DashboardPage() {
             </Card>
           )}
         </section>
-
-        {/* Focus & improve — weak-area detection + retry weakest answers */}
-        {hasResults && insights && (
-          <section
-            className="animate-fade-up"
-            style={{ animationDelay: "180ms" }}
-          >
-            <h2 className="mb-3 text-lg font-semibold">Focus &amp; improve</h2>
-            <div className="grid gap-5 lg:grid-cols-2">
-              <WeakAreaCard
-                weakest={insights.weakest}
-                ranked={insights.ranked}
-              />
-              <RetryWeakCard retry={insights.retry} />
-            </div>
-          </section>
-        )}
 
         {/* Recent activity + profile */}
         <section

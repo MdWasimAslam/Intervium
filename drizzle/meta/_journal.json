@@ -64,6 +64,83 @@
       "when": 1780215918776,
       "tag": "0008_remove_speech_interview",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1780257944560,
+      "tag": "0009_amused_imperial_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1780261582916,
+      "tag": "0010_expand_bank",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1780261646009,
+      "tag": "0011_contract_bank",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1780269336071,
+      "tag": "0012_phase2_presets_ai_usage_log",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1780270653788,
+      "tag": "0013_add_profession_type",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1780271761205,
+      "tag": "0014_cv_versions_cover_letters",
+      "breakpoints": true
+    },
+    {
+      "idx": 15,
+      "version": "7",
+      "when": 1780308315120,
+      "tag": "0015_motionless_imperial_guard",
+      "breakpoints": true
+    },
+    {
+      "idx": 16,
+      "version": "7",
+      "when": 1780309061303,
+      "tag": "0016_outgoing_marrow",
+      "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1780309198734,
+      "tag": "0017_broad_sphinx",
+      "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1780331148906,
+      "tag": "0018_first_susan_delgado",
+      "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1780333167958,
+      "tag": "0019_sloppy_shocker",
+      "breakpoints": true
     }
   ]
 }

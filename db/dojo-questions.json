@@ -1,0 +1,191 @@
+{
+  "topics": [
+    { "slug": "arrays", "name": "Arrays", "sortOrder": 1 },
+    { "slug": "strings", "name": "Strings", "sortOrder": 2 },
+    { "slug": "hash-map", "name": "Hash Map", "sortOrder": 3 },
+    { "slug": "two-pointers", "name": "Two Pointers", "sortOrder": 4 },
+    { "slug": "stack", "name": "Stack", "sortOrder": 5 },
+    { "slug": "binary-search", "name": "Binary Search", "sortOrder": 6 },
+    { "slug": "dynamic-programming", "name": "Dynamic Programming", "sortOrder": 7 },
+    { "slug": "math", "name": "Math", "sortOrder": 8 },
+    { "slug": "loops", "name": "Loops", "sortOrder": 9 },
+    { "slug": "bit-manipulation", "name": "Bit Manipulation", "sortOrder": 10 }
+  ],
+  "questions": [
+    {
+      "slug": "two-sum",
+      "title": "Two Sum",
+      "difficulty": "easy",
+      "topics": ["arrays", "hash-map"],
+      "fnName": "twoSum",
+      "starterCode": "function twoSum(nums, target) {\n  // Return the indices of the two numbers that add up to target.\n}\n",
+      "prompt": "Given an array of integers `nums` and an integer `target`, return the indices of the two numbers that add up to `target`. Each input has exactly one solution, and you may not use the same element twice.\n\nExample:\n  twoSum([2, 7, 11, 15], 9)  ->  [0, 1]   (because nums[0] + nums[1] === 9)\n  twoSum([3, 2, 4], 6)       ->  [1, 2]",
+      "testCases": [
+        { "input": [[2, 7, 11, 15], 9], "expected": [0, 1] },
+        { "input": [[3, 2, 4], 6], "expected": [1, 2] },
+        { "input": [[3, 3], 6], "expected": [0, 1] }
+      ]
+    },
+    {
+      "slug": "reverse-string",
+      "title": "Reverse String",
+      "difficulty": "easy",
+      "topics": ["strings", "two-pointers"],
+      "fnName": "reverseString",
+      "starterCode": "function reverseString(s) {\n  // Return the reversed string.\n}\n",
+      "prompt": "Given a string `s`, return it reversed.\n\nExample:\n  reverseString(\"hello\")  ->  \"olleh\"\n  reverseString(\"ab cd\")  ->  \"dc ba\"",
+      "testCases": [
+        { "input": ["hello"], "expected": "olleh" },
+        { "input": ["ab cd"], "expected": "dc ba" },
+        { "input": [""], "expected": "" },
+        { "input": ["a"], "expected": "a" }
+      ]
+    },
+    {
+      "slug": "valid-palindrome",
+      "title": "Valid Palindrome",
+      "difficulty": "easy",
+      "topics": ["strings", "two-pointers"],
+      "fnName": "isPalindrome",
+      "starterCode": "function isPalindrome(s) {\n  // Return true if s is a palindrome, ignoring case and non-alphanumerics.\n}\n",
+      "prompt": "Given a string `s`, return true if it is a palindrome considering only alphanumeric characters and ignoring case.\n\nExample:\n  isPalindrome(\"A man, a plan, a canal: Panama\")  ->  true\n  isPalindrome(\"race a car\")                       ->  false",
+      "testCases": [
+        { "input": ["A man, a plan, a canal: Panama"], "expected": true },
+        { "input": ["race a car"], "expected": false },
+        { "input": [" "], "expected": true },
+        { "input": ["0P"], "expected": false }
+      ]
+    },
+    {
+      "slug": "fizzbuzz",
+      "title": "Fizz Buzz",
+      "difficulty": "easy",
+      "topics": ["math", "loops"],
+      "fnName": "fizzBuzz",
+      "starterCode": "function fizzBuzz(n) {\n  // Return an array of strings for 1..n.\n}\n",
+      "prompt": "Return an array of length `n` (1-indexed). For multiples of 3 use \"Fizz\", for multiples of 5 use \"Buzz\", for multiples of both use \"FizzBuzz\", otherwise the number as a string.\n\nExample:\n  fizzBuzz(5)  ->  [\"1\", \"2\", \"Fizz\", \"4\", \"Buzz\"]",
+      "testCases": [
+        { "input": [3], "expected": ["1", "2", "Fizz"] },
+        { "input": [5], "expected": ["1", "2", "Fizz", "4", "Buzz"] },
+        { "input": [15], "expected": ["1", "2", "Fizz", "4", "Buzz", "Fizz", "7", "8", "Fizz", "Buzz", "11", "Fizz", "13", "14", "FizzBuzz"] }
+      ]
+    },
+    {
+      "slug": "valid-parentheses",
+      "title": "Valid Parentheses",
+      "difficulty": "medium",
+      "topics": ["stack", "strings"],
+      "fnName": "isValid",
+      "starterCode": "function isValid(s) {\n  // Return true if the brackets are balanced and correctly nested.\n}\n",
+      "prompt": "Given a string `s` containing just the characters '()[]{}', determine if the input is valid: brackets must close in the correct order and each closing bracket matches its opening type.\n\nExample:\n  isValid(\"()[]{}\")  ->  true\n  isValid(\"([)]\")    ->  false",
+      "testCases": [
+        { "input": ["()"], "expected": true },
+        { "input": ["()[]{}"], "expected": true },
+        { "input": ["(]"], "expected": false },
+        { "input": ["([)]"], "expected": false },
+        { "input": ["{[]}"], "expected": true }
+      ]
+    },
+    {
+      "slug": "contains-duplicate",
+      "title": "Contains Duplicate",
+      "difficulty": "easy",
+      "topics": ["arrays", "hash-map"],
+      "fnName": "containsDuplicate",
+      "starterCode": "function containsDuplicate(nums) {\n  // Return true if any value appears at least twice.\n}\n",
+      "prompt": "Given an integer array `nums`, return true if any value appears at least twice, and false if every element is distinct.\n\nExample:\n  containsDuplicate([1, 2, 3, 1])  ->  true\n  containsDuplicate([1, 2, 3, 4])  ->  false",
+      "testCases": [
+        { "input": [[1, 2, 3, 1]], "expected": true },
+        { "input": [[1, 2, 3, 4]], "expected": false },
+        { "input": [[1, 1, 1, 3, 3, 4, 3, 2, 4, 2]], "expected": true }
+      ]
+    },
+    {
+      "slug": "maximum-subarray",
+      "title": "Maximum Subarray",
+      "difficulty": "medium",
+      "topics": ["arrays", "dynamic-programming"],
+      "fnName": "maxSubArray",
+      "starterCode": "function maxSubArray(nums) {\n  // Return the largest sum of any contiguous subarray.\n}\n",
+      "prompt": "Given an integer array `nums`, find the contiguous subarray with the largest sum and return that sum.\n\nExample:\n  maxSubArray([-2, 1, -3, 4, -1, 2, 1, -5, 4])  ->  6   (the subarray [4, -1, 2, 1])",
+      "testCases": [
+        { "input": [[-2, 1, -3, 4, -1, 2, 1, -5, 4]], "expected": 6 },
+        { "input": [[1]], "expected": 1 },
+        { "input": [[5, 4, -1, 7, 8]], "expected": 23 },
+        { "input": [[-1, -2, -3]], "expected": -1 }
+      ]
+    },
+    {
+      "slug": "binary-search",
+      "title": "Binary Search",
+      "difficulty": "easy",
+      "topics": ["arrays", "binary-search"],
+      "fnName": "search",
+      "starterCode": "function search(nums, target) {\n  // Return the index of target in the sorted array, or -1.\n}\n",
+      "prompt": "Given a sorted (ascending) array of unique integers `nums` and a `target`, return the index of `target`, or -1 if it isn't present. Aim for O(log n).\n\nExample:\n  search([-1, 0, 3, 5, 9, 12], 9)  ->  4\n  search([-1, 0, 3, 5, 9, 12], 2)  ->  -1",
+      "testCases": [
+        { "input": [[-1, 0, 3, 5, 9, 12], 9], "expected": 4 },
+        { "input": [[-1, 0, 3, 5, 9, 12], 2], "expected": -1 },
+        { "input": [[5], 5], "expected": 0 },
+        { "input": [[2, 5], 5], "expected": 1 }
+      ]
+    },
+    {
+      "slug": "valid-anagram",
+      "title": "Valid Anagram",
+      "difficulty": "easy",
+      "topics": ["strings", "hash-map"],
+      "fnName": "isAnagram",
+      "starterCode": "function isAnagram(s, t) {\n  // Return true if t is an anagram of s.\n}\n",
+      "prompt": "Given two strings `s` and `t`, return true if `t` is an anagram of `s` (same characters, same counts).\n\nExample:\n  isAnagram(\"anagram\", \"nagaram\")  ->  true\n  isAnagram(\"rat\", \"car\")          ->  false",
+      "testCases": [
+        { "input": ["anagram", "nagaram"], "expected": true },
+        { "input": ["rat", "car"], "expected": false },
+        { "input": ["a", "ab"], "expected": false }
+      ]
+    },
+    {
+      "slug": "move-zeroes",
+      "title": "Move Zeroes",
+      "difficulty": "easy",
+      "topics": ["arrays", "two-pointers"],
+      "fnName": "moveZeroes",
+      "starterCode": "function moveZeroes(nums) {\n  // Move all zeroes to the end, keeping the order of the others. Return the array.\n}\n",
+      "prompt": "Given an integer array `nums`, move all 0's to the end while keeping the relative order of the non-zero elements, then return the resulting array.\n\nExample:\n  moveZeroes([0, 1, 0, 3, 12])  ->  [1, 3, 12, 0, 0]",
+      "testCases": [
+        { "input": [[0, 1, 0, 3, 12]], "expected": [1, 3, 12, 0, 0] },
+        { "input": [[0]], "expected": [0] },
+        { "input": [[1, 2, 3]], "expected": [1, 2, 3] }
+      ]
+    },
+    {
+      "slug": "climbing-stairs",
+      "title": "Climbing Stairs",
+      "difficulty": "easy",
+      "topics": ["dynamic-programming", "math"],
+      "fnName": "climbStairs",
+      "starterCode": "function climbStairs(n) {\n  // Return the number of distinct ways to climb to the top.\n}\n",
+      "prompt": "You are climbing a staircase with `n` steps. Each time you can climb 1 or 2 steps. Return the number of distinct ways to reach the top.\n\nExample:\n  climbStairs(2)  ->  2   (1+1, or 2)\n  climbStairs(3)  ->  3",
+      "testCases": [
+        { "input": [2], "expected": 2 },
+        { "input": [3], "expected": 3 },
+        { "input": [5], "expected": 8 },
+        { "input": [1], "expected": 1 }
+      ]
+    },
+    {
+      "slug": "single-number",
+      "title": "Single Number",
+      "difficulty": "easy",
+      "topics": ["arrays", "bit-manipulation"],
+      "fnName": "singleNumber",
+      "starterCode": "function singleNumber(nums) {\n  // Every element appears twice except one. Return that one.\n}\n",
+      "prompt": "Given a non-empty array `nums` where every element appears twice except for one, find and return that single element. Try to do it with O(1) extra space.\n\nExample:\n  singleNumber([4, 1, 2, 1, 2])  ->  4",
+      "testCases": [
+        { "input": [[2, 2, 1]], "expected": 1 },
+        { "input": [[4, 1, 2, 1, 2]], "expected": 4 },
+        { "input": [[1]], "expected": 1 }
+      ]
+    }
+  ]
+}

@@ -1,36 +1,30 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNotNull } from "drizzle-orm";
 import {
+  bankQuestions,
   db,
-  focusAreas,
   interviewSessions,
   jobRoles,
   profiles,
-  questionsCache,
   sessionQuestions,
   techStacks,
 } from "@db";
-import { computeSignature } from "@/lib/signature";
 import {
-  DEFAULT_CODING_LANGUAGE,
   generateQuestions,
   QuestionGenerationError,
   type GenerationContext,
+  type SkillLevel,
 } from "@/lib/groq";
 import { allowAction } from "@/lib/rate-limit";
 import { reserveAiCalls } from "@/lib/ai-budget";
 import { cvPlainText } from "@/lib/cv/parse";
 
-/** Extra questions to generate beyond the immediate shortfall, to refill the pool. */
-const GENERATION_BUFFER = 3;
-
 export interface SessionConfig {
   id: string;
   userId: string;
+  mode: "bank" | "ai";
   jobRoleId: string;
   techStackId: string;
-  focusAreaId: string;
-  difficulty: string;
-  interviewType: "technical" | "behavioral" | "mixed" | "coding";
+  skillLevel: SkillLevel | null;
   questionCount: number;
 }
 
@@ -38,6 +32,14 @@ export interface EngineQuestion {
   id: string;
   position: number;
   questionText: string;
+}
+
+/** What gets written onto a transcript row, before position is assigned. */
+interface PickedQuestion {
+  bankQuestionId: string | null;
+  questionText: string;
+  idealAnswer: string;
+  modality: "text" | "coding";
 }
 
 /** Fisher–Yates shuffle (non-mutating). */
@@ -50,231 +52,187 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+/** Read a session's transcript rows in order (the engine's idempotent answer). */
+async function readPersisted(sessionId: string): Promise<EngineQuestion[]> {
+  return db
+    .select({
+      id: sessionQuestions.id,
+      position: sessionQuestions.position,
+      questionText: sessionQuestions.questionText,
+    })
+    .from(sessionQuestions)
+    .where(eq(sessionQuestions.sessionId, sessionId))
+    .orderBy(asc(sessionQuestions.position));
+}
+
 /**
- * Cache-first question retrieval for a session.
+ * Resolve the questions for a session.
  *
- * - Idempotent: if the session already has questions, returns them in order.
- * - Otherwise selects unseen cached questions for the config's signature,
- *   tops up from Groq if the pool is short, persists the selection as
- *   session_questions rows, and returns them.
+ * - Idempotent: a session that already has transcript rows replays them.
+ * - Bank mode: random, not-yet-seen active questions for the (role, tech).
+ * - AI mode: questions generated live and written ONLY onto this transcript —
+ *   never cached or reused. When the daily AI budget is spent there is no
+ *   fallback (no cache exists), so it fails with a clear message.
  */
 export async function getQuestionsForSession(
   session: SessionConfig,
 ): Promise<EngineQuestion[]> {
   // 1) Idempotency — replay an already-populated session.
-  const existing = await db
-    .select({
-      id: sessionQuestions.questionId,
-      position: sessionQuestions.position,
-      questionText: questionsCache.questionText,
-    })
-    .from(sessionQuestions)
-    .innerJoin(
-      questionsCache,
-      eq(questionsCache.id, sessionQuestions.questionId),
-    )
-    .where(eq(sessionQuestions.sessionId, session.id))
-    .orderBy(asc(sessionQuestions.position));
+  const existing = await readPersisted(session.id);
+  if (existing.length > 0) return existing;
 
-  if (existing.length > 0) {
-    console.log(
-      `[question-engine] session=${session.id} replay existing=${existing.length} (no lookup)`,
-    );
-    return existing;
-  }
+  // 2) Pick this session's questions by mode.
+  const picked =
+    session.mode === "bank"
+      ? await pickBankQuestions(session)
+      : await generateAiQuestions(session);
 
-  const signature = computeSignature({
-    jobRoleId: session.jobRoleId,
-    techStackId: session.techStackId,
-    focusAreaId: session.focusAreaId,
-    difficulty: session.difficulty,
-    type: session.interviewType,
-  });
-
-  // 2) Cache pool for this signature + 3) questions this user has already seen.
-  const [pool, seenRows] = await Promise.all([
-    db
-      .select({
-        id: questionsCache.id,
-        questionText: questionsCache.questionText,
-      })
-      .from(questionsCache)
-      .where(
-        and(
-          eq(questionsCache.signature, signature),
-          eq(questionsCache.isActive, true),
-        ),
-      ),
-    // "Seen" questions for this user. We only ever pick from the current
-    // signature's pool, so questions outside it can never be selected — scope
-    // the scan to this signature instead of the user's ENTIRE session history.
-    // This keeps the result correct (any pool question the user has seen is
-    // still excluded) while letting the index on questions_cache.signature do
-    // the work rather than scanning every session_question the user ever had.
-    db
-      .select({ questionId: sessionQuestions.questionId })
-      .from(sessionQuestions)
-      .innerJoin(
-        interviewSessions,
-        eq(interviewSessions.id, sessionQuestions.sessionId),
-      )
-      .innerJoin(
-        questionsCache,
-        eq(questionsCache.id, sessionQuestions.questionId),
-      )
-      .where(
-        and(
-          eq(interviewSessions.userId, session.userId),
-          eq(questionsCache.signature, signature),
-        ),
-      ),
-  ]);
-
-  const seen = new Set(seenRows.map((r) => r.questionId));
-  const unseen = pool.filter((q) => !seen.has(q.id));
-
-  // 4) Pick from the unseen pool.
-  const picked = shuffle(unseen).slice(0, session.questionCount);
-  let fromCache = picked.length;
-  let generatedCount = 0;
-
-  // 5) Top up if the unseen pool is short.
-  if (picked.length < session.questionCount) {
-    const shortfall = session.questionCount - picked.length;
-
-    // Per-user rate limit — kills accidental retry loops before any AI work.
-    if (!allowAction(`gen:${session.userId}`)) {
-      throw new QuestionGenerationError(
-        "You're generating interviews too fast. Please wait a moment and try again.",
-      );
-    }
-
-    // Daily AI budget — when spent, degrade gracefully instead of calling
-    // Groq (and 429-ing): refill from the cache by relaxing the "unseen"
-    // rule, repeating questions the user has seen before.
-    if (await reserveAiCalls(1)) {
-      const ctx = await buildContext(session, shortfall + GENERATION_BUFFER);
-      const generated = await generateQuestions(ctx);
-
-      const isCoding = session.interviewType === "coding";
-      const inserted = await db
-        .insert(questionsCache)
-        .values(
-          generated.map((g) => ({
-            jobRoleId: session.jobRoleId,
-            techStackId: session.techStackId,
-            focusAreaId: session.focusAreaId,
-            difficulty: session.difficulty,
-            type: isCoding ? ("coding" as const) : ("text" as const),
-            language: isCoding
-              ? (g.language ?? DEFAULT_CODING_LANGUAGE)
-              : null,
-            questionText: g.question_text,
-            idealAnswer: g.ideal_answer,
-            signature,
-            source: "ai" as const,
-          })),
-        )
-        .returning({
-          id: questionsCache.id,
-          questionText: questionsCache.questionText,
-        });
-
-      const needed = session.questionCount - picked.length;
-      picked.push(...inserted.slice(0, needed));
-      generatedCount = needed;
-
-      console.log(
-        `[question-engine] generated ${inserted.length} new rows (used ${needed})`,
-      );
-    } else {
-      // Budget spent for today — reuse seen questions to still fill the session.
-      const pickedIds = new Set(picked.map((p) => p.id));
-      const repeats = shuffle(pool.filter((q) => !pickedIds.has(q.id))).slice(
-        0,
-        shortfall,
-      );
-      picked.push(...repeats);
-
-      if (picked.length === 0) {
-        // No cache to fall back on for this config — ask the user to try later.
-        throw new QuestionGenerationError(
-          "We've reached today's limit for generating new questions. Please try again tomorrow, or pick a role/stack that already has questions.",
-        );
-      }
-
-      console.log(
-        `[question-engine] daily AI budget spent — served ${repeats.length} cached repeat(s) instead of generating`,
-      );
-    }
-  }
-
-  // 6) Persist the selection as session_questions, in order.
-  const ordered = picked.map((q, i) => ({
-    id: q.id,
-    position: i,
-    questionText: q.questionText,
-  }));
-
-  if (ordered.length > 0) {
-    // Two requests for the same session can race between the idempotency SELECT
-    // (step 1) and this insert. `.onConflictDoNothing()` (relying on the unique
-    // constraint on session_questions(session_id, question_id)) makes a losing
-    // racer's insert a no-op instead of erroring or duplicating rows.
+  // 3) Persist the selection inline, in order. Two requests racing on the same
+  //    session are made safe by the unique (session_id, position) constraint.
+  if (picked.length > 0) {
     await db
       .insert(sessionQuestions)
       .values(
-        ordered.map((q) => ({
+        picked.map((q, i) => ({
           sessionId: session.id,
-          questionId: q.id,
-          position: q.position,
+          bankQuestionId: q.bankQuestionId,
+          questionText: q.questionText,
+          idealAnswer: q.idealAnswer,
+          modality: q.modality,
+          position: i,
         })),
       )
       .onConflictDoNothing();
   }
 
-  console.log(
-    `[question-engine] session=${session.id} cache=${fromCache} generated=${generatedCount} (pool=${pool.length}, unseen_before=${unseen.length})`,
-  );
+  // 4) Re-read the committed set so racing callers return the same ordering.
+  const persisted = await readPersisted(session.id);
+  return persisted.length > 0
+    ? persisted
+    : picked.map((q, i) => ({
+        id: `${session.id}:${i}`,
+        position: i,
+        questionText: q.questionText,
+      }));
+}
 
-  // 7) Re-read the persisted set as the authoritative answer. If we lost a race
-  // the winner's rows are already there; this guarantees both callers return
-  // the SAME committed question set (and ordering) rather than diverging.
-  const persisted = await db
-    .select({
-      id: sessionQuestions.questionId,
-      position: sessionQuestions.position,
-      questionText: questionsCache.questionText,
-    })
-    .from(sessionQuestions)
-    .innerJoin(
-      questionsCache,
-      eq(questionsCache.id, sessionQuestions.questionId),
-    )
-    .where(eq(sessionQuestions.sessionId, session.id))
-    .orderBy(asc(sessionQuestions.position));
+/* -------------------------------------------------------------------------- */
+/* Bank mode                                                                  */
+/* -------------------------------------------------------------------------- */
 
-  return persisted.length > 0 ? persisted : ordered;
+async function pickBankQuestions(
+  session: SessionConfig,
+): Promise<PickedQuestion[]> {
+  const [pool, seenRows] = await Promise.all([
+    db
+      .select({
+        id: bankQuestions.id,
+        questionText: bankQuestions.questionText,
+        idealAnswer: bankQuestions.idealAnswer,
+        modality: bankQuestions.modality,
+      })
+      .from(bankQuestions)
+      .where(
+        and(
+          eq(bankQuestions.roleId, session.jobRoleId),
+          eq(bankQuestions.techStackId, session.techStackId),
+          eq(bankQuestions.isActive, true),
+        ),
+      ),
+    // Bank questions this user has already been served (any past session).
+    db
+      .select({ bankQuestionId: sessionQuestions.bankQuestionId })
+      .from(sessionQuestions)
+      .innerJoin(
+        interviewSessions,
+        eq(interviewSessions.id, sessionQuestions.sessionId),
+      )
+      .where(
+        and(
+          eq(interviewSessions.userId, session.userId),
+          isNotNull(sessionQuestions.bankQuestionId),
+        ),
+      ),
+  ]);
+
+  if (pool.length === 0) {
+    throw new QuestionGenerationError(
+      "This role and tech stack has no question-bank questions yet. Ask an admin to add some, or try an AI interview.",
+    );
+  }
+
+  const seen = new Set(seenRows.map((r) => r.bankQuestionId));
+  const unseen = pool.filter((q) => !seen.has(q.id));
+
+  // Prefer unseen; if the user has exhausted the pool, top up with repeats.
+  const picked = shuffle(unseen).slice(0, session.questionCount);
+  if (picked.length < session.questionCount) {
+    const pickedIds = new Set(picked.map((q) => q.id));
+    picked.push(
+      ...shuffle(pool.filter((q) => !pickedIds.has(q.id))).slice(
+        0,
+        session.questionCount - picked.length,
+      ),
+    );
+  }
+
+  return picked.map((q) => ({
+    bankQuestionId: q.id,
+    questionText: q.questionText,
+    idealAnswer: q.idealAnswer,
+    modality: q.modality,
+  }));
+}
+
+/* -------------------------------------------------------------------------- */
+/* AI mode (ephemeral — generated live, never cached)                         */
+/* -------------------------------------------------------------------------- */
+
+async function generateAiQuestions(
+  session: SessionConfig,
+): Promise<PickedQuestion[]> {
+  // Per-user rate limit — kills accidental retry loops before any AI work.
+  if (!allowAction(`gen:${session.userId}`)) {
+    throw new QuestionGenerationError(
+      "You're generating interviews too fast. Please wait a moment and try again.",
+    );
+  }
+
+  // No cache to fall back on for AI mode — if the daily budget is spent we
+  // can't degrade gracefully, so stop with a clear message.
+  if (!(await reserveAiCalls(1))) {
+    throw new QuestionGenerationError(
+      "We've reached today's limit for AI-generated interviews. Please try a Question Bank interview, or come back tomorrow.",
+    );
+  }
+
+  const ctx = await buildContext(session);
+  const generated = await generateQuestions(ctx);
+
+  return generated.slice(0, session.questionCount).map((g) => ({
+    bankQuestionId: null,
+    questionText: g.question_text,
+    idealAnswer: g.ideal_answer,
+    modality: "text" as const,
+  }));
 }
 
 /** Assemble the Groq prompt context from the session + the user's profile. */
 async function buildContext(
   session: SessionConfig,
-  count: number,
 ): Promise<GenerationContext> {
-  const [[role], [tech], [focus], [profile]] = await Promise.all([
+  const [[role], [tech], [profile]] = await Promise.all([
     db
-      .select({ name: jobRoles.name })
+      .select({
+        name: jobRoles.name,
+        professionType: jobRoles.professionType,
+      })
       .from(jobRoles)
       .where(eq(jobRoles.id, session.jobRoleId)),
     db
       .select({ name: techStacks.name })
       .from(techStacks)
       .where(eq(techStacks.id, session.techStackId)),
-    db
-      .select({ name: focusAreas.name })
-      .from(focusAreas)
-      .where(eq(focusAreas.id, session.focusAreaId)),
     db
       .select({
         years: profiles.yearsExperience,
@@ -291,14 +249,14 @@ async function buildContext(
   return {
     roleName: role?.name ?? "Software Developer",
     techStack: tech?.name ?? "General",
-    focusArea: focus?.name ?? "General",
-    difficulty: session.difficulty,
-    interviewType: session.interviewType,
-    count,
+    skillLevel: session.skillLevel ?? "intermediate",
+    count: session.questionCount,
     yearsExperience: profile?.years ?? 0,
     skills: Array.isArray(profile?.skills) ? (profile.skills as string[]) : [],
     targetRole: onboarding.targetRole ?? "",
     cvText: cvPlainText(profile?.cvText),
+    userId: session.userId,
+    professionType: role?.professionType ?? "technical",
   };
 }
 

@@ -5,11 +5,9 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/EmptyState";
 import type { RecentSession } from "@/lib/dashboard";
 
-const TYPE_LABEL: Record<string, string> = {
-  technical: "Technical",
-  behavioral: "Behavioral",
-  mixed: "Mixed",
-  coding: "Coding",
+const MODE_LABEL: Record<string, string> = {
+  bank: "Question Bank",
+  ai: "AI",
 };
 
 /** Recent completed sessions, each linking to its full results breakdown. */
@@ -58,7 +56,7 @@ export function RecentActivity({
                   <div className="min-w-0">
                     <p className="truncate font-medium">
                       {s.role} ·{" "}
-                      {TYPE_LABEL[s.interviewType] ?? s.interviewType} · {s.tech}
+                      {MODE_LABEL[s.mode] ?? s.mode} · {s.tech}
                     </p>
                     <p className="text-xs text-[var(--muted-foreground)]">
                       {s.date}

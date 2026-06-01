@@ -30,12 +30,18 @@ Each array element is a "config block" with this exact shape:
     "focusArea": "Frontend",
     "difficulty": "Senior",
     "interviewType": "technical",
+    "modality": "text",
     "questions": [
       { "questionText": "…", "idealAnswer": "…" },
       { "questionText": "…", "idealAnswer": "…" }
     ]
   }
 ]
+
+`modality` is OPTIONAL ("text" | "coding"); it defaults to "coding" when
+interviewType is "coding", otherwise "text". For coding blocks you may also add
+an OPTIONAL `language` ("javascript" | "typescript"). Both the CLI loader and
+the admin "Import JSON" dialog accept this exact format.
 
 ## RULES
 - Emit ONE block per unique combination of (techStack, focusArea, difficulty,

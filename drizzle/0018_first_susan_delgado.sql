@@ -1,0 +1,1 @@
+ALTER TABLE "app_settings" ADD COLUMN "scoring_provider" text DEFAULT 'groq' NOT NULL;

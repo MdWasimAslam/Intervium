@@ -1,33 +1,12 @@
 import Link from "next/link";
-import {
-  FileText,
-  History,
-  Pencil,
-  Shield,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
-
-interface Shortcut {
-  href: string;
-  label: string;
-  icon: LucideIcon;
-}
+import { navFor } from "@/components/layout/nav-links";
 
 /**
- * Tidy shortcut row to existing pages only. Admin appears solely for admins
- * (the same role check the rest of the app uses).
+ * Tidy shortcut row to existing pages only, derived from the shared nav list.
+ * Admin appears solely for admins (the same role check the rest of the app uses).
  */
 export function QuickLinks({ isAdmin }: { isAdmin: boolean }) {
-  const links: Shortcut[] = [
-    { href: "/interview/new", label: "Start interview", icon: Zap },
-    { href: "/cv", label: "My CV", icon: FileText },
-    { href: "/history", label: "History", icon: History },
-    { href: "/profile", label: "Edit profile", icon: Pencil },
-  ];
-  if (isAdmin) {
-    links.push({ href: "/admin", label: "Admin", icon: Shield });
-  }
+  const links = navFor(isAdmin).filter((l) => l.inShortcuts);
 
   return (
     <section className="space-y-3">

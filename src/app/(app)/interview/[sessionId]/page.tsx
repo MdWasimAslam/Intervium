@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { and, asc, eq } from "drizzle-orm";
-import { db, interviewSessions, questionsCache, sessionQuestions } from "@db";
+import { db, interviewSessions, sessionQuestions } from "@db";
 import { requireAuth } from "@/lib/session";
 import { getSettings } from "@/lib/settings";
 import {
@@ -35,13 +35,14 @@ export default async function InterviewSessionPage({
     .select({
       id: interviewSessions.id,
       userId: interviewSessions.userId,
+      mode: interviewSessions.mode,
       jobRoleId: interviewSessions.jobRoleId,
       techStackId: interviewSessions.techStackId,
-      focusAreaId: interviewSessions.focusAreaId,
-      difficulty: interviewSessions.difficulty,
-      interviewType: interviewSessions.interviewType,
+      skillLevel: interviewSessions.skillLevel,
       questionCount: interviewSessions.questionCount,
       timerEnabled: interviewSessions.timerEnabled,
+      timerPresetId: interviewSessions.timerPresetId,
+      customTimerSeconds: interviewSessions.customTimerSeconds,
       status: interviewSessions.status,
     })
     .from(interviewSessions)
@@ -101,17 +102,12 @@ export default async function InterviewSessionPage({
   const rows = await db
     .select({
       position: sessionQuestions.position,
-      questionText: questionsCache.questionText,
-      type: questionsCache.type,
-      language: questionsCache.language,
+      questionText: sessionQuestions.questionText,
+      modality: sessionQuestions.modality,
       userAnswer: sessionQuestions.userAnswer,
       answeredAt: sessionQuestions.answeredAt,
     })
     .from(sessionQuestions)
-    .innerJoin(
-      questionsCache,
-      eq(questionsCache.id, sessionQuestions.questionId),
-    )
     .where(eq(sessionQuestions.sessionId, sessionId))
     .orderBy(asc(sessionQuestions.position));
 
@@ -132,18 +128,28 @@ export default async function InterviewSessionPage({
 
   const settings = await getSettings();
 
+  // Resolve the per-question timer. New sessions snapshot their resolved seconds
+  // in customTimerSeconds (null = no timer); pre-preset sessions fall back to
+  // the global default when they were timed.
+  const resolvedTimerSeconds = session.timerPresetId
+    ? session.customTimerSeconds
+    : session.timerEnabled
+      ? settings.defaultTimerSeconds
+      : null;
+  const timerEnabled = resolvedTimerSeconds != null && resolvedTimerSeconds > 0;
+
   return (
     <InterviewRunner
       sessionId={sessionId}
       questions={rows.map((r) => ({
         position: r.position,
         questionText: r.questionText,
-        type: r.type,
-        language: r.language,
+        type: r.modality,
+        language: r.modality === "coding" ? "javascript" : null,
       }))}
       initialAnswers={initialAnswers}
-      timerEnabled={session.timerEnabled}
-      timerSeconds={settings.defaultTimerSeconds}
+      timerEnabled={timerEnabled}
+      timerSeconds={resolvedTimerSeconds ?? 0}
       startIndex={startIndex}
     />
   );

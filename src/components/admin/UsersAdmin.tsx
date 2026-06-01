@@ -249,7 +249,7 @@ function HistoryDialog({ email, userId }: { email: string; userId: string }) {
               {sessions.map((s) => (
                 <TableRow key={s.id}>
                   <TableCell className="text-sm">
-                    {s.role} · {s.interviewType}
+                    {s.role} · {s.mode}
                   </TableCell>
                   <TableCell className="text-xs">{s.status}</TableCell>
                   <TableCell className="text-sm">

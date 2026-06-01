@@ -5,6 +5,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { db, jobRoles, profiles } from "@db";
 import { getCurrentUser } from "@/lib/session";
+import { isCvJson } from "@/lib/cv/parse";
 
 /* -------------------------------------------------------------------------- */
 /* Schemas                                                                    */
@@ -17,7 +18,11 @@ const fieldSchema = {
   yearsExperience: z.number().int().min(0).max(60),
   skills: z.array(z.string().trim().min(1).max(60)).max(50),
   targetRole: z.string().trim().max(200),
-  cvText: z.string().max(20000),
+  // CVs are JSON-only: empty, or a JSON object/array. Plain text is rejected.
+  cvText: z
+    .string()
+    .max(20000)
+    .refine(isCvJson, "Your CV must be valid JSON."),
 };
 
 const draftSchema = z.object(fieldSchema).partial();

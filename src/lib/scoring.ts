@@ -1,11 +1,5 @@
 import { and, asc, eq, sql } from "drizzle-orm";
-import {
-  db,
-  interviewSessions,
-  jobRoles,
-  questionsCache,
-  sessionQuestions,
-} from "@db";
+import { db, interviewSessions, jobRoles, sessionQuestions } from "@db";
 import {
   DEFAULT_CODING_LANGUAGE,
   generateSummary,
@@ -16,6 +10,7 @@ import {
   type BatchScoreItem,
 } from "@/lib/groq";
 import { AiBudgetError, reserveAiCalls } from "@/lib/ai-budget";
+import { getSettings } from "@/lib/settings";
 
 const MAX_PER_QUESTION = 10;
 
@@ -29,10 +24,12 @@ export async function scoreSession(sessionId: string): Promise<void> {
   const [session] = await db
     .select({
       id: interviewSessions.id,
+      userId: interviewSessions.userId,
       status: interviewSessions.status,
       scoredAt: interviewSessions.scoredAt,
-      difficulty: interviewSessions.difficulty,
+      skillLevel: interviewSessions.skillLevel,
       roleName: jobRoles.name,
+      professionType: jobRoles.professionType,
     })
     .from(interviewSessions)
     .innerJoin(jobRoles, eq(jobRoles.id, interviewSessions.jobRoleId))
@@ -42,21 +39,22 @@ export async function scoreSession(sessionId: string): Promise<void> {
   if (session.status !== "completed") return; // only score finished interviews
   if (session.scoredAt) return; // already scored — idempotent no-op
 
+  // Scoring calibration target. AI sessions carry a skill level; bank sessions
+  // don't (curated answers set the bar), so fall back to a neutral label.
+  const level = session.skillLevel ?? "mid-level";
+
+  // Question content lives inline on the transcript (self-contained rows), so
+  // scoring no longer depends on any shared question pool.
   const rows = await db
     .select({
       id: sessionQuestions.id,
-      questionText: questionsCache.questionText,
-      idealAnswer: questionsCache.idealAnswer,
-      type: questionsCache.type,
-      language: questionsCache.language,
+      questionText: sessionQuestions.questionText,
+      idealAnswer: sessionQuestions.idealAnswer,
+      modality: sessionQuestions.modality,
       userAnswer: sessionQuestions.userAnswer,
       feedback: sessionQuestions.feedback,
     })
     .from(sessionQuestions)
-    .innerJoin(
-      questionsCache,
-      eq(questionsCache.id, sessionQuestions.questionId),
-    )
     .where(eq(sessionQuestions.sessionId, sessionId))
     .orderBy(asc(sessionQuestions.position));
 
@@ -79,14 +77,15 @@ export async function scoreSession(sessionId: string): Promise<void> {
         feedback: "No answer was provided for this question.",
         strengths: [],
         improvements: ["Attempt an answer next time, even a partial one."],
+        missingConcepts: [],
       });
-    } else if (row.type === "coding") {
+    } else if (row.modality === "coding") {
       codeAnswered.push({
         id: row.id,
         question: row.questionText,
         idealSolution: row.idealAnswer,
         userCode: answer,
-        language: row.language ?? DEFAULT_CODING_LANGUAGE,
+        language: DEFAULT_CODING_LANGUAGE,
       });
     } else {
       answered.push({
@@ -113,48 +112,45 @@ export async function scoreSession(sessionId: string): Promise<void> {
     feedback: "We couldn't score this answer automatically.",
     strengths: [],
     improvements: [],
+    missingConcepts: [],
   };
 
-  // Text / behavioral answers — ONE Groq call. A ScoringError here means the
-  // model never produced *any* valid score for this group (network/quota/
-  // invalid output). We must NOT persist fallback zeros or mark the session
-  // scored — that would permanently finalise a failure the user can never
-  // retry. Re-throw so the session stays unscored and the "Try again" UI path
-  // can re-run real scoring later. (A *partial* response is no longer an error:
-  // scoreAnswersBatch returns the valid ids and we fill only the missing ones
-  // with `fallback` below — those genuinely couldn't be scored this run.)
-  if (answered.length > 0) {
-    // A thrown ScoringError (or any error) propagates out of scoreSession,
-    // leaving the session unscored and retryable — we never persist fallback
-    // zeros for a fully-failed group. scoreAnswersBatch returns partial maps,
-    // so `?? fallback` only fills ids the model genuinely couldn't return.
-    const scores = await scoreAnswersBatch(
+  // Score the two independent answer groups CONCURRENTLY. Text/behavioral go to
+  // the text rubric, coding submissions to the code-aware rubric — each is a
+  // single Groq call with no shared data, so running them in parallel (instead
+  // of awaiting text, then code) roughly halves wall-clock scoring time for a
+  // mixed session. Each batch helper short-circuits an empty group to an empty
+  // map without calling the model, so passing an empty array is safe and free.
+  //
+  // Failure semantics: if EITHER group fully fails it throws, and Promise.all
+  // rejects on that first rejection — before any persistence below — so nothing
+  // is finalised and the whole session stays unscored/retryable (never
+  // half-zeroed). The batch helpers return partial maps on success, so
+  // `?? fallback` only fills ids the model genuinely couldn't score this run.
+  // Admin-selected grading backend (Groq by default; DeepSeek when toggled).
+  const { scoringProvider } = await getSettings();
+  const [textScores, codeScores] = await Promise.all([
+    scoreAnswersBatch(
       session.roleName,
-      session.difficulty,
+      level,
       answered,
-    );
-    for (const item of answered) {
-      results.set(item.id, scores.get(item.id) ?? fallback);
-    }
-  }
-
-  // Coding submissions — ONE Groq call with the code-aware rubric. Same
-  // all-or-nothing-failure handling: a ScoringError leaves the session
-  // unscored (including mixed text+code sessions — if either group fully
-  // fails, nothing is finalised) so it can be retried.
-  if (codeAnswered.length > 0) {
-    // Same all-or-nothing-failure handling as the text group above. For a
-    // mixed text+code session, if EITHER group fully fails the error propagates
-    // before any persistence below, so nothing is finalised — the whole session
-    // stays unscored and retryable rather than half-zeroed.
-    const scores = await scoreCodeBatch(
+      session.userId,
+      session.professionType,
+      scoringProvider,
+    ),
+    scoreCodeBatch(
       session.roleName,
-      session.difficulty,
+      level,
       codeAnswered,
-    );
-    for (const item of codeAnswered) {
-      results.set(item.id, scores.get(item.id) ?? fallback);
-    }
+      session.userId,
+      scoringProvider,
+    ),
+  ]);
+  for (const item of answered) {
+    results.set(item.id, textScores.get(item.id) ?? fallback);
+  }
+  for (const item of codeAnswered) {
+    results.set(item.id, codeScores.get(item.id) ?? fallback);
   }
 
   // Persist every pending row's score in ONE statement (was one UPDATE per
@@ -170,6 +166,10 @@ export async function scoreSession(sessionId: string): Promise<void> {
         const detail = JSON.stringify({
           strengths: u.result.strengths,
           improvements: u.result.improvements,
+          // Concepts the answer missed and (coding) a stronger alternative —
+          // power the "Missing concepts" / "Better approach" results sections.
+          missingConcepts: u.result.missingConcepts,
+          betterApproach: u.result.betterApproach,
           // Rubric breakdown for the results UI. JSON.stringify drops whichever
           // is undefined (text answers have `rubric`, coding has `codeRubric`,
           // empty/fallback scores have neither).
@@ -214,15 +214,16 @@ export async function scoreSession(sessionId: string): Promise<void> {
     needsSummaryCall && (await reserveAiCalls(1))
       ? await generateSummary({
           roleName: session.roleName,
-          difficulty: session.difficulty,
+          difficulty: level,
           totalScore,
           maxScore,
           perQuestion: scored.map((r) => ({
             score: r.score,
             feedback: r.feedback ?? "",
           })),
+          userId: session.userId,
         })
-      : `You scored ${totalScore}/${maxScore} on this ${session.difficulty} ${session.roleName} interview.`;
+      : `You scored ${totalScore}/${maxScore} on this ${session.roleName} interview.`;
 
   await db
     .update(interviewSessions)

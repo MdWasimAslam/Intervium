@@ -35,11 +35,10 @@ export async function GET(
     .select({
       id: interviewSessions.id,
       userId: interviewSessions.userId,
+      mode: interviewSessions.mode,
       jobRoleId: interviewSessions.jobRoleId,
       techStackId: interviewSessions.techStackId,
-      focusAreaId: interviewSessions.focusAreaId,
-      difficulty: interviewSessions.difficulty,
-      interviewType: interviewSessions.interviewType,
+      skillLevel: interviewSessions.skillLevel,
       questionCount: interviewSessions.questionCount,
     })
     .from(interviewSessions)

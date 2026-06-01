@@ -1,0 +1,2 @@
+ALTER TABLE "questions_cache" ADD COLUMN "interview_type" "interview_type" DEFAULT 'technical' NOT NULL;--> statement-breakpoint
+CREATE INDEX "questions_cache_interview_type_idx" ON "questions_cache" USING btree ("interview_type");

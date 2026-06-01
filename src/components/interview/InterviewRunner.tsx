@@ -11,6 +11,7 @@ import { FormError } from "@/components/auth/FormError";
 import { QuestionTimer } from "@/components/interview/QuestionTimer";
 import { SaveStatus } from "@/components/interview/SaveStatus";
 import { CodeEditor } from "@/components/interview/CodeEditor";
+import { CodeScratchpad } from "@/components/code/CodeScratchpad";
 import { QuestionPrompt } from "@/components/interview/QuestionPrompt";
 import { useAnswerQueue } from "@/components/interview/useAnswerQueue";
 import { completeSession } from "@/lib/actions/interview";
@@ -195,6 +196,16 @@ export function InterviewRunner({
                   defaultValue={initialAnswers[q.position] ?? ""}
                   placeholder="Type your answer here…"
                   autoFocus
+                  disabled={finishing}
+                />
+              )}
+
+              {/* JS-only scratchpad: run code to check it (not graded). The
+                  worker executes JavaScript, so it's hidden for other langs. */}
+              {isCoding && (!q.language || q.language === "javascript") && (
+                <CodeScratchpad
+                  key={`scratch-${q.position}`}
+                  getCode={() => codeRef.current}
                   disabled={finishing}
                 />
               )}

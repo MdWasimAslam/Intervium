@@ -4,10 +4,15 @@ import { useState } from "react";
 import { Check, Loader2, Search, Sparkles, X } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Chip } from "@/components/ui/chip";
 import { ScoreRing } from "@/components/interview/ScoreRing";
-import { analyzeMatch, type AtsResult } from "@/lib/cv/ats";
+import {
+  analyzeMatch,
+  fitLevelFromScore,
+  type AtsResult,
+  type FitLevel,
+} from "@/lib/cv/ats";
 import { analyzeJobMatchAction } from "@/lib/actions/cv";
 import { type CvMatchAnalysis } from "@/lib/groq";
 import { type CvData } from "@/lib/cv/types";
@@ -17,15 +22,19 @@ import { OptimizePanel } from "./OptimizePanel";
  * ATS Match tab. Keyword scoring runs entirely in-app (instant, no AI). One
  * optional AI call produces a holistic semantic match analysis (fit verdict,
  * strengths, gaps, suggestions), cached per JD so re-viewing never re-calls.
+ *
+ * The job description is lifted to the parent workspace so the Cover Letter tab
+ * can reuse whatever was pasted here.
  */
 export function AtsPanel({
   cv,
-  onApplyOptimized,
+  jd,
+  onJdChange,
 }: {
   cv: CvData;
-  onApplyOptimized: (cv: CvData) => void;
+  jd: string;
+  onJdChange: (jd: string) => void;
 }) {
-  const [jd, setJd] = useState("");
   const [analysis, setAnalysis] = useState<AtsResult | null>(null);
   const [analyzedJd, setAnalyzedJd] = useState("");
 
@@ -75,18 +84,19 @@ export function AtsPanel({
           <Textarea
             rows={8}
             value={jd}
-            onChange={(e) => setJd(e.target.value)}
+            onChange={(e) => onJdChange(e.target.value)}
             placeholder="Paste the full job description here…"
           />
           <div className="flex items-center gap-3">
-            <Button onClick={analyze} disabled={!jd.trim() || aiLoading}>
-              {aiLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Search className="h-4 w-4" />
-              )}
+            <LoadingButton
+              onClick={analyze}
+              disabled={!jd.trim()}
+              loading={aiLoading}
+              loadingText="Analyzing…"
+            >
+              <Search className="h-4 w-4" />
               Analyze match
-            </Button>
+            </LoadingButton>
             <span className="text-sm text-[var(--muted-foreground)]">
               {stale
                 ? "Job description changed — re-analyze to update."
@@ -128,18 +138,17 @@ export function AtsPanel({
               <CardTitle className="flex items-center gap-2 text-base">
                 <Sparkles className="h-4 w-4 text-[var(--primary)]" /> AI match analysis
               </CardTitle>
-              <Button
+              <LoadingButton
                 variant="outline"
                 size="sm"
                 onClick={() => {
                   setAi(null);
                   void runAiAnalysis(analyzedJd);
                 }}
-                disabled={aiLoading}
+                loading={aiLoading}
               >
-                {aiLoading && <Loader2 className="h-4 w-4 animate-spin" />}
                 Refresh
-              </Button>
+              </LoadingButton>
             </CardHeader>
             <CardContent className="space-y-4">
               {aiError && <p className="text-sm text-[var(--destructive)]">{aiError}</p>}
@@ -159,7 +168,7 @@ export function AtsPanel({
               {ai && (
                 <>
                   <div className="flex flex-wrap items-center gap-3">
-                    <FitBadge level={ai.fitLevel} />
+                    <FitBadge score={ai.fitScore} />
                     <span className="text-sm">
                       <span className="font-semibold">AI fit estimate: {ai.fitScore}%</span>
                       <span className="text-[var(--muted-foreground)]">
@@ -204,27 +213,29 @@ export function AtsPanel({
             </CardContent>
           </Card>
 
-          <OptimizePanel
-            cv={cv}
-            jd={analyzedJd}
-            baseScore={analysis.score}
-            onApply={onApplyOptimized}
-          />
+          <OptimizePanel cv={cv} jd={analyzedJd} baseScore={analysis.score} />
         </>
       )}
     </div>
   );
 }
 
-function FitBadge({ level }: { level: CvMatchAnalysis["fitLevel"] }) {
-  const styles: Record<CvMatchAnalysis["fitLevel"], string> = {
+/**
+ * Deterministic fit badge: the band and label are derived from the score via
+ * {@link fitLevelFromScore}, never self-reported by the model — so a "72%" can
+ * never render as "Moderate".
+ */
+function FitBadge({ score }: { score: number }) {
+  const { key, label } = fitLevelFromScore(score);
+  const styles: Record<FitLevel, string> = {
     strong: "bg-[var(--primary)]/15 text-[var(--primary)]",
+    good: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
     moderate: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
-    weak: "bg-[var(--destructive)]/15 text-[var(--destructive)]",
+    weak: "bg-orange-500/15 text-orange-600 dark:text-orange-400",
+    poor: "bg-[var(--destructive)]/15 text-[var(--destructive)]",
   };
-  const label = { strong: "Strong fit", moderate: "Moderate fit", weak: "Weak fit" }[level];
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${styles[level]}`}>
+    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${styles[key]}`}>
       {label}
     </span>
   );

@@ -48,6 +48,11 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/dashboard", nextUrl));
   }
 
+  // Developer-only QA Center is admin-only (the page + API also self-guard).
+  if (path.startsWith("/qa") && role !== "admin") {
+    return NextResponse.redirect(new URL("/dashboard", nextUrl));
+  }
+
   return NextResponse.next();
 });
 

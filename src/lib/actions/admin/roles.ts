@@ -4,12 +4,10 @@ import { revalidatePath } from "next/cache";
 import { count, eq } from "drizzle-orm";
 import { z } from "zod";
 import {
+  bankQuestions,
   db,
-  difficultyBands,
-  focusAreas,
   interviewSessions,
   jobRoles,
-  questionsCache,
   techStacks,
 } from "@db";
 import { requireAdmin } from "@/lib/session";
@@ -24,6 +22,10 @@ const roleSchema = z.object({
     .max(80)
     .regex(/^[a-z0-9-]+$/, "Slug: lowercase letters, numbers, hyphens only."),
   description: z.string().trim().max(500).optional().default(""),
+  // Gates the interview generation/scoring framing for this profession.
+  professionType: z
+    .enum(["technical", "hr", "sales", "marketing", "other"])
+    .default("technical"),
   isActive: z.boolean(),
   sortOrder: z.number().int().min(0).max(9999),
 });
@@ -76,34 +78,20 @@ export async function deleteRole(input: unknown): Promise<AdminResult> {
   const { id } = parsed.data;
 
   // Block deletes that would orphan dependent data.
-  const checks: [string, typeof focusAreas | typeof techStacks][] = [
-    ["focus areas", focusAreas],
-    ["tech stacks", techStacks],
-  ];
-  for (const [label, table] of checks) {
-    const [{ n }] = await db
-      .select({ n: count() })
-      .from(table)
-      .where(eq(table.jobRoleId, id));
-    if (n > 0)
-      return {
-        ok: false,
-        error: `This role still has ${label}. Remove them (or deactivate the role) first.`,
-      };
-  }
-  const [{ n: bands }] = await db
+  const [{ n: techs }] = await db
     .select({ n: count() })
-    .from(difficultyBands)
-    .where(eq(difficultyBands.jobRoleId, id));
-  if (bands > 0)
+    .from(techStacks)
+    .where(eq(techStacks.jobRoleId, id));
+  if (techs > 0)
     return {
       ok: false,
-      error: "This role still has difficulty bands. Remove them first.",
+      error:
+        "This role still has tech stacks. Remove them (or deactivate the role) first.",
     };
   const [{ n: qs }] = await db
     .select({ n: count() })
-    .from(questionsCache)
-    .where(eq(questionsCache.jobRoleId, id));
+    .from(bankQuestions)
+    .where(eq(bankQuestions.roleId, id));
   const [{ n: sessions }] = await db
     .select({ n: count() })
     .from(interviewSessions)

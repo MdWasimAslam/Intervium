@@ -9,6 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Chip } from "@/components/ui/chip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { FormError } from "@/components/auth/FormError";
 import {
   Dialog,
@@ -34,25 +41,38 @@ export interface Role {
   name: string;
   slug: string;
   description: string | null;
+  professionType: "technical" | "hr" | "sales" | "marketing" | "other";
   isActive: boolean;
   sortOrder: number;
 }
+
+const PROFESSION_TYPES: { value: Role["professionType"]; label: string }[] = [
+  { value: "technical", label: "Technical (coding)" },
+  { value: "hr", label: "HR" },
+  { value: "sales", label: "Sales" },
+  { value: "marketing", label: "Marketing" },
+  { value: "other", label: "Other (non-technical)" },
+];
+
+const typeLabel = (t: Role["professionType"]) =>
+  PROFESSION_TYPES.find((p) => p.value === t)?.label ?? t;
 
 export function RolesAdmin({ roles }: { roles: Role[] }) {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Job Roles</h1>
+          <h1 className="text-2xl font-bold">Professions</h1>
           <p className="text-sm text-[var(--muted-foreground)]">
-            Modules users can interview for. Inactive roles are hidden from the
-            setup screen.
+            Professions users can interview for. The type controls whether
+            interviews use technical (coding) framing or domain-appropriate
+            non-technical framing. Inactive professions are hidden from setup.
           </p>
         </div>
         <RoleDialog
           trigger={
             <Button>
-              <Plus /> Add role
+              <Plus /> Add profession
             </Button>
           }
         />
@@ -62,6 +82,7 @@ export function RolesAdmin({ roles }: { roles: Role[] }) {
         <TableHeader>
           <TableRow>
             <TableHead>Name</TableHead>
+            <TableHead>Type</TableHead>
             <TableHead>Slug</TableHead>
             <TableHead>Order</TableHead>
             <TableHead>Status</TableHead>
@@ -72,6 +93,9 @@ export function RolesAdmin({ roles }: { roles: Role[] }) {
           {roles.map((role) => (
             <TableRow key={role.id}>
               <TableCell className="font-medium">{role.name}</TableCell>
+              <TableCell className="text-[var(--muted-foreground)]">
+                {typeLabel(role.professionType)}
+              </TableCell>
               <TableCell className="text-[var(--muted-foreground)]">
                 {role.slug}
               </TableCell>
@@ -105,10 +129,10 @@ export function RolesAdmin({ roles }: { roles: Role[] }) {
           {roles.length === 0 && (
             <TableRow>
               <TableCell
-                colSpan={5}
+                colSpan={6}
                 className="py-8 text-center text-[var(--muted-foreground)]"
               >
-                No roles yet. Add one to get started.
+                No professions yet. Add one to get started.
               </TableCell>
             </TableRow>
           )}
@@ -133,13 +157,23 @@ function RoleDialog({
   const [name, setName] = useState(role?.name ?? "");
   const [slug, setSlug] = useState(role?.slug ?? "");
   const [description, setDescription] = useState(role?.description ?? "");
+  const [professionType, setProfessionType] = useState<Role["professionType"]>(
+    role?.professionType ?? "technical",
+  );
   const [isActive, setIsActive] = useState(role?.isActive ?? true);
   const [sortOrder, setSortOrder] = useState(role?.sortOrder ?? 0);
 
   function submit() {
     setError(undefined);
     start(async () => {
-      const payload = { name, slug, description, isActive, sortOrder };
+      const payload = {
+        name,
+        slug,
+        description,
+        professionType,
+        isActive,
+        sortOrder,
+      };
       const res = role
         ? await updateRole({ id: role.id, ...payload })
         : await createRole(payload);
@@ -157,7 +191,9 @@ function RoleDialog({
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{role ? "Edit role" : "Add role"}</DialogTitle>
+          <DialogTitle>
+            {role ? "Edit profession" : "Add profession"}
+          </DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5">
@@ -168,6 +204,30 @@ function RoleDialog({
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g. HR"
             />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Type</Label>
+            <Select
+              value={professionType}
+              onValueChange={(v) =>
+                setProfessionType(v as Role["professionType"])
+              }
+            >
+              <SelectTrigger aria-label="Profession type">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PROFESSION_TYPES.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-[var(--muted-foreground)]">
+              Technical professions get coding/tech-stack interviews; the others
+              get domain-appropriate, non-technical questions and grading.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="r-slug">Slug</Label>
@@ -206,7 +266,7 @@ function RoleDialog({
         </div>
         <DialogFooter>
           <Button onClick={submit} disabled={pending}>
-            {role ? "Save changes" : "Create role"}
+            {role ? "Save changes" : "Create profession"}
           </Button>
         </DialogFooter>
       </DialogContent>

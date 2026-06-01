@@ -26,9 +26,13 @@ export class AiBudgetError extends Error {}
 /**
  * Soft ceiling, kept comfortably below Groq's free-tier daily cap so a burst
  * of retries can't blow past the real limit. Override via env if your project's
- * live limit differs (see https://aistudio.google.com/rate-limit).
+ * live limit differs (see https://console.groq.com/settings/limits).
+ *
+ * NOTE: this caps the number of *calls* per day. Groq's binding free-tier
+ * constraint is usually tokens-per-day on the smart model — surfaced in the
+ * Admin → AI Usage dashboard but not enforced by this counter.
  */
-const DAILY_BUDGET = Math.max(
+export const DAILY_BUDGET = Math.max(
   1,
   Number(process.env.AI_DAILY_BUDGET) || 180,
 );
@@ -86,5 +90,18 @@ export async function aiCallsRemaining(): Promise<number> {
     return Math.max(0, DAILY_BUDGET - (row?.count ?? 0));
   } catch {
     return DAILY_BUDGET;
+  }
+}
+
+/** Calls reserved against today's budget so far (0 on error). For dashboards. */
+export async function aiCallsUsedToday(): Promise<number> {
+  try {
+    const [row] = await db
+      .select({ count: aiUsage.count })
+      .from(aiUsage)
+      .where(eq(aiUsage.day, today()));
+    return Math.max(0, row?.count ?? 0);
+  } catch {
+    return 0;
   }
 }

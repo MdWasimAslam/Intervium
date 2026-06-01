@@ -1,35 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowRight, Check, Loader2, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, Download, Sparkles, TrendingUp } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/ui/loading-button";
 import { Chip } from "@/components/ui/chip";
-import { CvPreview } from "./CvPreview";
+import { CvDocument } from "./CvDocument";
+import { CvPrintPortal } from "./CvPrintPortal";
+import { usePreferredDesignId } from "./cv-design-store";
+import { getCvDesign } from "./designs";
 import { analyzeMatch } from "@/lib/cv/ats";
 import { optimizeCvAction } from "@/lib/actions/cv";
+import { printCv } from "./print";
 import { type CvData } from "@/lib/cv/types";
 
 /**
  * "Improve my CV for this job" — one Groq call produces an ATS-friendlier
- * rewrite, shown as a preview with the new (in-app) score and the added
- * keywords. Accepting swaps it into the live CV and persists it.
+ * rewrite, shown as a side-by-side preview with the new (in-app) score and the
+ * added keywords. The optimized CV is a DOWNLOAD-ONLY artifact tailored to this
+ * one job: it is never saved over the user's stored CV, so the original is left
+ * exactly as it was. Both the preview and the downloaded PDF render in the
+ * user's chosen default template.
  */
 export function OptimizePanel({
   cv,
   jd,
   baseScore,
-  onApply,
 }: {
   cv: CvData;
   jd: string;
   baseScore: number;
-  onApply: (cv: CvData) => void;
 }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
   const [optimized, setOptimized] = useState<CvData | null>(null);
-  const [accepted, setAccepted] = useState(false);
+
+  // Render the preview AND the downloaded PDF in the user's saved default
+  // template — not a hardcoded theme.
+  const design = getCvDesign(usePreferredDesignId());
 
   const newScore = optimized ? analyzeMatch(optimized, jd).score : 0;
   const delta = newScore - baseScore;
@@ -44,24 +53,10 @@ export function OptimizePanel({
   const optimize = async () => {
     setLoading(true);
     setError(undefined);
-    setAccepted(false);
     const res = await optimizeCvAction(jd, cv);
     setLoading(false);
     if (res.ok) setOptimized(res.data.optimized);
     else setError(res.error);
-  };
-
-  const accept = () => {
-    if (!optimized) return;
-    if (
-      !window.confirm(
-        "This will replace your current CV. Continue?",
-      )
-    ) {
-      return;
-    }
-    onApply(optimized);
-    setAccepted(true);
   };
 
   return (
@@ -71,10 +66,15 @@ export function OptimizePanel({
           <Sparkles className="h-4 w-4 text-[var(--primary)]" /> Optimize CV for this job
         </CardTitle>
         {!optimized && (
-          <Button size="lg" onClick={() => void optimize()} disabled={loading}>
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {loading ? "Optimizing…" : "Optimize my CV"}
-          </Button>
+          <LoadingButton
+            size="lg"
+            onClick={() => void optimize()}
+            loading={loading}
+            loadingText="Optimizing…"
+          >
+            <Sparkles className="h-4 w-4" />
+            Optimize my CV
+          </LoadingButton>
         )}
       </CardHeader>
       <CardContent className="space-y-5">
@@ -84,8 +84,10 @@ export function OptimizePanel({
           <p className="text-sm text-[var(--muted-foreground)]">
             Let AI rewrite your CV for this exact role — weaving in the missing keywords
             and sharpening every bullet with strong action verbs, truthfully and without
-            inventing experience. You preview the result and the new score before
-            anything is saved.
+            inventing experience. You preview the result and download it as a tailored
+            copy. <span className="font-medium text-[var(--foreground)]">Your saved CV
+            is never changed</span> — this only produces a job-specific version to
+            download.
           </p>
         )}
 
@@ -121,34 +123,69 @@ export function OptimizePanel({
             )}
 
             <div>
-              <span className="mb-2 block text-sm font-medium">Optimized preview</span>
-              <CvPreview cv={optimized} />
+              <span className="mb-2 block text-sm font-medium">
+                Side-by-side comparison
+              </span>
+              {/* Split only when there's room for two A4-width docs; below xl
+                  they stack, so each renders at its true print width. */}
+              <div className="grid gap-4 xl:grid-cols-2">
+                <ComparePane label="Your saved CV" cv={cv} design={design} muted />
+                <ComparePane
+                  label="Optimized for this job"
+                  cv={optimized}
+                  design={design}
+                />
+              </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <Button onClick={accept} disabled={accepted}>
-                <Check className="h-4 w-4" />
-                {accepted ? "Applied & saved" : "Accept & save"}
+              <Button onClick={() => void printCv()}>
+                <Download className="h-4 w-4" />
+                Download optimized CV (PDF)
               </Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setOptimized(null);
-                  setAccepted(false);
-                }}
-              >
+              <Button variant="outline" onClick={() => setOptimized(null)}>
                 Discard
               </Button>
-              {accepted && (
-                <span className="text-sm text-[var(--muted-foreground)]">
-                  Your CV is updated — switch to Edit &amp; Preview to download it.
-                </span>
-              )}
+              <span className="text-sm text-[var(--muted-foreground)]">
+                This tailored copy is download-only — your saved CV stays untouched.
+              </span>
             </div>
+
+            {/* Print-only copy of the OPTIMIZED CV, in the default template. The
+                "Download" button above triggers window.print() against this. */}
+            <CvPrintPortal cv={optimized} design={design} />
           </>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function ComparePane({
+  label,
+  cv,
+  design,
+  muted,
+}: {
+  label: string;
+  cv: CvData;
+  design: ReturnType<typeof getCvDesign>;
+  muted?: boolean;
+}) {
+  return (
+    <div>
+      <p
+        className={
+          "mb-2 text-xs font-semibold uppercase tracking-wide " +
+          (muted ? "text-[var(--muted-foreground)]" : "text-[var(--primary)]")
+        }
+      >
+        {label}
+      </p>
+      <div className="max-h-[560px] overflow-auto rounded-xl border border-[var(--border)] bg-white p-5">
+        <CvDocument cv={cv} design={design} />
+      </div>
+    </div>
   );
 }
 

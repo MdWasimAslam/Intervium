@@ -1,7 +1,26 @@
 import type { Metadata } from "next";
+import { Source_Sans_3, Source_Serif_4 } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { APP_DESCRIPTION, APP_NAME } from "@/constants";
+
+/**
+ * Self-hosted CV fonts. Embedding them (rather than relying on the OS's serif/
+ * sans defaults) gives the CV deterministic, identical metrics in the on-screen
+ * preview and the printed PDF across machines. `latin-ext` covers accented
+ * names; `swap` avoids invisible text. Bound to `.cv-doc` in globals.css, so
+ * only the CV is reskinned — the rest of the app is untouched.
+ */
+const cvSans = Source_Sans_3({
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+  variable: "--font-cv-sans",
+});
+const cvSerif = Source_Serif_4({
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+  variable: "--font-cv-serif",
+});
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
 
@@ -42,7 +61,11 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${cvSans.variable} ${cvSerif.variable}`}
+      suppressHydrationWarning
+    >
       <body className="flex min-h-screen flex-col">
         <a
           href="#main"

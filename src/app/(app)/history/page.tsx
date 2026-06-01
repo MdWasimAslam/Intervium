@@ -13,11 +13,9 @@ import { isOnboardingComplete, requireAuth } from "@/lib/session";
 
 export const metadata: Metadata = { title: "History" };
 
-const TYPE_LABEL: Record<string, string> = {
-  technical: "Technical",
-  behavioral: "Behavioral",
-  mixed: "Mixed",
-  coding: "Coding",
+const MODE_LABEL: Record<string, string> = {
+  bank: "Question Bank",
+  ai: "AI",
 };
 
 /**
@@ -52,7 +50,7 @@ export default async function HistoryPage({
       id: interviewSessions.id,
       role: jobRoles.name,
       tech: techStacks.name,
-      interviewType: interviewSessions.interviewType,
+      mode: interviewSessions.mode,
       status: interviewSessions.status,
       totalScore: interviewSessions.totalScore,
       maxScore: interviewSessions.maxScore,
@@ -120,9 +118,7 @@ export default async function HistoryPage({
                   >
                     <div className="min-w-0">
                       <p className="truncate font-medium">
-                        {s.role} ·{" "}
-                        {TYPE_LABEL[s.interviewType] ?? s.interviewType} ·{" "}
-                        {s.tech}
+                        {s.role} · {MODE_LABEL[s.mode] ?? s.mode} · {s.tech}
                       </p>
                       <p className="text-xs text-[var(--muted-foreground)]">
                         {date}

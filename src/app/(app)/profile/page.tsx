@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
-import { db, difficultyBands, jobRoles, profiles, techStacks } from "@db";
+import { db, jobRoles, profiles, techStacks } from "@db";
 import { requireAuth } from "@/lib/session";
 import { ProfileEditor } from "@/components/profile/ProfileEditor";
+import { toAvatarConfig } from "@/components/ui/avatar-options";
 import type {
-  BandOption,
   RoleOption,
   StackOption,
 } from "@/components/onboarding/types";
@@ -29,6 +29,7 @@ export default async function ProfilePage() {
       yearsExperience: profiles.yearsExperience,
       skills: profiles.skills,
       cvText: profiles.cvText,
+      avatar: profiles.avatar,
       onboarding: profiles.onboarding,
     })
     .from(profiles)
@@ -40,7 +41,7 @@ export default async function ProfilePage() {
   if (!profile || !completed) redirect("/onboarding");
 
   // Reference data — all admin-managed, same sources as onboarding.
-  const [roles, stacks, bands] = await Promise.all([
+  const [roles, stacks] = await Promise.all([
     db
       .select({
         id: jobRoles.id,
@@ -58,14 +59,6 @@ export default async function ProfilePage() {
       })
       .from(techStacks)
       .where(eq(techStacks.isActive, true)),
-    db
-      .select({
-        jobRoleId: difficultyBands.jobRoleId,
-        label: difficultyBands.label,
-        minYears: difficultyBands.minYears,
-        maxYears: difficultyBands.maxYears,
-      })
-      .from(difficultyBands),
   ]);
 
   const initial = {
@@ -74,13 +67,13 @@ export default async function ProfilePage() {
     yearsExperience: profile.yearsExperience,
     skills: Array.isArray(profile.skills) ? (profile.skills as string[]) : [],
     cvText: profile.cvText ?? "",
+    avatar: toAvatarConfig(profile.avatar),
   };
 
   return (
     <ProfileEditor
       roles={roles as RoleOption[]}
       stacks={stacks as StackOption[]}
-      bands={bands as BandOption[]}
       initial={initial}
       seed={user.id}
     />

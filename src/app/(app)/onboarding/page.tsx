@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { asc, eq } from "drizzle-orm";
-import { db, difficultyBands, jobRoles, profiles, techStacks } from "@db";
+import { db, jobRoles, profiles, techStacks } from "@db";
 import { requireAuth } from "@/lib/session";
 import { OnboardingWizard } from "@/components/onboarding/OnboardingWizard";
 import type { OnboardingDraft } from "@/lib/actions/onboarding";
@@ -34,7 +34,7 @@ export default async function OnboardingPage({
   if (draft.completed === true && !editing) redirect("/dashboard");
 
   // Reference data — all from the DB, never hardcoded.
-  const [roles, stacks, bands] = await Promise.all([
+  const [roles, stacks] = await Promise.all([
     db
       .select({
         id: jobRoles.id,
@@ -52,14 +52,6 @@ export default async function OnboardingPage({
       })
       .from(techStacks)
       .where(eq(techStacks.isActive, true)),
-    db
-      .select({
-        jobRoleId: difficultyBands.jobRoleId,
-        label: difficultyBands.label,
-        minYears: difficultyBands.minYears,
-        maxYears: difficultyBands.maxYears,
-      })
-      .from(difficultyBands),
   ]);
 
   const initialValues: WizardValues = {
@@ -78,9 +70,9 @@ export default async function OnboardingPage({
     <OnboardingWizard
       roles={roles}
       stacks={stacks}
-      bands={bands}
       initialValues={initialValues}
       initialStep={initialStep}
+      isAdmin={user.role === "admin"}
     />
   );
 }

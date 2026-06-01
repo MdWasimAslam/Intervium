@@ -16,7 +16,7 @@ export default async function AdminLayout({
   await requireAdmin();
 
   return (
-    <div className="mx-auto flex w-full max-w-6xl flex-col md:flex-row">
+    <div className="mx-auto flex w-full max-w-7xl flex-col md:flex-row">
       <AdminSidebar />
       <main className="min-w-0 flex-1 p-6">{children}</main>
     </div>
