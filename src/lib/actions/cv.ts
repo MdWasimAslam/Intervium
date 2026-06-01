@@ -5,6 +5,7 @@ import { z } from "zod";
 import { coverLetters, db, profiles } from "@db";
 import { getCurrentUser } from "@/lib/session";
 import { allowAction } from "@/lib/rate-limit";
+import type { Result } from "@/lib/actions/result";
 import {
   cvFingerprint,
   cvPlainText,
@@ -92,14 +93,6 @@ const cvSchema = z.object({
 });
 
 const jdSchema = z.string().trim().min(1).max(8000);
-
-/* -------------------------------------------------------------------------- */
-/* Result types                                                               */
-/* -------------------------------------------------------------------------- */
-
-type Ok<T> = { ok: true; data: T };
-type Err = { ok: false; error: string };
-type Result<T> = Ok<T> | Err;
 
 /* -------------------------------------------------------------------------- */
 /* Actions                                                                    */

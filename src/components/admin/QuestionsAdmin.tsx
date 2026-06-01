@@ -1,41 +1,18 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ChevronLeft,
   ChevronRight,
-  Pencil,
   Plus,
   Search,
-  Trash2,
-  Upload,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 import { Chip } from "@/components/ui/chip";
-import { FormError } from "@/components/auth/FormError";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -45,28 +22,28 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ConfirmDelete } from "@/components/admin/ConfirmDelete";
+import { deleteQuestion } from "@/lib/actions/admin/questions";
 import {
-  bulkDelete,
-  bulkSetActive,
-  createQuestion,
-  deleteQuestion,
-  importQuestionsFromJson,
-  toggleQuestion,
-  updateQuestion,
-} from "@/lib/actions/admin/questions";
-import type { ImportReport } from "@/lib/questions/import";
+  BulkBar,
+  CheckBox,
+  FilterSelect,
+  ToggleActive,
+} from "@/components/admin/questions/controls";
+import { QuestionDialog } from "@/components/admin/questions/QuestionDialog";
+import { EditQuestionDialog } from "@/components/admin/questions/EditQuestionDialog";
+import { ImportDialog } from "@/components/admin/questions/ImportDialog";
 
 /* --------------------------------- Types ---------------------------------- */
 
-type Category = "technical" | "behavioral";
-type Modality = "text" | "coding";
+export type Category = "technical" | "behavioral";
+export type Modality = "text" | "coding";
 
-interface Taxon {
+export interface Taxon {
   id: string;
   jobRoleId: string;
   name: string;
 }
-interface RoleRef {
+export interface RoleRef {
   id: string;
   name: string;
 }
@@ -99,12 +76,12 @@ interface Props {
   totalPages: number;
 }
 
-const CATEGORIES = [
+export const CATEGORIES = [
   { value: "technical", label: "Technical" },
   { value: "behavioral", label: "Behavioral" },
 ] as const;
 
-const MODALITIES = [
+export const MODALITIES = [
   { value: "text", label: "Text" },
   { value: "coding", label: "Code" },
 ] as const;
@@ -376,552 +353,6 @@ export function QuestionsAdmin({
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-/* ------------------------------ Sub-components ----------------------------- */
-
-function FilterSelect({
-  label,
-  value,
-  onChange,
-  allLabel,
-  options,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  allLabel: string;
-  options: { value: string; label: string }[];
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      <Select value={value} onValueChange={onChange}>
-        <SelectTrigger aria-label={`Filter by ${label}`}>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">{allLabel}</SelectItem>
-          {options.map((o) => (
-            <SelectItem key={o.value} value={o.value}>
-              {o.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
-  );
-}
-
-function CheckBox({
-  checked,
-  onChange,
-  ...props
-}: {
-  checked: boolean;
-  onChange: () => void;
-} & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      type="checkbox"
-      checked={checked}
-      onChange={onChange}
-      className="h-4 w-4 cursor-pointer rounded border-[var(--border)] accent-[var(--primary)]"
-      {...props}
-    />
-  );
-}
-
-function ToggleActive({ id, isActive }: { id: string; isActive: boolean }) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
-  return (
-    <Switch
-      checked={isActive}
-      disabled={pending}
-      aria-label="Toggle active"
-      onCheckedChange={(v) =>
-        start(async () => {
-          try {
-            const res = await toggleQuestion({ id, isActive: v });
-            if (!res.ok) {
-              window.alert(res.error ?? "Could not update the question.");
-              return;
-            }
-            router.refresh();
-          } catch {
-            window.alert("Could not update the question.");
-          }
-        })
-      }
-    />
-  );
-}
-
-function BulkBar({ ids, onCleared }: { ids: string[]; onCleared: () => void }) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
-  const [message, setMessage] = useState<string>();
-
-  function run(fn: () => Promise<{ ok: boolean; error?: string }>) {
-    setMessage(undefined);
-    start(async () => {
-      const res = await fn();
-      if (res.error) setMessage(res.error);
-      if (res.ok) {
-        if (!res.error) onCleared();
-        router.refresh();
-      }
-    });
-  }
-
-  return (
-    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-[var(--border)] bg-[var(--muted)] px-3 py-2">
-      <span className="text-sm font-medium">{ids.length} selected</span>
-      <div className="ml-auto flex flex-wrap gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={pending}
-          onClick={() => run(() => bulkSetActive({ ids, isActive: true }))}
-        >
-          Activate
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          disabled={pending}
-          onClick={() => run(() => bulkSetActive({ ids, isActive: false }))}
-        >
-          Deactivate
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          className="border-[var(--destructive)] text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
-          disabled={pending}
-          onClick={() => run(() => bulkDelete({ ids }))}
-        >
-          <Trash2 className="h-4 w-4" /> Delete
-        </Button>
-      </div>
-      {message && (
-        <p className="w-full text-xs text-[var(--muted-foreground)]">{message}</p>
-      )}
-    </div>
-  );
-}
-
-/* --------------------------- Add / Edit dialogs ---------------------------- */
-
-interface QuestionFormValue {
-  roleId: string;
-  techStackId: string;
-  category: Category;
-  modality: Modality;
-  questionText: string;
-  idealAnswer: string;
-}
-
-function QuestionFields({
-  roles,
-  techStacks,
-  value,
-  onChange,
-}: {
-  roles: RoleRef[];
-  techStacks: Taxon[];
-  value: QuestionFormValue;
-  onChange: (v: QuestionFormValue) => void;
-}) {
-  const roleTech = techStacks.filter((t) => t.jobRoleId === value.roleId);
-  const isCoding = value.modality === "coding";
-  const set = (patch: Partial<QuestionFormValue>) =>
-    onChange({ ...value, ...patch });
-
-  return (
-    <div className="space-y-3">
-      <div className="grid grid-cols-2 gap-3">
-        <Field label="Role">
-          <Select
-            value={value.roleId}
-            onValueChange={(v) =>
-              set({
-                roleId: v,
-                techStackId:
-                  techStacks.find((t) => t.jobRoleId === v)?.id ?? "",
-              })
-            }
-          >
-            <SelectTrigger aria-label="Profession">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {roles.map((r) => (
-                <SelectItem key={r.id} value={r.id}>
-                  {r.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label="Specialization">
-          <Select
-            value={value.techStackId}
-            onValueChange={(v) => set({ techStackId: v })}
-          >
-            <SelectTrigger aria-label="Specialization">
-              <SelectValue placeholder="—" />
-            </SelectTrigger>
-            <SelectContent>
-              {roleTech.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label="Category">
-          <Select
-            value={value.category}
-            onValueChange={(v) => set({ category: v as Category })}
-          >
-            <SelectTrigger aria-label="Category">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CATEGORIES.map((c) => (
-                <SelectItem key={c.value} value={c.value}>
-                  {c.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label="How candidate answers">
-          <Select
-            value={value.modality}
-            onValueChange={(v) => set({ modality: v as Modality })}
-          >
-            <SelectTrigger aria-label="Modality">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {MODALITIES.map((m) => (
-                <SelectItem key={m.value} value={m.value}>
-                  {m.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-      </div>
-      <Field label={isCoding ? "Problem prompt" : "Question"}>
-        <Textarea
-          rows={3}
-          value={value.questionText}
-          onChange={(e) => set({ questionText: e.target.value })}
-          placeholder={
-            isCoding ? "State the task, inputs/outputs, and an example…" : undefined
-          }
-        />
-      </Field>
-      <Field label={isCoding ? "Ideal solution" : "Ideal answer"}>
-        <Textarea
-          rows={isCoding ? 6 : 3}
-          value={value.idealAnswer}
-          onChange={(e) => set({ idealAnswer: e.target.value })}
-          className={isCoding ? "font-mono text-sm" : undefined}
-          placeholder={isCoding ? "A complete reference solution (JavaScript)…" : undefined}
-        />
-      </Field>
-      {isCoding && (
-        <p className="text-xs text-[var(--muted-foreground)]">
-          Coding questions are answered in a JavaScript editor.
-        </p>
-      )}
-    </div>
-  );
-}
-
-function QuestionDialog({
-  roles,
-  techStacks,
-  trigger,
-}: {
-  roles: RoleRef[];
-  techStacks: Taxon[];
-  trigger: React.ReactNode;
-}) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string>();
-  const [pending, start] = useTransition();
-  const [value, setValue] = useState<QuestionFormValue>(() => ({
-    roleId: roles[0]?.id ?? "",
-    techStackId: techStacks.find((t) => t.jobRoleId === roles[0]?.id)?.id ?? "",
-    category: "technical",
-    modality: "text",
-    questionText: "",
-    idealAnswer: "",
-  }));
-
-  function submit() {
-    setError(undefined);
-    start(async () => {
-      const res = await createQuestion(value);
-      if (res.ok) {
-        setOpen(false);
-        setValue((v) => ({ ...v, questionText: "", idealAnswer: "" }));
-        router.refresh();
-      } else setError(res.error);
-    });
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Add question</DialogTitle>
-        </DialogHeader>
-        <QuestionFields
-          roles={roles}
-          techStacks={techStacks}
-          value={value}
-          onChange={setValue}
-        />
-        {error && <FormError message={error} />}
-        <DialogFooter>
-          <Button
-            onClick={submit}
-            disabled={pending || !value.techStackId}
-          >
-            Create question
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function EditQuestionDialog({
-  question,
-  roles,
-  techStacks,
-}: {
-  question: QuestionRow;
-  roles: RoleRef[];
-  techStacks: Taxon[];
-}) {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [error, setError] = useState<string>();
-  const [pending, start] = useTransition();
-  const [isActive, setIsActive] = useState(question.isActive);
-  const [value, setValue] = useState<QuestionFormValue>({
-    roleId: question.roleId,
-    techStackId: question.techStackId,
-    category: question.category,
-    modality: question.modality,
-    questionText: question.questionText,
-    idealAnswer: question.idealAnswer,
-  });
-
-  function submit() {
-    setError(undefined);
-    start(async () => {
-      const res = await updateQuestion({ id: question.id, ...value, isActive });
-      if (res.ok) {
-        setOpen(false);
-        router.refresh();
-      } else setError(res.error);
-    });
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm" aria-label="Edit">
-          <Pencil className="h-4 w-4" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-xl">
-        <DialogHeader>
-          <DialogTitle>Edit question</DialogTitle>
-        </DialogHeader>
-        <QuestionFields
-          roles={roles}
-          techStacks={techStacks}
-          value={value}
-          onChange={setValue}
-        />
-        <div className="mt-3 flex items-center gap-2">
-          <Switch checked={isActive} onCheckedChange={setIsActive} />
-          <span className="text-sm">Active</span>
-        </div>
-        {error && <FormError message={error} />}
-        <DialogFooter>
-          <Button onClick={submit} disabled={pending || !value.techStackId}>
-            Save changes
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-/* ------------------------------ Import dialog ------------------------------ */
-
-const IMPORT_SAMPLE = `[
-  {
-    "role": "Software Developer",
-    "techStack": "React",
-    "category": "technical",
-    "modality": "text",
-    "questions": [
-      { "questionText": "…", "idealAnswer": "…" }
-    ]
-  }
-]`;
-
-function ImportDialog() {
-  const router = useRouter();
-  const [open, setOpen] = useState(false);
-  const [json, setJson] = useState("");
-  const [report, setReport] = useState<ImportReport>();
-  const [error, setError] = useState<string>();
-  const [pending, start] = useTransition();
-
-  function run(dryRun: boolean) {
-    setError(undefined);
-    start(async () => {
-      const res = await importQuestionsFromJson({ json, dryRun });
-      if (!res.ok) {
-        setError(res.error);
-        setReport(undefined);
-        return;
-      }
-      setReport(res.report);
-      if (!dryRun) router.refresh();
-    });
-  }
-
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(o) => {
-        setOpen(o);
-        if (!o) {
-          setReport(undefined);
-          setError(undefined);
-        }
-      }}
-    >
-      <DialogTrigger asChild>
-        <Button variant="outline">
-          <Upload /> Bulk JSON import
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>Import questions from JSON</DialogTitle>
-          <DialogDescription>
-            Paste an array of blocks. Profession and specialization are matched{" "}
-            <strong>by name</strong> (case-insensitive). Re-importing the same
-            file inserts nothing new. Validate first to preview.
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-3">
-          <Textarea
-            rows={10}
-            value={json}
-            onChange={(e) => setJson(e.target.value)}
-            placeholder={IMPORT_SAMPLE}
-            className="font-mono text-xs"
-            aria-label="Import JSON"
-          />
-          <details className="text-xs text-[var(--muted-foreground)]">
-            <summary className="cursor-pointer">Expected format</summary>
-            <pre className="mt-2 overflow-x-auto rounded-lg bg-[var(--muted)] p-2">
-              {IMPORT_SAMPLE}
-            </pre>
-            <p className="mt-1">
-              <code>category</code>: technical · behavioral.{" "}
-              <code>modality</code> (optional): text · coding (default text).
-            </p>
-          </details>
-          {report && <ImportReportView report={report} />}
-          {error && <FormError message={error} />}
-        </div>
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="ghost">Close</Button>
-          </DialogClose>
-          <Button
-            variant="outline"
-            disabled={pending || !json.trim()}
-            onClick={() => run(true)}
-          >
-            {pending ? "Working…" : "Validate (dry run)"}
-          </Button>
-          <Button disabled={pending || !json.trim()} onClick={() => run(false)}>
-            {pending ? "Working…" : "Import"}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function ImportReportView({ report }: { report: ImportReport }) {
-  return (
-    <div className="rounded-lg border border-[var(--border)] bg-[var(--muted)]/40 p-3 text-sm">
-      <p className="font-medium">
-        {report.dryRun ? "Dry run — nothing written." : "Imported."}{" "}
-        <span className="text-[var(--primary)]">
-          {report.dryRun ? "Would insert" : "Inserted"} {report.inserted}
-        </span>
-        , {report.duplicates} duplicate(s) skipped
-        {report.blocksFailed > 0 && (
-          <span className="text-[var(--destructive)]">
-            , {report.blocksFailed} block(s) failed
-          </span>
-        )}
-        .
-      </p>
-      <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto text-xs">
-        {report.blocks.map((b) => (
-          <li
-            key={b.index}
-            className={
-              b.status === "error" ? "text-[var(--destructive)]" : undefined
-            }
-          >
-            {b.status === "ok" && `✓ ${b.label}: +${b.inserted}`}
-            {b.status === "empty" && `• ${b.label}: nothing new`}
-            {b.status === "error" && `✗ ${b.label}: ${b.error}`}
-          </li>
-        ))}
-      </ul>
-    </div>
-  );
-}
-
-function Field({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="space-y-1.5">
-      <Label>{label}</Label>
-      {children}
     </div>
   );
 }

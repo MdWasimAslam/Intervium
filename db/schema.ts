@@ -384,8 +384,10 @@ export const appSettings = pgTable("app_settings", {
   defaultLengthPresetId: text("default_length_preset_id")
     .notNull()
     .default("standard"),
-  // Which AI backend grades interview answers ("groq" | "deepseek"). A plain
-  // text column (not an enum) so adding a future provider needs no migration.
+  // Which AI backend powers every smart-tier feature — interview grading,
+  // result summaries, and all CV / Code Dojo AI ("groq" | "deepseek"). The
+  // column name predates the setting governing all AI (not just scoring). A
+  // plain text column (not an enum) so a future provider needs no migration.
   scoringProvider: text("scoring_provider").notNull().default("groq"),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()

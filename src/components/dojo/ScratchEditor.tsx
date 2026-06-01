@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CodeEditor } from "@/components/code/CodeEditor";
 import { CodeScratchpad } from "@/components/code/CodeScratchpad";
-import { readDraft, useEditorDraft } from "@/components/code/use-editor-draft";
+import { readDraft, useEditorDraft } from "@/components/code/useEditorDraft";
 
 const SCRATCH_TEMPLATE =
   "// Scratchpad — write and run JavaScript.\n// Pick a problem from the Problems tab to practice.\n\n";

@@ -21,8 +21,8 @@ import { CodeEditor } from "@/components/code/CodeEditor";
 import { ResultsPanel } from "@/components/code/ResultsPanel";
 import { useJsRunner } from "@/components/code/useJsRunner";
 import { useCodeScratch } from "@/components/code/useCodeScratch";
-import { useCoarsePointer } from "@/components/code/use-coarse-pointer";
-import { readDraft, useEditorDraft } from "@/components/code/use-editor-draft";
+import { useCoarsePointer } from "@/components/code/useCoarsePointer";
+import { readDraft, useEditorDraft } from "@/components/code/useEditorDraft";
 import { ConfirmDelete } from "@/components/admin/ConfirmDelete";
 import {
   deletePersonalDojoQuestion,
@@ -172,7 +172,7 @@ export function SolveShell({
         <span className="text-sm font-medium text-[var(--muted-foreground)]">
           JavaScript
         </span>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {busy && (
             <Button
               variant="outline"

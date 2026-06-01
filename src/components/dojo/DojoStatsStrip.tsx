@@ -13,7 +13,7 @@ export function DojoStatsStrip({
 }) {
   const { easy, medium, hard } = stats.byDifficulty;
   return (
-    <div className="grid grid-cols-3 gap-4">
+    <div className="grid grid-cols-3 gap-2 sm:gap-4">
       <StatTile
         icon={<Flame />}
         label="Streak"

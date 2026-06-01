@@ -128,7 +128,7 @@ export function GenerateProblemDialog({
         </DialogHeader>
 
         <div className="space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block space-y-1">
               <span className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
                 Topic (optional)

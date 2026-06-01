@@ -28,9 +28,8 @@ import {
 } from "@/lib/dojo/queries";
 import { resolveTopicIds, setQuestionTopics, slugify } from "@/lib/dojo/topics";
 import { isUniqueViolation } from "@/lib/actions/admin/util";
+import type { Result } from "@/lib/actions/result";
 import type { DojoQuestionDetail } from "@/lib/dojo/types";
-
-type Result<T> = { ok: true; data: T } | { ok: false; error: string };
 
 const attemptSchema = z.object({
   questionId: z.string().uuid(),

@@ -41,7 +41,7 @@ export function QaHealthHeader({ report }: { report: QaReport }) {
         <div className="flex flex-wrap items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             <div className="flex flex-col items-center">
-              <span className={cn("text-5xl font-bold tabular-nums", scoreColor(summary.score))}>
+              <span className={cn("text-4xl font-bold tabular-nums sm:text-5xl", scoreColor(summary.score))}>
                 {summary.score}
               </span>
               <span className="text-xs text-[var(--muted-foreground)]">/ 100</span>
@@ -58,7 +58,7 @@ export function QaHealthHeader({ report }: { report: QaReport }) {
               </span>
             </div>
           </div>
-          <div className="flex gap-6">
+          <div className="flex gap-3 sm:gap-6">
             <Stat value={summary.criticalIssues} label="Critical" />
             <Stat value={summary.failures} label="Failures" />
             <Stat value={summary.warnings} label="Warnings" />

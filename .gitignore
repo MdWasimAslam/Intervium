@@ -32,6 +32,7 @@ yarn-error.log*
 
 # local editor / agent settings
 .claude
+.qwen
 
 # typescript
 *.tsbuildinfo

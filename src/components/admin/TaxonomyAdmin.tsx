@@ -98,7 +98,7 @@ export function TaxonomyAdmin({
         />
       </div>
 
-      <div className="mb-4 w-56">
+      <div className="mb-4 w-full sm:w-56">
         <Select value={filter} onValueChange={setFilter}>
           <SelectTrigger aria-label="Filter by profession">
             <SelectValue />

@@ -101,6 +101,17 @@ export async function getSettings(): Promise<AppSettings> {
 }
 
 /**
+ * The admin-selected AI backend for every "smart"-tier model call — interview
+ * grading, result summaries, and all CV / Code-Dojo AI features. (The cheap
+ * "fast" tier used for interview question generation always stays on Groq.)
+ * Stored under the historical `scoringProvider` column; the name predates the
+ * setting governing all AI, not just scoring. Falls back to Groq on any error.
+ */
+export async function getAiProvider(): Promise<ScoringProvider> {
+  return (await getSettings()).scoringProvider;
+}
+
+/**
  * Resolve the per-question timer seconds for a chosen preset (or a custom
  * value). Returns `null` for "No Timer" / an unknown preset, so callers treat
  * a missing/invalid choice as un-timed rather than crashing.

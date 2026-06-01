@@ -71,7 +71,7 @@ export function AuthShell({
       </aside>
 
       {/* Form column */}
-      <main className="flex items-center justify-center px-6 py-12">
+      <main className="flex items-center justify-center px-4 sm:px-6 py-12">
         <div className="w-full max-w-sm">
           {/* Compact logo for mobile (brand panel is hidden there). */}
           <div className="mb-8 flex justify-center lg:hidden">

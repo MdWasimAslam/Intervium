@@ -28,13 +28,14 @@ const SCORING_PROVIDERS: {
   {
     id: "groq",
     label: "Groq (Llama)",
-    description: "Default. Fastest responses; subject to Groq plan limits.",
+    description:
+      "Default. Runs every AI feature on Llama. Fastest responses; subject to Groq plan limits.",
   },
   {
     id: "deepseek",
     label: "DeepSeek",
     description:
-      "Stronger grading model. Requires DEEPSEEK_API_KEY; slightly slower.",
+      "Stronger model for all AI features — grading, summaries, and CV & Code Dojo. Requires DEEPSEEK_API_KEY; slightly slower.",
   },
 ];
 
@@ -139,7 +140,7 @@ export function SettingsAdmin(initial: Props) {
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-[auto_1fr_8rem_auto] items-center gap-2 text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
+            <div className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_1fr_8rem_auto] items-center gap-2 text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
               <span className="px-1">Default</span>
               <span>Label</span>
               <span>Seconds</span>
@@ -148,7 +149,7 @@ export function SettingsAdmin(initial: Props) {
             {timers.map((t) => (
               <div
                 key={t.id}
-                className="grid grid-cols-[auto_1fr_8rem_auto] items-center gap-2"
+                className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_1fr_8rem_auto] items-center gap-2"
               >
                 <input
                   type="radio"
@@ -204,7 +205,7 @@ export function SettingsAdmin(initial: Props) {
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="grid grid-cols-[auto_1fr_8rem_auto] items-center gap-2 text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
+            <div className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_1fr_8rem_auto] items-center gap-2 text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
               <span className="px-1">Default</span>
               <span>Label</span>
               <span>Questions</span>
@@ -213,7 +214,7 @@ export function SettingsAdmin(initial: Props) {
             {lengths.map((l) => (
               <div
                 key={l.id}
-                className="grid grid-cols-[auto_1fr_8rem_auto] items-center gap-2"
+                className="grid grid-cols-[auto_1fr_auto] sm:grid-cols-[auto_1fr_8rem_auto] items-center gap-2"
               >
                 <input
                   type="radio"
@@ -259,13 +260,15 @@ export function SettingsAdmin(initial: Props) {
           </CardContent>
         </Card>
 
-        {/* Interview scoring provider */}
+        {/* AI provider */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Interview scoring</CardTitle>
+            <CardTitle className="text-base">AI provider</CardTitle>
             <p className="text-sm text-[var(--muted-foreground)]">
-              Which AI backend grades interview answers. Applies to new scoring
-              runs immediately. Question generation and summaries always use Groq.
+              Which AI backend powers every smart feature — interview grading,
+              result summaries, and all CV &amp; Code Dojo AI. Applies to new
+              runs immediately. Interview question generation always uses Groq
+              for speed.
             </p>
           </CardHeader>
           <CardContent className="space-y-2">

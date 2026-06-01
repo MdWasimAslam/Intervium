@@ -84,8 +84,8 @@ export function Landing() {
       </div>
 
       {/* HERO — sized to fill the first screen below the sticky header */}
-      <section className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-7xl items-center px-6 py-20 lg:py-24">
-        <div className="grid w-full items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
+      <section className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-7xl items-center px-4 sm:px-6 py-20 lg:py-24">
+        <div className="grid w-full items-center gap-10 lg:gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="animate-fade-up">
             <Chip>
               <Sparkles className="h-3 w-3" /> AI-powered mock interviews

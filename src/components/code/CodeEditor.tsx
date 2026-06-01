@@ -6,7 +6,7 @@ import type * as MonacoTypes from "monaco-editor";
 import { Check, Copy, Loader2, Star, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
-import { useCoarsePointer } from "./use-coarse-pointer";
+import { useCoarsePointer } from "./useCoarsePointer";
 import {
   EDITOR_BG,
   EDITOR_THEMES,

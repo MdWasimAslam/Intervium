@@ -21,8 +21,11 @@ export type CvCacheFeature =
 /** Ignore cached rows older than this — lets model/prompt changes flow through. */
 const MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
 
-function cacheKey(feature: CvCacheFeature, input: unknown): string {
-  return `${feature}:${cvAiModelId()}:${fnv1a(stableStringify(input))}`;
+async function cacheKey(
+  feature: CvCacheFeature,
+  input: unknown,
+): Promise<string> {
+  return `${feature}:${await cvAiModelId()}:${fnv1a(stableStringify(input))}`;
 }
 
 /** Return a cached result for this feature+input, or null on miss/expiry/error. */
@@ -31,7 +34,7 @@ export async function getCachedCvResult<T>(
   input: unknown,
 ): Promise<T | null> {
   try {
-    const key = cacheKey(feature, input);
+    const key = await cacheKey(feature, input);
     const [row] = await db
       .select({ result: aiCvCache.result, createdAt: aiCvCache.createdAt })
       .from(aiCvCache)
@@ -62,7 +65,7 @@ export async function putCachedCvResult(
   result: unknown,
 ): Promise<void> {
   try {
-    const key = cacheKey(feature, input);
+    const key = await cacheKey(feature, input);
     await db
       .insert(aiCvCache)
       .values({ cacheKey: key, feature, result })

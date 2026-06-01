@@ -51,7 +51,7 @@ export function CvPreview({ cv }: { cv: CvData }) {
         <span className="text-sm font-medium text-[var(--muted-foreground)]">Preview</span>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={designId} onValueChange={onDesignChange}>
-            <SelectTrigger className="h-9 w-[150px]" aria-label="CV design">
+            <SelectTrigger className="h-9 w-[120px] sm:w-[150px]" aria-label="CV design">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -80,7 +80,7 @@ export function CvPreview({ cv }: { cv: CvData }) {
       {/* On-screen preview card. overflow-x-auto so the fixed-width A4 document
           scrolls on a narrow pane instead of reflowing — reflowing would make
           the preview stop matching the PDF. The faint guides mark page breaks. */}
-      <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-white p-8 shadow-sm">
+      <div className="overflow-x-auto rounded-2xl border border-[var(--border)] bg-white p-3 shadow-sm sm:p-8">
         <div className="relative mx-auto w-fit">
           <CvDocument cv={cv} design={design} />
           <div

@@ -84,8 +84,8 @@ export function DojoAdmin({
         />
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-[var(--border)]">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border border-[var(--border)]">
+        <table className="w-full min-w-[36rem] text-sm">
           <thead className="bg-[var(--muted)] text-left text-xs uppercase tracking-wide text-[var(--muted-foreground)]">
             <tr>
               <th className="px-4 py-2.5 font-medium">Problem</th>
@@ -388,7 +388,7 @@ function QuestionDialog({
             {genError && <p className="text-xs text-[var(--destructive)]">{genError}</p>}
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="Title">
               <Input
                 value={value.title}

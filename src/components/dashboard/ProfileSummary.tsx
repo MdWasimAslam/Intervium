@@ -71,7 +71,7 @@ export function ProfileSummary({ profile }: { profile: DashboardProfile }) {
 
   return (
     <Card className="h-full">
-      <CardHeader className="flex-row items-center justify-between">
+      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <CardTitle className="text-base">Profile</CardTitle>
         <Link
           href="/profile"

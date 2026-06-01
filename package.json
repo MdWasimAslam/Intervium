@@ -2,7 +2,7 @@
   "name": "intervium",
   "version": "1.0.0",
   "private": true,
-  "description": "Minimal Next.js app with JWT authentication, Neon Postgres, and light/dark mode.",
+  "description": "AI-powered interview practice and CV optimization platform with Groq-powered question generation and scoring.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
