@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -252,6 +253,10 @@ export async function completeSession(input: {
       .update(interviewSessions)
       .set({ status: "completed", completedAt: new Date() })
       .where(eq(interviewSessions.id, sessionId.data));
+    // The session now appears (and its stats change) on these surfaces, which
+    // are otherwise served from the client router cache until a hard reload.
+    revalidatePath("/dashboard");
+    revalidatePath("/history");
   }
 
   redirect(`/interview/${sessionId.data}/results`);
@@ -284,9 +289,26 @@ export async function scoreSessionAction(
     };
   }
 
+  // Single-flight per session: stops two open tabs from both kicking off
+  // scoring and double-spending the AI budget on the same session. scoreSession
+  // is itself idempotent; this just avoids the wasted concurrent batch. The
+  // window is short so it covers the on-load race without blocking a manual
+  // "Try again" after a budget error.
+  const SCORING_LOCK_MS = 3_000;
+  if (!allowAction(`score-lock:${parsed.data}`, 1, SCORING_LOCK_MS)) {
+    return {
+      ok: false,
+      error: "Scoring is already in progress — refresh in a moment.",
+    };
+  }
+
   try {
     const { scoreSession } = await import("@/lib/scoring");
     await scoreSession(parsed.data);
+    // The freshly-scored session changes the dashboard, history and results.
+    revalidatePath("/dashboard");
+    revalidatePath("/history");
+    revalidatePath(`/interview/${parsed.data}/results`);
     return { ok: true };
   } catch (error) {
     const { AiBudgetError } = await import("@/lib/ai-budget");

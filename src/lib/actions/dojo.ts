@@ -10,6 +10,7 @@ import {
   dojoQuestions,
   dojoQuestionTopics,
 } from "@db";
+import { withTransaction } from "@db/tx";
 import { getCurrentUser } from "@/lib/session";
 import { allowAction } from "@/lib/rate-limit";
 import { reserveAiCalls } from "@/lib/ai-budget";
@@ -24,6 +25,9 @@ import {
 import { schedule } from "@/lib/dojo/spaced-repetition";
 import {
   getQuestionBySlug,
+  getVisibleQuestionMeta,
+  isQuestionVisible,
+  pickNextDueSlug,
   pickRandomSlug,
 } from "@/lib/dojo/queries";
 import { resolveTopicIds, setQuestionTopics, slugify } from "@/lib/dojo/topics";
@@ -59,6 +63,9 @@ export async function saveDojoAttempt(
     return { ok: false, error: "Invalid submission." };
   }
   const a = parsed.data;
+  if (!(await isQuestionVisible(a.questionId, user.id))) {
+    return { ok: false, error: "Problem not found." };
+  }
   const now = new Date();
   const justPassed = a.status === "passed";
 
@@ -139,10 +146,7 @@ export async function getDojoHintAction(
     return { ok: false, error: "Slow down a touch — try again in a moment." };
   }
 
-  const [q] = await db
-    .select({ title: dojoQuestions.title, prompt: dojoQuestions.prompt })
-    .from(dojoQuestions)
-    .where(eq(dojoQuestions.id, parsed.data.questionId));
+  const q = await getVisibleQuestionMeta(parsed.data.questionId, user.id);
   if (!q) return { ok: false, error: "Question not found." };
 
   try {
@@ -182,18 +186,16 @@ export async function reviewDojoSolutionAction(
   if (!allowAction(`dojo-review:${user.id}`, 8, 60_000)) {
     return { ok: false, error: "Slow down a touch — try again in a moment." };
   }
+  // Confirm visibility before reserving budget so we never spend a call on a
+  // question the user can't see.
+  const q = await getVisibleQuestionMeta(parsed.data.questionId, user.id);
+  if (!q) return { ok: false, error: "Question not found." };
   if (!(await reserveAiCalls(1))) {
     return {
       ok: false,
       error: "The daily AI budget is spent. Please try again tomorrow.",
     };
   }
-
-  const [q] = await db
-    .select({ title: dojoQuestions.title, prompt: dojoQuestions.prompt })
-    .from(dojoQuestions)
-    .where(eq(dojoQuestions.id, parsed.data.questionId));
-  if (!q) return { ok: false, error: "Question not found." };
 
   try {
     const review = await reviewDojoSolution(
@@ -224,13 +226,17 @@ const rateSchema = z.object({
  */
 export async function rateDojoQuestion(
   input: z.infer<typeof rateSchema>,
-): Promise<Result<{ dueInDays: number }>> {
+): Promise<Result<{ dueInDays: number; nextDueSlug: string | null }>> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Not authenticated." };
 
   const parsed = rateSchema.safeParse(input);
   if (!parsed.success) return { ok: false, error: "Invalid rating." };
   const { questionId, rating } = parsed.data;
+
+  if (!(await isQuestionVisible(questionId, user.id))) {
+    return { ok: false, error: "Problem not found." };
+  }
 
   try {
     const [prog] = await db
@@ -244,7 +250,11 @@ export async function rateDojoQuestion(
       { ease: prog?.ease ?? 250, intervalDays: prog?.intervalDays ?? 0 },
       rating,
     );
-    const dueAt = new Date(Date.now() + next.dueInDays * 86_400_000);
+    // "Again" returns 0 days; floor it to a short delay so the card leaves the
+    // immediate due queue (otherwise dueAt === now and it loops instantly).
+    const AGAIN_FLOOR_MS = 10 * 60_000; // 10 minutes — back later this session
+    const dueMs = next.dueInDays * 86_400_000;
+    const dueAt = new Date(Date.now() + (dueMs > 0 ? dueMs : AGAIN_FLOOR_MS));
 
     await db
       .insert(dojoProgress)
@@ -266,9 +276,14 @@ export async function rateDojoQuestion(
         },
       });
 
-    // Refresh only the separate review page, not the page being solved on.
+    // Refresh the review page and the Dojo home so its "due for review" count
+    // reflects the new schedule without a hard reload.
     revalidatePath("/dojo/review");
-    return { ok: true, data: { dueInDays: next.dueInDays } };
+    revalidatePath("/dojo");
+    // The just-rated problem now has a future dueAt, so this is the *next* one
+    // due (if any) — lets the solver jump straight to it.
+    const nextDueSlug = await pickNextDueSlug(user.id);
+    return { ok: true, data: { dueInDays: next.dueInDays, nextDueSlug } };
   } catch (error) {
     console.error("[rateDojoQuestion]", error);
     return { ok: false, error: "Could not save your rating." };
@@ -497,11 +512,13 @@ export async function deletePersonalDojoQuestion(
     };
   }
 
-  await db.delete(dojoProgress).where(eq(dojoProgress.questionId, id));
-  await db
-    .delete(dojoQuestionTopics)
-    .where(eq(dojoQuestionTopics.questionId, id));
-  await db.delete(dojoQuestions).where(eq(dojoQuestions.id, id));
+  await withTransaction(async (tx) => {
+    await tx.delete(dojoProgress).where(eq(dojoProgress.questionId, id));
+    await tx
+      .delete(dojoQuestionTopics)
+      .where(eq(dojoQuestionTopics.questionId, id));
+    await tx.delete(dojoQuestions).where(eq(dojoQuestions.id, id));
+  });
   revalidatePath("/dojo");
   return { ok: true, data: true };
 }

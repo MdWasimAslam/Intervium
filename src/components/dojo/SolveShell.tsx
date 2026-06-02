@@ -1,11 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
   Check,
   CheckCircle2,
+  Code2,
   Loader2,
   Maximize2,
   Minimize2,
@@ -22,6 +23,7 @@ import { ResultsPanel } from "@/components/code/ResultsPanel";
 import { useJsRunner } from "@/components/code/useJsRunner";
 import { useCodeScratch } from "@/components/code/useCodeScratch";
 import { useCoarsePointer } from "@/components/code/useCoarsePointer";
+import { useFullscreen } from "@/components/code/useFullscreen";
 import { readDraft, useEditorDraft } from "@/components/code/useEditorDraft";
 import { ConfirmDelete } from "@/components/admin/ConfirmDelete";
 import {
@@ -44,9 +46,19 @@ import { ConfidenceRating } from "./ConfidenceRating";
 export function SolveShell({
   question,
   onBack,
+  onSolved,
+  onScratchpad,
+  onDeleted,
 }: {
   question: DojoQuestionDetail;
   onBack?: () => void;
+  /** Called once a problem first transitions to solved (after the attempt is
+   * persisted) so the parent can refresh the problem list. */
+  onSolved?: () => void;
+  /** Leave the problem and return to the free scratchpad, if available. */
+  onScratchpad?: () => void;
+  /** Called after this problem is deleted so the parent can drop it from view. */
+  onDeleted?: () => void;
 }) {
   const draftKey = `dojo:draft:${question.id}`;
   const [code, setCode] = useState(
@@ -54,9 +66,14 @@ export function SolveShell({
   );
   const [solved, setSolved] = useState(question.solved);
   const [hintsUsed, setHintsUsed] = useState(0);
+  // Hints already attributed to a prior submit, so each attempt records only
+  // the hints consulted for it (not the running session total).
+  const hintsAtLastSubmit = useRef(0);
+  const [saveError, setSaveError] = useState<string>();
+  const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"tests" | "console">("tests");
-  const [fullscreen, setFullscreen] = useState(false);
-  const [layoutSignal, setLayoutSignal] = useState(0);
+  const { fullscreen, toggle: toggleFullscreen, layoutSignal, bumpLayout } =
+    useFullscreen();
   const [confirmReset, setConfirmReset] = useState(false);
 
   const [lastSubmit, setLastSubmit] = useState<{ code: string; summary: string } | null>(
@@ -75,21 +92,6 @@ export function SolveShell({
   const runRunning = scratch.state.status === "running";
   const busy = testRunning || runRunning;
 
-  const bumpLayout = () => setLayoutSignal((n) => n + 1);
-
-  // Escape exits fullscreen.
-  useEffect(() => {
-    if (!fullscreen) return;
-    function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        setFullscreen(false);
-        bumpLayout();
-      }
-    }
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [fullscreen]);
-
   function changeCode(v: string) {
     setCode(v);
     draft.save(v);
@@ -104,6 +106,7 @@ export function SolveShell({
   async function handleSubmit() {
     scratch.cancel(); // cancel any in-flight run
     setTab("tests");
+    setSaveError(undefined);
     const submitted = code;
     const outcome = await tests.run(submitted, question.fnName, question.testCases);
     if (outcome.kind === "cancelled") return;
@@ -117,20 +120,39 @@ export function SolveShell({
           ? "Time limit exceeded (likely an infinite loop)."
           : `Runtime/syntax error: ${outcome.error}`;
 
-    void saveDojoAttempt({
+    // Test results reflect this run regardless of whether the save succeeds.
+    setLastSubmit({ code: submitted, summary });
+    setReview(null);
+    setReviewError(undefined);
+
+    const newlySolved = passedAll && !solved;
+    // Record only the hints consulted since the last submit, not the total.
+    const hintsThisAttempt = Math.max(0, hintsUsed - hintsAtLastSubmit.current);
+
+    setSaving(true);
+    const res = await saveDojoAttempt({
       questionId: question.id,
       code: submitted,
       status: passedAll ? "passed" : "failed",
       testsPassed: outcome.kind === "done" ? outcome.passed : 0,
       testsTotal: outcome.kind === "done" ? outcome.total : question.testCases.length,
       runtimeMs: outcome.kind === "done" ? Math.round(outcome.runtimeMs) : undefined,
-      hintsUsed,
+      hintsUsed: hintsThisAttempt,
     });
+    setSaving(false);
+
+    if (!res.ok) {
+      // Keep the draft so the work isn't lost, and surface the failure.
+      setSaveError(res.error ?? "Could not save your attempt. Please try again.");
+      return;
+    }
+
+    hintsAtLastSubmit.current = hintsUsed;
     draft.clear(); // the submitted code is now the canonical last attempt
-    setLastSubmit({ code: submitted, summary });
-    setReview(null);
-    setReviewError(undefined);
     if (passedAll) setSolved(true);
+    // On the first solve, ask the parent to refresh so the problem list reflects
+    // the new "solved" status without a hard reload.
+    if (newlySolved && res.data.solved) onSolved?.();
   }
 
   function handleStop() {
@@ -149,6 +171,11 @@ export function SolveShell({
     draft.clear();
     tests.reset();
     scratch.cancel();
+    // Drop the previous submission so AI review can't act on reset-away code.
+    setLastSubmit(null);
+    setReview(null);
+    setReviewError(undefined);
+    setSaveError(undefined);
   }
 
   function handleReview() {
@@ -187,7 +214,12 @@ export function SolveShell({
             <RotateCcw className="h-4 w-4" />
             {confirmReset ? "Confirm reset" : "Reset"}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleRun} disabled={runRunning}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleRun}
+            disabled={busy || saving}
+          >
             {runRunning ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
@@ -195,8 +227,8 @@ export function SolveShell({
             )}
             Run
           </Button>
-          <Button size="sm" onClick={handleSubmit} disabled={testRunning}>
-            {testRunning ? (
+          <Button size="sm" onClick={handleSubmit} disabled={busy || saving}>
+            {testRunning || saving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
               <CheckCircle2 className="h-4 w-4" />
@@ -206,10 +238,7 @@ export function SolveShell({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => {
-              setFullscreen((f) => !f);
-              bumpLayout();
-            }}
+            onClick={toggleFullscreen}
             aria-label={fullscreen ? "Exit fullscreen" : "Fullscreen"}
           >
             {fullscreen ? (
@@ -220,6 +249,12 @@ export function SolveShell({
           </Button>
         </div>
       </div>
+
+      {saveError && (
+        <p className="rounded-lg border border-[var(--destructive)]/30 bg-[var(--destructive)]/10 px-3 py-2 text-sm text-[var(--destructive)]">
+          {saveError}
+        </p>
+      )}
 
       <SplitPane
         storageKey="dojo-editor"
@@ -260,22 +295,33 @@ export function SolveShell({
     <div className="grid gap-4 lg:grid-cols-2">
       {/* Problem */}
       <div className="flex flex-col gap-3">
-        {onBack ? (
-          <button
-            type="button"
-            onClick={onBack}
-            className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
-          >
-            <ArrowLeft className="h-4 w-4" /> All problems
-          </button>
-        ) : (
-          <Link
-            href="/dojo"
-            className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
-          >
-            <ArrowLeft className="h-4 w-4" /> All problems
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
+          {onBack ? (
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+            >
+              <ArrowLeft className="h-4 w-4" /> All problems
+            </button>
+          ) : (
+            <Link
+              href="/dojo"
+              className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+            >
+              <ArrowLeft className="h-4 w-4" /> All problems
+            </Link>
+          )}
+          {onScratchpad && (
+            <button
+              type="button"
+              onClick={onScratchpad}
+              className="inline-flex w-fit items-center gap-1.5 text-sm font-medium text-[var(--muted-foreground)] transition-colors hover:text-[var(--foreground)]"
+            >
+              <Code2 className="h-4 w-4" /> Scratchpad
+            </button>
+          )}
+        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <h1 className="text-xl font-bold tracking-tight">{question.title}</h1>
@@ -291,7 +337,7 @@ export function SolveShell({
                 action={() => deletePersonalDojoQuestion({ id: question.id })}
                 title="Delete this problem?"
                 description="This permanently removes your problem. Problems with practice history can't be deleted."
-                onSuccess={onBack}
+                onSuccess={onDeleted ?? onBack}
               />
             </span>
           )}
@@ -320,13 +366,30 @@ export function SolveShell({
         />
       </div>
 
-      {/* Editor + runner — overlays as fullscreen without remounting Monaco. */}
+      {/* Editor + runner — overlays as fullscreen without remounting Monaco.
+          In fullscreen the problem column is hidden behind the overlay, so the
+          prompt rides along in a collapsible panel up top. */}
       <div
         className={cn(
           fullscreen &&
             "fixed inset-0 z-50 overflow-auto bg-[var(--background)] p-4 sm:p-6",
         )}
       >
+        {fullscreen && (
+          <details
+            open
+            className="mb-3 rounded-xl border border-[var(--border)] bg-[var(--card)]"
+          >
+            <summary className="cursor-pointer px-4 py-2.5 text-sm font-semibold text-[var(--foreground)]">
+              {question.title}
+            </summary>
+            <div className="max-h-48 overflow-auto border-t border-[var(--border)] px-4 py-3">
+              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-[var(--foreground)]">
+                {question.prompt}
+              </pre>
+            </div>
+          </details>
+        )}
         {workbench}
       </div>
     </div>

@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Loader2 } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { rateDojoQuestion } from "@/lib/actions/dojo";
 import type { DojoRating } from "@/lib/dojo/types";
 
@@ -41,7 +43,10 @@ function dueLabel(days: number): string {
  */
 export function ConfidenceRating({ questionId }: { questionId: string }) {
   const [pending, setPending] = useState<DojoRating | null>(null);
-  const [result, setResult] = useState<{ dueInDays: number } | null>(null);
+  const [result, setResult] = useState<{
+    dueInDays: number;
+    nextDueSlug: string | null;
+  } | null>(null);
   const [error, setError] = useState<string>();
 
   async function rate(rating: DojoRating) {
@@ -49,8 +54,14 @@ export function ConfidenceRating({ questionId }: { questionId: string }) {
     setError(undefined);
     const res = await rateDojoQuestion({ questionId, rating });
     setPending(null);
-    if (res.ok) setResult({ dueInDays: res.data.dueInDays });
-    else setError(res.error);
+    if (res.ok) {
+      setResult({
+        dueInDays: res.data.dueInDays,
+        nextDueSlug: res.data.nextDueSlug,
+      });
+    } else {
+      setError(res.error);
+    }
   }
 
   return (
@@ -82,9 +93,18 @@ export function ConfidenceRating({ questionId }: { questionId: string }) {
         ))}
       </div>
       {result && (
-        <p className="text-sm text-[var(--primary)]">
-          Saved — back for review {dueLabel(result.dueInDays)}.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm text-[var(--primary)]">
+            Saved — back for review {dueLabel(result.dueInDays)}.
+          </p>
+          {result.nextDueSlug && (
+            <Link href={`/dojo/${result.nextDueSlug}`}>
+              <Button size="sm" variant="outline">
+                Review next <ArrowRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
+        </div>
       )}
       {error && <p className="text-sm text-[var(--destructive)]">{error}</p>}
     </div>

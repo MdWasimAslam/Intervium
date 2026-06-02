@@ -42,6 +42,37 @@ function visibleTo(userId: string) {
   );
 }
 
+/**
+ * Is this question visible to the user (active built-in or their own)? The
+ * access gate for write actions that take a raw questionId (attempt, rating,
+ * hint, review) so a leaked private-problem id can't be read or written to.
+ */
+export async function isQuestionVisible(
+  questionId: string,
+  userId: string,
+): Promise<boolean> {
+  const [row] = await db
+    .select({ id: dojoQuestions.id })
+    .from(dojoQuestions)
+    .where(and(eq(dojoQuestions.id, questionId), visibleTo(userId)));
+  return Boolean(row);
+}
+
+/**
+ * Title + prompt for a visible question, or null. Combines the visibility gate
+ * with the fetch in one query for actions that need the text (hint, review).
+ */
+export async function getVisibleQuestionMeta(
+  questionId: string,
+  userId: string,
+): Promise<{ title: string; prompt: string } | null> {
+  const [row] = await db
+    .select({ title: dojoQuestions.title, prompt: dojoQuestions.prompt })
+    .from(dojoQuestions)
+    .where(and(eq(dojoQuestions.id, questionId), visibleTo(userId)));
+  return row ?? null;
+}
+
 /** Every visible question with its topics and this user's solved/attempted state. */
 export async function listQuestions(userId: string): Promise<DojoListItem[]> {
   const questions = await db
@@ -267,6 +298,26 @@ export async function listDueQuestions(userId: string): Promise<DojoListItem[]> 
     attempted: d.attempts > 0,
     isMine: d.createdBy === userId,
   }));
+}
+
+/** The slug of the soonest problem currently due for review, or null. */
+export async function pickNextDueSlug(userId: string): Promise<string | null> {
+  const [row] = await db
+    .select({ slug: dojoQuestions.slug })
+    .from(dojoProgress)
+    .innerJoin(dojoQuestions, eq(dojoQuestions.id, dojoProgress.questionId))
+    .where(
+      and(
+        eq(dojoProgress.userId, userId),
+        eq(dojoQuestions.isActive, true),
+        or(isNull(dojoQuestions.createdBy), eq(dojoQuestions.createdBy, userId)),
+        isNotNull(dojoProgress.dueAt),
+        lte(dojoProgress.dueAt, new Date()),
+      ),
+    )
+    .orderBy(dojoProgress.dueAt)
+    .limit(1);
+  return row?.slug ?? null;
 }
 
 /** Count of questions currently due for review. */

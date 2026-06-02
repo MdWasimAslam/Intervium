@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/dialog";
 import { FormError } from "@/components/auth/FormError";
 import { ConfirmDelete } from "@/components/admin/ConfirmDelete";
+import { ImportDialog } from "@/components/admin/dojo/ImportDialog";
 import { DifficultyBadge } from "@/components/dojo/DifficultyBadge";
 import { useDojoDraft } from "@/components/dojo/useDojoDraft";
 import { TestResults } from "@/components/code/TestResults";
@@ -74,14 +75,17 @@ export function DojoAdmin({
             Practice problems for the personal coding ground. {rows.length} total.
           </p>
         </div>
-        <QuestionDialog
-          topicSuggestions={topicSuggestions}
-          trigger={
-            <Button>
-              <Plus className="h-4 w-4" /> Add question
-            </Button>
-          }
-        />
+        <div className="flex flex-wrap gap-2">
+          <ImportDialog />
+          <QuestionDialog
+            topicSuggestions={topicSuggestions}
+            trigger={
+              <Button>
+                <Plus className="h-4 w-4" /> Add question
+              </Button>
+            }
+          />
+        </div>
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-[var(--border)]">

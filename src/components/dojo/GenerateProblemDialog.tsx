@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { Check, Loader2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -58,10 +58,16 @@ export function GenerateProblemDialog({
   const [verified, setVerified] = useState(false);
   const [saveError, setSaveError] = useState<string>();
   const [saving, startSave] = useTransition();
+  // Set when the dialog closes mid-generate so the async flow bails instead of
+  // continuing (which would burn another AI call and update closed-dialog state).
+  const aborted = useRef(false);
 
   function onOpenChange(next: boolean) {
     setOpen(next);
-    if (!next) {
+    if (next) {
+      aborted.current = false;
+    } else {
+      aborted.current = true;
       reset();
       resetRun();
       setVerified(false);
@@ -78,10 +84,11 @@ export function GenerateProblemDialog({
       difficulty,
       prompt: promptText.trim() || undefined,
     });
-    if (!d) return;
+    if (aborted.current || !d) return;
 
     setVerifying(true);
     const outcome = await run(d.referenceSolution, d.fnName, d.testCases);
+    if (aborted.current) return;
     setVerifying(false);
 
     const allPass =

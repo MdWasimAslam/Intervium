@@ -45,10 +45,17 @@ export function CodeScratchpad({
       {state.status !== "idle" && state.status !== "running" && (
         <div className="rounded-lg border border-[var(--border)] bg-[var(--card)] p-3">
           {state.status === "timeout" && (
-            <p className="flex items-center gap-2 text-sm font-medium text-[var(--destructive)]">
-              <Clock className="h-4 w-4" /> Time limit exceeded — possible infinite
-              loop.
-            </p>
+            <>
+              <p className="flex items-center gap-2 text-sm font-medium text-[var(--destructive)]">
+                <Clock className="h-4 w-4" /> Time limit exceeded — possible
+                infinite loop.
+              </p>
+              {state.logs.length > 0 && (
+                <pre className="mt-2 max-h-48 overflow-auto whitespace-pre-wrap font-mono text-xs text-[var(--foreground)]">
+                  {state.logs.join("\n")}
+                </pre>
+              )}
+            </>
           )}
           {state.status === "error" && (
             <p className="flex items-start gap-2 text-sm font-medium text-[var(--destructive)]">

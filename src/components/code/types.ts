@@ -46,6 +46,17 @@ export type ScratchResponse =
   | { ok: true; logs: string[]; runtimeMs: number }
   | { ok: false; error: string; logs: string[] };
 
+/**
+ * Console output streamed mid-run (throttled) so that if the worker is killed
+ * on a timeout the main thread can still show whatever it managed to deliver
+ * before the hang. Best-effort: a purely synchronous infinite loop never yields
+ * to post anything, so its earlier logs still can't be recovered.
+ */
+export interface RunnerLogMessage {
+  partial: true;
+  logs: string[];
+}
+
 /** The scratchpad hook's observable state. */
 export type ScratchState =
   | { status: "idle" }

@@ -120,7 +120,7 @@ export function AddProblemDialog({
   const [error, setError] = useState<string>();
   const [saving, startSave] = useTransition();
   const [importing, startImport] = useTransition();
-  const { state: runState, run } = useJsRunner();
+  const { state: runState, run, reset: resetRun } = useJsRunner();
 
   const set = (patch: Partial<FormValue>) => setValue((v) => ({ ...v, ...patch }));
 
@@ -134,6 +134,8 @@ export function AddProblemDialog({
       setImportJson("");
       setImportReport(null);
       setError(undefined);
+    } else {
+      resetRun(); // cancel any in-flight "Run reference solution" worker
     }
   }
 

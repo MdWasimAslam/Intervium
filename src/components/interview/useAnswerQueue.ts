@@ -42,7 +42,9 @@ function clearPending(sessionId: string, position: number) {
 }
 
 /** Read all pending answers for a session back out of sessionStorage. */
-function readPersisted(sessionId: string): Map<number, AnswerPayload> {
+export function readPersistedAnswers(
+  sessionId: string,
+): Map<number, AnswerPayload> {
   const out = new Map<number, AnswerPayload>();
   try {
     const prefix = storagePrefix(sessionId);
@@ -115,6 +117,19 @@ export function useAnswerQueue(sessionId: string) {
     [sessionId, sync],
   );
 
+  /**
+   * Persist an in-progress answer to sessionStorage WITHOUT a server save. The
+   * current question isn't enqueued until the user advances, so this is what
+   * keeps a crash/refresh from losing what they've typed — rehydration on the
+   * next mount flushes it to the server, and the runner seeds the editor from it.
+   */
+  const saveLocalDraft = useCallback(
+    (position: number, payload: AnswerPayload) => {
+      persistPending(sessionId, position, payload);
+    },
+    [sessionId],
+  );
+
   /** Record an answer and kick off its save in the background. Never blocks. */
   const enqueue = useCallback(
     (position: number, payload: AnswerPayload) => {
@@ -141,7 +156,7 @@ export function useAnswerQueue(sessionId: string) {
   // Rehydrate any answers left pending by a previous crash/refresh, then
   // re-flush them. Runs once per session.
   useEffect(() => {
-    const persisted = readPersisted(sessionId);
+    const persisted = readPersistedAnswers(sessionId);
     if (persisted.size === 0) return;
     persisted.forEach((payload, position) => {
       // Don't clobber a fresher in-memory answer for the same position.
@@ -164,5 +179,5 @@ export function useAnswerQueue(sessionId: string) {
     return () => window.removeEventListener("beforeunload", handler);
   }, [unsavedCount]);
 
-  return { enqueue, flush, unsavedCount, hasFailure };
+  return { enqueue, saveLocalDraft, flush, unsavedCount, hasFailure };
 }

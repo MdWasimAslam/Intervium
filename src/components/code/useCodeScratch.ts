@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { ScratchResponse, ScratchState } from "./types";
+import type { RunnerLogMessage, ScratchResponse, ScratchState } from "./types";
 
 const DEFAULT_TIMEOUT_MS = 4000;
 
@@ -32,14 +32,20 @@ export function useCodeScratch() {
 
       const worker = new Worker(new URL("./runner.worker.ts", import.meta.url));
       workerRef.current = worker;
+      // Latest streamed console output, so a timeout-kill can still show it.
+      let streamedLogs: string[] = [];
 
       timerRef.current = setTimeout(() => {
         teardown();
-        setState({ status: "timeout", logs: [] });
+        setState({ status: "timeout", logs: streamedLogs });
       }, timeoutMs);
 
-      worker.onmessage = (e: MessageEvent<ScratchResponse>) => {
+      worker.onmessage = (e: MessageEvent<ScratchResponse | RunnerLogMessage>) => {
         const data = e.data;
+        if ("partial" in data) {
+          streamedLogs = data.logs;
+          return;
+        }
         teardown();
         if (data.ok) {
           setState({ status: "done", logs: data.logs, runtimeMs: data.runtimeMs });

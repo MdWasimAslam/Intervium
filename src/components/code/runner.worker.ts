@@ -10,6 +10,7 @@
  */
 import type {
   CaseResult,
+  RunnerLogMessage,
   RunRequest,
   RunResponse,
   ScratchResponse,
@@ -76,15 +77,23 @@ for (const k of ["fetch", "XMLHttpRequest", "WebSocket", "importScripts", "Event
 // Cap captured output so a tight `while(true){ console.log() }` can't exhaust
 // memory before the timeout fires.
 const MAX_LOGS = 1000;
+// Stream a snapshot of captured output every N lines so a timeout-kill can
+// still surface what ran (only delivered if the code yields to the event loop).
+const STREAM_EVERY_N_LOGS = 25;
 
 self.onmessage = (e: MessageEvent<RunRequest>) => {
   const { code, fnName, testCases, mode } = e.data;
   const logs: string[] = [];
+  let streamed = 0;
 
   // Capture console.log/info/warn/error without leaking the worker's own console.
   const sink = (...args: unknown[]) => {
     if (logs.length < MAX_LOGS) logs.push(args.map(format).join(" "));
     else if (logs.length === MAX_LOGS) logs.push("… output truncated");
+    if (logs.length - streamed >= STREAM_EVERY_N_LOGS) {
+      streamed = logs.length;
+      self.postMessage({ partial: true, logs: logs.slice() } as RunnerLogMessage);
+    }
   };
   const console = self.console;
   console.log = sink;

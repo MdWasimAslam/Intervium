@@ -1,7 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { RunOutcome, RunResponse, RunState, TestCase } from "./types";
+import type {
+  RunnerLogMessage,
+  RunOutcome,
+  RunResponse,
+  RunState,
+  TestCase,
+} from "./types";
 
 const DEFAULT_TIMEOUT_MS = 4000;
 
@@ -48,6 +54,8 @@ export function useJsRunner() {
         resolveRef.current = resolve;
         const worker = new Worker(new URL("./runner.worker.ts", import.meta.url));
         workerRef.current = worker;
+        // Latest streamed console output, so a timeout-kill can still show it.
+        let streamedLogs: string[] = [];
 
         const settle = (outcome: RunOutcome, next: RunState) => {
           if (timerRef.current) clearTimeout(timerRef.current);
@@ -62,11 +70,15 @@ export function useJsRunner() {
         };
 
         timerRef.current = setTimeout(() => {
-          settle({ kind: "timeout" }, { status: "timeout", logs: [] });
+          settle({ kind: "timeout" }, { status: "timeout", logs: streamedLogs });
         }, timeoutMs);
 
-        worker.onmessage = (e: MessageEvent<RunResponse>) => {
+        worker.onmessage = (e: MessageEvent<RunResponse | RunnerLogMessage>) => {
           const data = e.data;
+          if ("partial" in data) {
+            streamedLogs = data.logs;
+            return;
+          }
           if (data.ok) {
             const passed = data.results.filter((r) => r.passed).length;
             const total = data.results.length;

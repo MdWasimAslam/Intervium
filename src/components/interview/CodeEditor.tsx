@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Maximize2, Minimize2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -28,6 +30,9 @@ interface Props {
   readOnly?: boolean;
   disabled?: boolean;
   height?: number;
+  /** When set, renders an expand/shrink toggle next to the language selector. */
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
 }
 
 /**
@@ -44,6 +49,8 @@ export function CodeEditor({
   readOnly = false,
   disabled = false,
   height = 360,
+  expanded = false,
+  onToggleExpanded,
 }: Props) {
   const [code, setCode] = useState(defaultValue);
   const [language, setLanguage] = useState<string>(defaultLanguage);
@@ -59,23 +66,40 @@ export function CodeEditor({
         <span className="text-xs font-medium uppercase tracking-wide text-[var(--muted-foreground)]">
           Language
         </span>
-        <div className="w-40">
-          <Select
-            value={language}
-            onValueChange={setLanguage}
-            disabled={disabled || readOnly}
-          >
-            <SelectTrigger aria-label="Editor language">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {EDITOR_LANGUAGES.map((l) => (
-                <SelectItem key={l.value} value={l.value}>
-                  {l.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-2">
+          {onToggleExpanded && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={onToggleExpanded}
+              aria-label={expanded ? "Shrink editor" : "Expand editor"}
+            >
+              {expanded ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
+            </Button>
+          )}
+          <div className="w-40">
+            <Select
+              value={language}
+              onValueChange={setLanguage}
+              disabled={disabled || readOnly}
+            >
+              <SelectTrigger aria-label="Editor language">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {EDITOR_LANGUAGES.map((l) => (
+                  <SelectItem key={l.value} value={l.value}>
+                    {l.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 

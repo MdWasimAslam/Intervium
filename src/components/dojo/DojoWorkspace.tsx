@@ -93,6 +93,12 @@ export function DojoWorkspace({
             key={detail.id}
             question={detail}
             onBack={() => setTab("problems")}
+            onSolved={() => router.refresh()}
+            onScratchpad={() => setDetail(null)}
+            onDeleted={() => {
+              setDetail(null);
+              setTab("problems");
+            }}
           />
         ) : (
           <div className="space-y-3">
