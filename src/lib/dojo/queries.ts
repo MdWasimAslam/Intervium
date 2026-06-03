@@ -109,7 +109,10 @@ export async function listQuestions(userId: string): Promise<DojoListItem[]> {
       })
       .from(dojoProgress)
       .where(
-        and(eq(dojoProgress.userId, userId), inArray(dojoProgress.questionId, ids)),
+        and(
+          eq(dojoProgress.userId, userId),
+          inArray(dojoProgress.questionId, ids),
+        ),
       ),
   ]);
 
@@ -195,12 +198,19 @@ export async function listTopics(): Promise<DojoTopicRef[]> {
 
 /**
  * A random visible question slug — preferring unsolved ones — optionally scoped
- * to a topic. Returns null if there are no matching questions.
+ * to a topic and/or difficulty. Returns null if there are no matching questions.
  */
 export async function pickRandomSlug(
   userId: string,
-  topicSlug?: string,
+  opts?: { topicSlug?: string; difficulty?: DojoDifficulty },
 ): Promise<string | null> {
+  const { topicSlug, difficulty } = opts ?? {};
+  // `and()` ignores undefined, so the difficulty clause is a no-op when absent.
+  const where = and(
+    visibleTo(userId),
+    difficulty ? eq(dojoQuestions.difficulty, difficulty) : undefined,
+  );
+
   const base = db
     .select({ id: dojoQuestions.id, slug: dojoQuestions.slug })
     .from(dojoQuestions);
@@ -218,8 +228,8 @@ export async function pickRandomSlug(
             eq(dojoTopics.slug, topicSlug),
           ),
         )
-        .where(visibleTo(userId))
-    : await base.where(visibleTo(userId));
+        .where(where)
+    : await base.where(where);
 
   if (rows.length === 0) return null;
 
@@ -244,7 +254,9 @@ export async function pickRandomSlug(
 }
 
 /** Questions due for spaced-repetition review (dueAt in the past), soonest first. */
-export async function listDueQuestions(userId: string): Promise<DojoListItem[]> {
+export async function listDueQuestions(
+  userId: string,
+): Promise<DojoListItem[]> {
   const due = await db
     .select({
       id: dojoQuestions.id,
@@ -261,7 +273,10 @@ export async function listDueQuestions(userId: string): Promise<DojoListItem[]> 
       and(
         eq(dojoProgress.userId, userId),
         eq(dojoQuestions.isActive, true),
-        or(isNull(dojoQuestions.createdBy), eq(dojoQuestions.createdBy, userId)),
+        or(
+          isNull(dojoQuestions.createdBy),
+          eq(dojoQuestions.createdBy, userId),
+        ),
         isNotNull(dojoProgress.dueAt),
         lte(dojoProgress.dueAt, new Date()),
       ),
@@ -310,7 +325,10 @@ export async function pickNextDueSlug(userId: string): Promise<string | null> {
       and(
         eq(dojoProgress.userId, userId),
         eq(dojoQuestions.isActive, true),
-        or(isNull(dojoQuestions.createdBy), eq(dojoQuestions.createdBy, userId)),
+        or(
+          isNull(dojoQuestions.createdBy),
+          eq(dojoQuestions.createdBy, userId),
+        ),
         isNotNull(dojoProgress.dueAt),
         lte(dojoProgress.dueAt, new Date()),
       ),
@@ -354,12 +372,16 @@ export async function getDojoStats(userId: string): Promise<DojoStats> {
     db
       .select({ n: count() })
       .from(dojoProgress)
-      .where(and(eq(dojoProgress.userId, userId), eq(dojoProgress.solved, true))),
+      .where(
+        and(eq(dojoProgress.userId, userId), eq(dojoProgress.solved, true)),
+      ),
     db
       .select({ difficulty: dojoQuestions.difficulty, n: count() })
       .from(dojoProgress)
       .innerJoin(dojoQuestions, eq(dojoQuestions.id, dojoProgress.questionId))
-      .where(and(eq(dojoProgress.userId, userId), eq(dojoProgress.solved, true)))
+      .where(
+        and(eq(dojoProgress.userId, userId), eq(dojoProgress.solved, true)),
+      )
       .groupBy(dojoQuestions.difficulty),
     db
       .select({ n: count() })

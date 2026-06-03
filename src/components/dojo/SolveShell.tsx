@@ -45,12 +45,17 @@ import { ConfidenceRating } from "./ConfidenceRating";
  */
 export function SolveShell({
   question,
+  fresh = false,
   onBack,
   onSolved,
   onScratchpad,
   onDeleted,
 }: {
   question: DojoQuestionDetail;
+  /** Start on a clean slate (starter code), ignoring any saved draft or previous
+   * submission — used by the random "practice" quick-start. The saved draft is
+   * left intact so resuming from the problem list still restores it. */
+  fresh?: boolean;
   onBack?: () => void;
   /** Called once a problem first transitions to solved (after the attempt is
    * persisted) so the parent can refresh the problem list. */
@@ -61,8 +66,12 @@ export function SolveShell({
   onDeleted?: () => void;
 }) {
   const draftKey = `dojo:draft:${question.id}`;
-  const [code, setCode] = useState(
-    () => readDraft(draftKey) ?? question.lastAttemptCode ?? question.starterCode,
+  const [code, setCode] = useState(() =>
+    fresh
+      ? question.starterCode
+      : (readDraft(draftKey) ??
+        question.lastAttemptCode ??
+        question.starterCode),
   );
   const [solved, setSolved] = useState(question.solved);
   const [hintsUsed, setHintsUsed] = useState(0);
@@ -72,13 +81,18 @@ export function SolveShell({
   const [saveError, setSaveError] = useState<string>();
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<"tests" | "console">("tests");
-  const { fullscreen, toggle: toggleFullscreen, layoutSignal, bumpLayout } =
-    useFullscreen();
+  const {
+    fullscreen,
+    toggle: toggleFullscreen,
+    layoutSignal,
+    bumpLayout,
+  } = useFullscreen();
   const [confirmReset, setConfirmReset] = useState(false);
 
-  const [lastSubmit, setLastSubmit] = useState<{ code: string; summary: string } | null>(
-    null,
-  );
+  const [lastSubmit, setLastSubmit] = useState<{
+    code: string;
+    summary: string;
+  } | null>(null);
   const [review, setReview] = useState<DojoReview | null>(null);
   const [reviewing, setReviewing] = useState(false);
   const [reviewError, setReviewError] = useState<string>();
@@ -108,11 +122,17 @@ export function SolveShell({
     setTab("tests");
     setSaveError(undefined);
     const submitted = code;
-    const outcome = await tests.run(submitted, question.fnName, question.testCases);
+    const outcome = await tests.run(
+      submitted,
+      question.fnName,
+      question.testCases,
+    );
     if (outcome.kind === "cancelled") return;
 
     const passedAll =
-      outcome.kind === "done" && outcome.total > 0 && outcome.passed === outcome.total;
+      outcome.kind === "done" &&
+      outcome.total > 0 &&
+      outcome.passed === outcome.total;
     const summary =
       outcome.kind === "done"
         ? `${outcome.passed}/${outcome.total} test cases passed`
@@ -135,15 +155,19 @@ export function SolveShell({
       code: submitted,
       status: passedAll ? "passed" : "failed",
       testsPassed: outcome.kind === "done" ? outcome.passed : 0,
-      testsTotal: outcome.kind === "done" ? outcome.total : question.testCases.length,
-      runtimeMs: outcome.kind === "done" ? Math.round(outcome.runtimeMs) : undefined,
+      testsTotal:
+        outcome.kind === "done" ? outcome.total : question.testCases.length,
+      runtimeMs:
+        outcome.kind === "done" ? Math.round(outcome.runtimeMs) : undefined,
       hintsUsed: hintsThisAttempt,
     });
     setSaving(false);
 
     if (!res.ok) {
       // Keep the draft so the work isn't lost, and surface the failure.
-      setSaveError(res.error ?? "Could not save your attempt. Please try again.");
+      setSaveError(
+        res.error ?? "Could not save your attempt. Please try again.",
+      );
       return;
     }
 

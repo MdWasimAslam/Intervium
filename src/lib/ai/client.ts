@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { logAiCall } from "@/lib/ai-logging";
-import { getAiProvider } from "@/lib/settings";
+import { resolveFeatureModel } from "@/lib/settings";
 
 /** A clean, UI-safe error for any generation failure. */
 export class QuestionGenerationError extends Error {}
@@ -24,11 +24,16 @@ export type AiProvider = "groq" | "deepseek";
 const DEEPSEEK_DEFAULT_BASE_URL = "https://api.deepseek.com";
 export const DEEPSEEK_DEFAULT_MODEL = "deepseek-v4-flash";
 
-/** Resolve the endpoint, key and model for a provider (throws if unconfigured). */
+/**
+ * Resolve the endpoint, key and model for a provider (throws if unconfigured).
+ * `modelOverride` (an admin per-feature choice) wins over the tier/env default.
+ */
 function resolveProvider(
   provider: AiProvider,
   tier: GroqModelTier,
+  modelOverride?: string,
 ): { apiKey: string; url: string; model: string; label: string } {
+  const override = modelOverride?.trim();
   if (provider === "deepseek") {
     const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
     if (!apiKey) {
@@ -42,7 +47,7 @@ function resolveProvider(
     return {
       apiKey,
       url: `${base}/chat/completions`,
-      model: process.env.DEEPSEEK_MODEL?.trim() || DEEPSEEK_DEFAULT_MODEL,
+      model: override || process.env.DEEPSEEK_MODEL?.trim() || DEEPSEEK_DEFAULT_MODEL,
       label: "DeepSeek",
     };
   }
@@ -55,7 +60,7 @@ function resolveProvider(
   return {
     apiKey,
     url: GROQ_CHAT_COMPLETIONS_URL,
-    model: tier === "smart" ? SMART_MODEL : FAST_MODEL,
+    model: override || (tier === "smart" ? SMART_MODEL : FAST_MODEL),
     label: "Groq",
   };
 }
@@ -104,6 +109,8 @@ export function getModel(
     tier?: GroqModelTier;
     /** AI backend for this call. Defaults to Groq. */
     provider?: AiProvider;
+    /** Explicit model id (admin per-feature override); falls back to the tier default. */
+    model?: string;
     /** Feature label for usage logging; omit to skip logging this call. */
     feature?: string;
     /** User the call is attributed to (for the AI Usage dashboard). */
@@ -120,11 +127,16 @@ export function getModel(
     temperature = 0.9,
     tier = "fast",
     provider = "groq",
+    model: modelOverride,
     feature,
     userId,
     seed,
   } = opts;
-  const { apiKey, url, model, label } = resolveProvider(provider, tier);
+  const { apiKey, url, model, label } = resolveProvider(
+    provider,
+    tier,
+    modelOverride,
+  );
 
   // Record one usage-log row per logical call (success carries token counts;
   // terminal failures log a status="error" row). No-op when feature is unset.
@@ -376,11 +388,13 @@ export async function generateJson<T>(
     seed?: number;
   },
 ): Promise<T> {
+  const { provider, model: modelId } = await resolveFeatureModel(opts.feature);
   const model = getModel({
     json: true,
     temperature: opts.temperature ?? 0.5,
     tier: "smart",
-    provider: await getAiProvider(),
+    provider,
+    model: modelId,
     feature: opts.feature,
     userId: opts.userId,
     seed: opts.seed,

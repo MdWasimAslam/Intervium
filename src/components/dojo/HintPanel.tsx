@@ -41,10 +41,10 @@ export function HintPanel({
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+    <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 elev-1">
       <div className="flex items-center justify-between gap-2">
         <span className="flex items-center gap-2 text-sm font-semibold">
-          <Lightbulb className="h-4 w-4 text-amber-500" /> Hints
+          <Lightbulb className="h-4 w-4 text-[var(--warning)]" /> Hints
         </span>
         {!exhausted && (
           <Button variant="outline" size="sm" onClick={getHint} disabled={loading}>
@@ -71,9 +71,9 @@ export function HintPanel({
           {hints.map((h, i) => (
             <li
               key={i}
-              className="rounded-lg border border-amber-500/20 bg-amber-500/[0.06] p-3 text-sm"
+              className="rounded-md border border-[var(--warning)]/20 bg-[var(--warning-subtle)] p-3 text-sm"
             >
-              <span className="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">
+              <span className="text-xs font-semibold uppercase tracking-wide text-[var(--warning)]">
                 Hint {i + 1}
               </span>
               <p className="mt-1 leading-relaxed">{h}</p>

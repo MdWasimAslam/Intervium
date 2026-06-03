@@ -141,6 +141,13 @@
       "when": 1780333167958,
       "tag": "0019_sloppy_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1780498343329,
+      "tag": "0020_careless_ultimates",
+      "breakpoints": true
     }
   ]
 }

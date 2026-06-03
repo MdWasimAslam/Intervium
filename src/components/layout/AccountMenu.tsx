@@ -139,7 +139,7 @@ export function AccountMenu({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.97 }}
             transition={reduced ? { duration: 0 } : { duration: 0.14, ease: "easeOut" }}
-            className="absolute right-0 mt-2 w-56 origin-top-right overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--popover)] text-[var(--popover-foreground)] shadow-lg"
+            className="absolute right-0 mt-2 w-56 origin-top-right overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--surface-3)] text-[var(--popover-foreground)] elev-3"
           >
             <div className="border-b border-[var(--border)] px-4 py-3">
               <p className="text-xs text-[var(--muted-foreground)]">
@@ -157,7 +157,7 @@ export function AccountMenu({
                   href={href}
                   role="menuitem"
                   onClick={close}
-                  className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-[var(--muted)] focus-visible:bg-[var(--muted)] outline-none"
+                  className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors hover:bg-[var(--surface-hover)] focus-visible:bg-[var(--surface-hover)] outline-none"
                 >
                   <Icon className="h-4 w-4 text-[var(--muted-foreground)]" />
                   {label}
@@ -170,7 +170,7 @@ export function AccountMenu({
                 href="/profile"
                 role="menuitem"
                 onClick={close}
-                className="flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-[var(--muted)] focus-visible:bg-[var(--muted)] outline-none"
+                className="flex items-center gap-2.5 rounded-md px-3 py-2 text-sm transition-colors hover:bg-[var(--surface-hover)] focus-visible:bg-[var(--surface-hover)] outline-none"
               >
                 <UserCog className="h-4 w-4 text-[var(--muted-foreground)]" />
                 Edit profile
@@ -180,7 +180,7 @@ export function AccountMenu({
                 <button
                   type="submit"
                   role="menuitem"
-                  className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm transition-colors hover:bg-[var(--muted)] focus-visible:bg-[var(--muted)] outline-none"
+                  className="flex w-full items-center gap-2.5 rounded-md px-3 py-2 text-left text-sm transition-colors hover:bg-[var(--surface-hover)] focus-visible:bg-[var(--surface-hover)] outline-none"
                 >
                   <LogOut className="h-4 w-4 text-[var(--muted-foreground)]" />
                   Sign out

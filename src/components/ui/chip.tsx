@@ -17,11 +17,12 @@ const chipVariants = cva(
         neutral:
           "border-[var(--border)] bg-[var(--secondary)] text-[var(--muted-foreground)]",
         success:
-          "border-[var(--primary)]/30 bg-[var(--accent)] text-[var(--accent-foreground)]",
+          "border-[var(--success)]/30 bg-[var(--success-subtle)] text-[var(--success)]",
         warning:
-          "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400",
+          "border-[var(--warning)]/30 bg-[var(--warning-subtle)] text-[var(--warning)]",
+        info: "border-[var(--info)]/30 bg-[var(--info-subtle)] text-[var(--info)]",
         danger:
-          "border-[var(--destructive)]/30 bg-[var(--destructive)]/10 text-[var(--destructive)]",
+          "border-[var(--destructive)]/30 bg-[var(--destructive-subtle)] text-[var(--destructive)]",
       },
     },
     defaultVariants: {

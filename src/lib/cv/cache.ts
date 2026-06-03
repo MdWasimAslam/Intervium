@@ -25,7 +25,7 @@ async function cacheKey(
   feature: CvCacheFeature,
   input: unknown,
 ): Promise<string> {
-  return `${feature}:${await cvAiModelId()}:${fnv1a(stableStringify(input))}`;
+  return `${feature}:${await cvAiModelId(feature)}:${fnv1a(stableStringify(input))}`;
 }
 
 /** Return a cached result for this feature+input, or null on miss/expiry/error. */

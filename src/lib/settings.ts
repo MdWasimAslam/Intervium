@@ -5,6 +5,11 @@ import {
   type LengthPreset,
   type TimerPreset,
 } from "@db";
+import {
+  type AiProvider,
+  type FeatureModels,
+  sanitizeFeatureModels,
+} from "@/lib/ai/catalog";
 
 /** AI backend that grades interview answers. */
 export type ScoringProvider = "groq" | "deepseek";
@@ -20,6 +25,8 @@ export interface AppSettings {
   defaultLengthPresetId: string;
   /** Which provider grades interview answers ("groq" by default). */
   scoringProvider: ScoringProvider;
+  /** Per-feature model overrides; empty = every feature uses the default. */
+  featureModels: FeatureModels;
 }
 
 /** The sentinel preset id for a user-entered custom timer duration. */
@@ -48,6 +55,7 @@ const DEFAULTS: AppSettings = {
   lengthPresets: DEFAULT_LENGTH_PRESETS,
   defaultLengthPresetId: "standard",
   scoringProvider: "groq",
+  featureModels: {},
 };
 
 /**
@@ -93,6 +101,8 @@ export async function getSettings(): Promise<AppSettings> {
       // Validate against the known set so an unexpected value can't be sent to
       // the AI layer; anything else falls back to Groq.
       scoringProvider: row.scoringProvider === "deepseek" ? "deepseek" : "groq",
+      // Drop any malformed/unknown entries so a bad row can never reach the AI layer.
+      featureModels: sanitizeFeatureModels(row.featureModels),
     };
   } catch (error) {
     console.error("[getSettings]", error);
@@ -109,6 +119,38 @@ export async function getSettings(): Promise<AppSettings> {
  */
 export async function getAiProvider(): Promise<ScoringProvider> {
   return (await getSettings()).scoringProvider;
+}
+
+/** The provider + (optional) model a single AI call should use. */
+export interface ResolvedModel {
+  provider: AiProvider;
+  /** An explicit model id, or undefined to let the client use its tier default. */
+  model?: string;
+}
+
+/**
+ * Resolve which provider + model a given AI feature runs on:
+ *  1. an admin per-feature override (from the AI Models screen), else
+ *  2. `fallbackProvider` if the caller supplies one (e.g. scoring passes the
+ *     global provider it already read), else
+ *  3. Groq for question generation (always cheap/fast), else the global
+ *     `scoringProvider`.
+ * When no model is returned, the client falls back to that provider's tier
+ * default — so an unset feature behaves exactly as before this setting existed.
+ */
+export async function resolveFeatureModel(
+  feature: string | undefined,
+  opts: { fallbackProvider?: AiProvider } = {},
+): Promise<ResolvedModel> {
+  const settings = await getSettings();
+  const override = feature ? settings.featureModels[feature] : undefined;
+  if (override?.model) {
+    return { provider: override.provider, model: override.model };
+  }
+  const provider =
+    opts.fallbackProvider ??
+    (feature === "question_gen" ? "groq" : settings.scoringProvider);
+  return { provider };
 }
 
 /**

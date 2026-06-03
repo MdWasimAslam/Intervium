@@ -389,6 +389,14 @@ export const appSettings = pgTable("app_settings", {
   // column name predates the setting governing all AI (not just scoring). A
   // plain text column (not an enum) so a future provider needs no migration.
   scoringProvider: text("scoring_provider").notNull().default("groq"),
+  // Per-feature model overrides: { [featureKey]: { provider, model } }. Empty
+  // map = every feature uses the global provider + its tier default (the
+  // historical behaviour). Lets an admin route each AI feature to a specific
+  // model. JSONB so adding/removing features needs no migration.
+  featureModels: jsonb("feature_models")
+    .$type<Record<string, { provider: "groq" | "deepseek"; model: string }>>()
+    .notNull()
+    .default(sql`'{}'::jsonb`),
   updatedAt: timestamp("updated_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

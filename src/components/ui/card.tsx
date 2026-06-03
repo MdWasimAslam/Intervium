@@ -2,23 +2,29 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * Card surface — rounded-2xl with a soft shadow, using the `--card` token.
- * Composable header/title/description/content/footer sub-parts follow the
- * shadcn/ui convention.
+ * Card surface — rounded-2xl on the `--card` (surface-1) token, lifted with the
+ * shared `elev-1` ladder (soft shadow in light, hairline + inset highlight in
+ * dark). Pass `interactive` for clickable cards: they raise to elev-2 and nudge
+ * up 1px on hover. Composable header/title/description/content/footer sub-parts
+ * follow the shadcn/ui convention.
  */
-const Card = React.forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => (
-  <div
-    ref={ref}
-    className={cn(
-      "rounded-2xl border border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)] shadow-[0_1px_3px_rgba(0,0,0,0.04),0_8px_24px_-12px_rgba(0,0,0,0.12)] dark:shadow-[0_1px_3px_rgba(0,0,0,0.4),0_8px_24px_-12px_rgba(0,0,0,0.6)]",
-      className,
-    )}
-    {...props}
-  />
-));
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  interactive?: boolean;
+}
+
+const Card = React.forwardRef<HTMLDivElement, CardProps>(
+  ({ className, interactive, ...props }, ref) => (
+    <div
+      ref={ref}
+      className={cn(
+        "rounded-2xl border border-[var(--border)] bg-[var(--card)] text-[var(--card-foreground)] elev-1",
+        interactive && "elev-interactive cursor-pointer hover:border-[var(--border-strong)]",
+        className,
+      )}
+      {...props}
+    />
+  ),
+);
 Card.displayName = "Card";
 
 const CardHeader = React.forwardRef<

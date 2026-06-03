@@ -1,0 +1,1 @@
+ALTER TABLE "app_settings" ADD COLUMN "feature_models" jsonb DEFAULT '{}'::jsonb NOT NULL;

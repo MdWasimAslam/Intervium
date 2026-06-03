@@ -8,6 +8,8 @@ export type AiFeature =
   | "scoring_code"
   | "summary_gen"
   | "cv_match"
+  | "cv_ats"
+  | "cv_import"
   | "cv_optimize"
   | "cover_letter_gen"
   | "gap_analysis"
@@ -22,6 +24,8 @@ export const AI_FEATURE_LABELS: Record<string, string> = {
   scoring_code: "Interview scoring (code)",
   summary_gen: "Summary generation",
   cv_match: "Resume analysis",
+  cv_ats: "Resume ATS review",
+  cv_import: "Resume import / parse",
   cv_optimize: "Resume optimization",
   cover_letter_gen: "Cover letter generation",
   gap_analysis: "Gap analysis",

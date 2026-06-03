@@ -12,6 +12,7 @@ import type {
   DojoTopicRef,
 } from "@/lib/dojo/types";
 import { QuestionList } from "./QuestionList";
+import { RandomPractice } from "./RandomPractice";
 import { SolveShell } from "./SolveShell";
 import { AddProblemDialog } from "./AddProblemDialog";
 import { ScratchEditor } from "./ScratchEditor";
@@ -25,24 +26,34 @@ export function DojoWorkspace({
   items,
   topics,
   initialDetail,
+  initialFresh = false,
 }: {
   items: DojoListItem[];
   topics: DojoTopicRef[];
   initialDetail: DojoQuestionDetail | null;
+  /** Open the initial problem on starter code, not the saved draft/last attempt
+   * (set by the random quick-start deep link). */
+  initialFresh?: boolean;
 }) {
   const router = useRouter();
   const [tab, setTab] = useState<"editor" | "problems">("editor");
-  const [detail, setDetail] = useState<DojoQuestionDetail | null>(initialDetail);
+  const [detail, setDetail] = useState<DojoQuestionDetail | null>(
+    initialDetail,
+  );
+  // Whether the current problem was opened "fresh" (random practice) — seeds the
+  // editor with starter code instead of restoring saved work.
+  const [fresh, setFresh] = useState(initialFresh);
   const [loadingSlug, setLoadingSlug] = useState<string | null>(null);
   const [error, setError] = useState<string>();
 
-  async function selectProblem(slug: string) {
+  async function selectProblem(slug: string, opts?: { fresh?: boolean }) {
     setError(undefined);
     setLoadingSlug(slug);
     const res = await getDojoQuestionAction(slug);
     setLoadingSlug(null);
     if (res.ok) {
       setDetail(res.data);
+      setFresh(opts?.fresh ?? false);
       setTab("editor");
     } else {
       setError(res.error);
@@ -68,6 +79,11 @@ export function DojoWorkspace({
 
   return (
     <div className="space-y-4">
+      <RandomPractice
+        topics={topics}
+        onPicked={(slug) => selectProblem(slug, { fresh: true })}
+      />
+
       <nav className="inline-flex rounded-full border border-[var(--border)] bg-[var(--card)] p-1">
         <TabButton
           active={tab === "editor"}
@@ -90,8 +106,9 @@ export function DojoWorkspace({
       {tab === "editor" ? (
         detail ? (
           <SolveShell
-            key={detail.id}
+            key={`${detail.id}:${fresh}`}
             question={detail}
+            fresh={fresh}
             onBack={() => setTab("problems")}
             onSolved={() => router.refresh()}
             onScratchpad={() => setDetail(null)}
@@ -107,7 +124,11 @@ export function DojoWorkspace({
                 Scratchpad — or pick a problem to practice.
               </p>
               <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setTab("problems")}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTab("problems")}
+                >
                   <ListChecks className="h-4 w-4" /> Browse problems
                 </Button>
                 {addButton}

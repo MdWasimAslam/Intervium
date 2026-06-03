@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { appSettings, db } from "@db";
 import { requireAdmin } from "@/lib/session";
+import { AI_FEATURE_KEYS } from "@/lib/ai/catalog";
 import { zodError, type AdminResult } from "./util";
 
 const timerPresetSchema = z.object({
@@ -105,5 +106,55 @@ export async function updateSettings(input: unknown): Promise<AdminResult> {
     return { ok: false, error: "Could not save settings." };
   }
   revalidatePath("/admin/settings");
+  return { ok: true };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Per-feature AI model overrides (/admin/ai-models)                          */
+/* -------------------------------------------------------------------------- */
+
+const featureChoiceSchema = z.object({
+  provider: z.enum(["groq", "deepseek"]),
+  model: z.string().trim().min(1).max(120),
+});
+
+const featureModelsSchema = z
+  .object({
+    // featureKey → { provider, model }. Only known feature keys are accepted.
+    featureModels: z.record(z.string(), featureChoiceSchema),
+  })
+  .superRefine((d, ctx) => {
+    const known = new Set<string>(AI_FEATURE_KEYS);
+    for (const key of Object.keys(d.featureModels)) {
+      if (!known.has(key)) {
+        ctx.addIssue({ code: "custom", message: `Unknown AI feature: ${key}` });
+      }
+    }
+  });
+
+/**
+ * Save the per-feature model map. A feature omitted from the map falls back to
+ * the global provider + tier default at call time, so clearing an entry simply
+ * restores default behaviour. Upserts only the `feature_models` column, so it
+ * never clobbers the timer/length/provider settings written by updateSettings.
+ */
+export async function updateFeatureModels(input: unknown): Promise<AdminResult> {
+  await requireAdmin();
+  const p = featureModelsSchema.safeParse(input);
+  if (!p.success) return { ok: false, error: zodError(p) };
+
+  try {
+    await db
+      .insert(appSettings)
+      .values({ id: "global", featureModels: p.data.featureModels })
+      .onConflictDoUpdate({
+        target: appSettings.id,
+        set: { featureModels: p.data.featureModels, updatedAt: new Date() },
+      });
+  } catch (error) {
+    console.error("[updateFeatureModels]", error);
+    return { ok: false, error: "Could not save model settings." };
+  }
+  revalidatePath("/admin/ai-models");
   return { ok: true };
 }

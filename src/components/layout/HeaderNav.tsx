@@ -28,7 +28,7 @@ export function HeaderNav({ isAdmin }: { isAdmin: boolean }) {
               "rounded-full px-3 py-1.5 text-sm font-medium transition-colors",
               active
                 ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-                : "text-[var(--muted-foreground)] hover:bg-[var(--muted)] hover:text-[var(--foreground)]",
+                : "text-[var(--muted-foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]",
             )}
           >
             {label}

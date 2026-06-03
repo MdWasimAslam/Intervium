@@ -206,7 +206,7 @@ export function AiUsageAdmin({ stats }: { stats: AiUsageStats }) {
 /** Threshold colors: green < 70% used, amber 70–90%, red ≥ 90%. */
 function barColor(pct: number): string {
   if (pct >= 90) return "var(--destructive)";
-  if (pct >= 70) return "#f59e0b"; // amber-500 — no design token exists for it
+  if (pct >= 70) return "var(--warning)";
   return "var(--primary)";
 }
 

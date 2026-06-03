@@ -9,15 +9,16 @@ import type { ReactNode } from "react";
  *
  * - `attribute="class"` toggles the `.dark` class on <html> (matches the
  *   Tailwind dark variant in globals.css).
- * - `defaultTheme="light"` → the app defaults to light/white.
- * - The user's choice is persisted to localStorage automatically.
+ * - `defaultTheme="system"` + `enableSystem` → first visit follows the OS
+ *   preference; the user's manual choice is then persisted to localStorage and
+ *   wins thereafter.
  */
 export function ThemeProvider({ children }: { children: ReactNode }) {
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="light"
-      enableSystem={false}
+      defaultTheme="system"
+      enableSystem
       disableTransitionOnChange
     >
       {/* Honour the OS "reduce motion" setting across all framer-motion. */}

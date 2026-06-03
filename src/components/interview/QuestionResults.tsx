@@ -12,6 +12,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Chip } from "@/components/ui/chip";
 import { QuestionPrompt } from "@/components/interview/QuestionPrompt";
 import { cn } from "@/lib/utils";
 
@@ -88,13 +89,13 @@ function CodeBlock({ code }: { code: string }) {
 
 function scoreColor(pct: number): string {
   if (pct >= 70) return "text-[var(--primary)]";
-  if (pct >= 40) return "text-amber-600 dark:text-amber-400";
+  if (pct >= 40) return "text-[var(--warning)]";
   return "text-[var(--destructive)]";
 }
 
 function barColor(pct: number): string {
   if (pct >= 70) return "bg-[var(--primary)]";
-  if (pct >= 40) return "bg-amber-500";
+  if (pct >= 40) return "bg-[var(--warning)]";
   return "bg-[var(--destructive)]";
 }
 
@@ -274,18 +275,15 @@ export function QuestionResults({
                   <div>
                     <SectionLabel
                       icon={ListChecks}
-                      className="text-amber-600 dark:text-amber-400"
+                      className="text-[var(--warning)]"
                     >
                       Missing concepts
                     </SectionLabel>
                     <div className="flex flex-wrap gap-1.5">
                       {r.missingConcepts.map((c, j) => (
-                        <span
-                          key={j}
-                          className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
-                        >
+                        <Chip key={j} tone="warning">
                           {c}
-                        </span>
+                        </Chip>
                       ))}
                     </div>
                   </div>
@@ -347,7 +345,7 @@ export function QuestionResults({
                       <div>
                         <SectionLabel
                           icon={TrendingUp}
-                          className="text-amber-600 dark:text-amber-400"
+                          className="text-[var(--warning)]"
                         >
                           Areas for improvement
                         </SectionLabel>

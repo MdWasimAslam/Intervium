@@ -1,7 +1,14 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
-import { Check, Circle, CircleDot, Loader2, Search, Shuffle } from "lucide-react";
+import {
+  Check,
+  Circle,
+  CircleDot,
+  Loader2,
+  Search,
+  Shuffle,
+} from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -27,8 +34,9 @@ export function QuestionList({
 }: {
   items: DojoListItem[];
   topics: DojoTopicRef[];
-  /** Open a problem in the editor tab (in-place, no navigation). */
-  onSelect: (slug: string) => void;
+  /** Open a problem in the editor tab (in-place, no navigation). `fresh` opens
+   * on starter code (random roll) rather than restoring the saved draft. */
+  onSelect: (slug: string, opts?: { fresh?: boolean }) => void;
   /** Slug currently being loaded — shows a spinner on that row. */
   loadingSlug?: string | null;
   /** Extra control rendered in the filter row (e.g. "Add problem"). */
@@ -51,7 +59,8 @@ export function QuestionList({
         if (difficulty !== "all" && it.difficulty !== difficulty) return false;
         if (status === "solved" && !it.solved) return false;
         if (status === "unsolved" && it.solved) return false;
-        if (status === "attempted" && !(it.attempted && !it.solved)) return false;
+        if (status === "attempted" && !(it.attempted && !it.solved))
+          return false;
         if (status === "mine" && !it.isMine) return false;
         return true;
       }),
@@ -63,8 +72,14 @@ export function QuestionList({
   function surprise() {
     setError(undefined);
     start(async () => {
-      const res = await randomDojoQuestion(topic === "all" ? undefined : topic);
-      if (res.ok) onSelect(res.data.slug);
+      const res = await randomDojoQuestion({
+        topicSlug: topic === "all" ? undefined : topic,
+        difficulty:
+          difficulty === "all"
+            ? undefined
+            : (difficulty as "easy" | "medium" | "hard"),
+      });
+      if (res.ok) onSelect(res.data.slug, { fresh: true });
       else setError(res.error);
     });
   }
@@ -98,7 +113,10 @@ export function QuestionList({
         </Select>
 
         <Select value={difficulty} onValueChange={setDifficulty}>
-          <SelectTrigger className="h-9 w-[130px]" aria-label="Filter by difficulty">
+          <SelectTrigger
+            className="h-9 w-[130px]"
+            aria-label="Filter by difficulty"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -110,7 +128,10 @@ export function QuestionList({
         </Select>
 
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="h-9 w-[130px]" aria-label="Filter by status">
+          <SelectTrigger
+            className="h-9 w-[130px]"
+            aria-label="Filter by status"
+          >
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -193,9 +214,22 @@ export function QuestionList({
   );
 }
 
-function StatusIcon({ solved, attempted }: { solved: boolean; attempted: boolean }) {
+function StatusIcon({
+  solved,
+  attempted,
+}: {
+  solved: boolean;
+  attempted: boolean;
+}) {
   if (solved)
-    return <Check className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />;
-  if (attempted) return <CircleDot className="h-5 w-5 shrink-0 text-amber-500" />;
-  return <Circle className={cn("h-5 w-5 shrink-0 text-[var(--muted-foreground)]/40")} />;
+    return (
+      <Check className="h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
+    );
+  if (attempted)
+    return <CircleDot className="h-5 w-5 shrink-0 text-amber-500" />;
+  return (
+    <Circle
+      className={cn("h-5 w-5 shrink-0 text-[var(--muted-foreground)]/40")}
+    />
+  );
 }

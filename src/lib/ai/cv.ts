@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { type CvData } from "@/lib/cv/types";
 import { fnv1a, stableStringify } from "@/lib/cv/parse";
-import { getAiProvider } from "@/lib/settings";
+import { resolveFeatureModel } from "@/lib/settings";
 import {
   getModel,
   generateJson,
@@ -11,14 +11,15 @@ import {
 } from "./client";
 
 /**
- * The model id the CV features run on (the active provider's "smart" tier).
- * Folded into the CV AI cache key so a model upgrade — or an admin switching
- * the AI provider (Groq ↔ DeepSeek) — transparently invalidates stale cached
- * output. Resolved without throwing so cache keying never breaks the request
- * even when the selected provider is unconfigured.
+ * The model id a given CV feature actually runs on (its admin override, else
+ * the active provider's "smart"-tier default). Folded into the CV AI cache key
+ * so changing a feature's model — or the global provider — transparently
+ * invalidates stale cached output. Resolved without throwing so cache keying
+ * never breaks the request even when the selected provider is unconfigured.
  */
-export async function cvAiModelId(): Promise<string> {
-  const provider = await getAiProvider();
+export async function cvAiModelId(feature: string): Promise<string> {
+  const { provider, model } = await resolveFeatureModel(feature);
+  if (model) return model;
   if (provider === "deepseek") {
     return process.env.DEEPSEEK_MODEL?.trim() || DEEPSEEK_DEFAULT_MODEL;
   }
@@ -374,11 +375,14 @@ export async function generateCoverLetter(
   ctx: CoverLetterContext,
   userId?: string | null,
 ): Promise<string> {
+  const { provider, model: modelId } =
+    await resolveFeatureModel("cover_letter_gen");
   const model = getModel({
     json: false,
     temperature: 0.6,
     tier: "smart",
-    provider: await getAiProvider(),
+    provider,
+    model: modelId,
     feature: "cover_letter_gen",
     userId,
   });

@@ -4,7 +4,7 @@ export type ScoreTone = "brand" | "good" | "warn" | "bad";
 const TONE_STROKE: Record<ScoreTone, string> = {
   brand: "var(--primary)",
   good: "var(--primary)",
-  warn: "#f59e0b", // amber-500
+  warn: "var(--warning)",
   bad: "var(--destructive)",
 };
 

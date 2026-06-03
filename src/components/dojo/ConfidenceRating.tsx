@@ -17,12 +17,12 @@ const OPTIONS: { rating: DojoRating; label: string; cls: string }[] = [
   {
     rating: "hard",
     label: "Hard",
-    cls: "border-amber-500/30 text-amber-600 hover:bg-amber-500/10 dark:text-amber-400",
+    cls: "border-[var(--warning)]/30 text-[var(--warning)] hover:bg-[var(--warning-subtle)]",
   },
   {
     rating: "good",
     label: "Good",
-    cls: "border-emerald-500/30 text-emerald-600 hover:bg-emerald-500/10 dark:text-emerald-400",
+    cls: "border-[var(--success)]/30 text-[var(--success)] hover:bg-[var(--success-subtle)]",
   },
   {
     rating: "easy",
@@ -65,7 +65,7 @@ export function ConfidenceRating({ questionId }: { questionId: string }) {
   }
 
   return (
-    <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4">
+    <div className="space-y-3 rounded-xl border border-[var(--border)] bg-[var(--card)] p-4 elev-1">
       <div>
         <p className="text-sm font-semibold">How well did you know this?</p>
         <p className="text-xs text-[var(--muted-foreground)]">

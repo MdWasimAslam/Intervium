@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { getAiProvider } from "@/lib/settings";
+import { getAiProvider, resolveFeatureModel } from "@/lib/settings";
 import {
   getModel,
   parseModelJson,
@@ -142,8 +142,14 @@ export function buildPrompt(ctx: GenerationContext, strict: boolean): string {
 export async function generateQuestions(
   ctx: GenerationContext,
 ): Promise<GeneratedQuestion[]> {
+  const { provider, model: modelId } = await resolveFeatureModel(
+    "question_gen",
+    { fallbackProvider: "groq" },
+  );
   const model = getModel({
     tier: "fast",
+    provider,
+    model: modelId,
     feature: "question_gen",
     userId: ctx.userId,
   });
@@ -539,11 +545,14 @@ export async function scoreAnswersBatch(
 ): Promise<Map<string, AnswerScore>> {
   if (items.length === 0) return new Map();
 
+  const { provider: resolvedProvider, model: modelId } =
+    await resolveFeatureModel("scoring_text", { fallbackProvider: provider });
   const model = getModel({
     json: true,
     temperature: 0.3,
     tier: "smart",
-    provider,
+    provider: resolvedProvider,
+    model: modelId,
     feature: "scoring_text",
     userId,
   });
@@ -694,11 +703,14 @@ export async function scoreCodeBatch(
 ): Promise<Map<string, AnswerScore>> {
   if (items.length === 0) return new Map();
 
+  const { provider: resolvedProvider, model: modelId } =
+    await resolveFeatureModel("scoring_code", { fallbackProvider: provider });
   const model = getModel({
     json: true,
     temperature: 0.2,
     tier: "smart",
-    provider,
+    provider: resolvedProvider,
+    model: modelId,
     feature: "scoring_code",
     userId,
   });
@@ -757,11 +769,14 @@ export interface SummaryContext {
 export async function generateSummary(ctx: SummaryContext): Promise<string> {
   const fallback = `You scored ${ctx.totalScore}/${ctx.maxScore} on this ${ctx.difficulty} ${ctx.roleName} interview.`;
   try {
+    const { provider, model: modelId } =
+      await resolveFeatureModel("summary_gen");
     const model = getModel({
       json: false,
       temperature: 0.4,
       tier: "smart",
-      provider: await getAiProvider(),
+      provider,
+      model: modelId,
       feature: "summary_gen",
       userId: ctx.userId,
     });

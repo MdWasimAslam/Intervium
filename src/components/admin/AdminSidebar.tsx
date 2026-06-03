@@ -6,6 +6,7 @@ import {
   BarChart3,
   Briefcase,
   Code2,
+  Cpu,
   Dumbbell,
   Gauge,
   KeyRound,
@@ -22,6 +23,7 @@ const LINKS = [
   { href: "/admin/questions", label: "Question Bank", icon: ListChecks },
   { href: "/admin/dojo", label: "Code Dojo", icon: Dumbbell },
   { href: "/admin/ai-usage", label: "AI Usage", icon: BarChart3 },
+  { href: "/admin/ai-models", label: "AI Models", icon: Cpu },
   { href: "/admin/settings", label: "Settings", icon: SettingsIcon },
   { href: "/admin/users", label: "Users", icon: UsersIcon },
   // Developer-only Production Readiness Dashboard (admin-gated, outside /admin).
@@ -41,10 +43,10 @@ export function AdminSidebar() {
               key={l.href}
               href={l.href}
               className={cn(
-                "flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
+                "flex shrink-0 items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                 active
                   ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
-                  : "text-[var(--muted-foreground)] hover:bg-[var(--muted)]",
+                  : "text-[var(--muted-foreground)] hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]",
               )}
             >
               <Icon className="h-4 w-4" />

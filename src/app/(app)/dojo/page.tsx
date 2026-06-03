@@ -10,7 +10,9 @@ import {
   getQuestionBySlug,
   listQuestions,
   listTopics,
+  pickRandomSlug,
 } from "@/lib/dojo/queries";
+import type { DojoDifficulty } from "@/lib/dojo/types";
 import { DojoWorkspace } from "@/components/dojo/DojoWorkspace";
 import { DojoStatsStrip } from "@/components/dojo/DojoStatsStrip";
 
@@ -29,8 +31,9 @@ export default async function DojoPage({
 }) {
   const user = await requireAuth();
   const sp = await searchParams;
-  const raw = sp.problem;
-  const wantedSlug = (Array.isArray(raw) ? raw[0] : raw)?.trim();
+  const first = (v: string | string[] | undefined) =>
+    (Array.isArray(v) ? v[0] : v)?.trim();
+  const explicitSlug = first(sp.problem);
 
   const [items, topics, due, streak, stats] = await Promise.all([
     listQuestions(user.id),
@@ -40,8 +43,25 @@ export default async function DojoPage({
     getDojoStats(user.id),
   ]);
 
-  // Only open a problem when one is explicitly requested — otherwise the Editor
-  // tab shows a fresh scratch editor.
+  // Open a problem when one is explicitly requested (`?problem=`), or roll a
+  // random one for the quick-start shortcut (`?random=1`, optionally scoped by
+  // `&difficulty=` / `&topic=`). Otherwise the Editor tab shows a scratch editor.
+  let wantedSlug = explicitSlug;
+  let openedRandom = false;
+  if (!wantedSlug && first(sp.random)) {
+    const diff = first(sp.difficulty);
+    const difficulty: DojoDifficulty | undefined =
+      diff === "easy" || diff === "medium" || diff === "hard"
+        ? diff
+        : undefined;
+    wantedSlug =
+      (await pickRandomSlug(user.id, {
+        topicSlug: first(sp.topic),
+        difficulty,
+      })) ?? undefined;
+    openedRandom = wantedSlug !== undefined;
+  }
+
   const initialDetail = wantedSlug
     ? await getQuestionBySlug(wantedSlug, user.id)
     : null;
@@ -75,7 +95,12 @@ export default async function DojoPage({
           </Link>
         )}
 
-        <DojoWorkspace items={items} topics={topics} initialDetail={initialDetail} />
+        <DojoWorkspace
+          items={items}
+          topics={topics}
+          initialDetail={initialDetail}
+          initialFresh={openedRandom}
+        />
       </div>
     </Container>
   );

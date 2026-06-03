@@ -108,20 +108,36 @@ export async function saveDojoAttempt(
     return { ok: true, data: { solved: justPassed } };
   } catch (error) {
     console.error("[saveDojoAttempt]", error);
-    return { ok: false, error: "Could not save your attempt. Please try again." };
+    return {
+      ok: false,
+      error: "Could not save your attempt. Please try again.",
+    };
   }
 }
 
-/** Pick a random (preferring unsolved) question, optionally within a topic. */
+const randomSchema = z.object({
+  topicSlug: z.string().trim().min(1).optional(),
+  difficulty: z.enum(["easy", "medium", "hard"]).optional(),
+});
+
+export type RandomDojoInput = z.infer<typeof randomSchema>;
+
+/**
+ * Pick a random (preferring unsolved) question, optionally scoped to a topic
+ * and/or difficulty.
+ */
 export async function randomDojoQuestion(
-  topicSlug?: string,
+  input?: RandomDojoInput,
 ): Promise<Result<{ slug: string }>> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Not authenticated." };
 
-  const slug = await pickRandomSlug(user.id, topicSlug || undefined);
+  const parsed = randomSchema.safeParse(input ?? {});
+  if (!parsed.success) return { ok: false, error: "Invalid request." };
+
+  const slug = await pickRandomSlug(user.id, parsed.data);
   if (!slug) {
-    return { ok: false, error: "No questions found for that topic yet." };
+    return { ok: false, error: "No questions match those filters yet." };
   }
   return { ok: true, data: { slug } };
 }
@@ -162,7 +178,9 @@ export async function getDojoHintAction(
     return { ok: true, data: { hint } };
   } catch (error) {
     const msg =
-      error instanceof CvAiError ? error.message : "Could not get a hint right now.";
+      error instanceof CvAiError
+        ? error.message
+        : "Could not get a hint right now.";
     return { ok: false, error: msg };
   }
 }
@@ -210,7 +228,9 @@ export async function reviewDojoSolutionAction(
     return { ok: true, data: review };
   } catch (error) {
     const msg =
-      error instanceof CvAiError ? error.message : "Could not review right now.";
+      error instanceof CvAiError
+        ? error.message
+        : "Could not review right now.";
     return { ok: false, error: msg };
   }
 }
@@ -240,10 +260,16 @@ export async function rateDojoQuestion(
 
   try {
     const [prog] = await db
-      .select({ ease: dojoProgress.ease, intervalDays: dojoProgress.intervalDays })
+      .select({
+        ease: dojoProgress.ease,
+        intervalDays: dojoProgress.intervalDays,
+      })
       .from(dojoProgress)
       .where(
-        and(eq(dojoProgress.userId, user.id), eq(dojoProgress.questionId, questionId)),
+        and(
+          eq(dojoProgress.userId, user.id),
+          eq(dojoProgress.questionId, questionId),
+        ),
       );
 
     const next = schedule(
@@ -356,7 +382,10 @@ const personalCreateSchema = z.object({
     .trim()
     .min(1)
     .max(80)
-    .regex(/^[A-Za-z_$][A-Za-z0-9_$]*$/, "Function name must be a valid identifier."),
+    .regex(
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/,
+      "Function name must be a valid identifier.",
+    ),
   starterCode: z.string().min(1).max(20000),
   testCases: z
     .array(
@@ -382,7 +411,8 @@ async function insertPersonalQuestion(
   q: PersonalQuestion,
 ): Promise<string> {
   const { topics, ...fields } = q;
-  const base = `usr-${userId.slice(0, 8)}-${slugify(q.title) || "problem"}`.slice(0, 110);
+  const base =
+    `usr-${userId.slice(0, 8)}-${slugify(q.title) || "problem"}`.slice(0, 110);
   for (let i = 0; i < 5; i++) {
     const slug = i === 0 ? base : `${base}-${i + 1}`;
     try {
@@ -419,7 +449,10 @@ export async function createPersonalDojoQuestion(
 
   const parsed = personalCreateSchema.safeParse(input);
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid problem." };
+    return {
+      ok: false,
+      error: parsed.error.issues[0]?.message ?? "Invalid problem.",
+    };
   }
 
   try {
@@ -436,9 +469,11 @@ export async function createPersonalDojoQuestion(
  * Import one or more personal problems from pasted JSON (a single object or an
  * array). Each is shape-validated; valid ones are created as private problems.
  */
-export async function importPersonalDojoQuestions(
-  input: { json: string },
-): Promise<Result<{ created: number; failed: number; firstSlug: string | null }>> {
+export async function importPersonalDojoQuestions(input: {
+  json: string;
+}): Promise<
+  Result<{ created: number; failed: number; firstSlug: string | null }>
+> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Not authenticated." };
 

@@ -40,6 +40,39 @@
   --border: #e6eae8;
   --input: #e6eae8;
   --ring: #00b775;
+  /* Emphasized edge (focus-within, raised cards) */
+  --border-strong: #d4dbd8;
+
+  /* Surface elevation ladder. surface-1 == card, surface-2 == secondary/muted;
+     surface-3 floats above (popovers/dialogs). Kept as additive aliases so the
+     existing --card/--secondary/--popover tokens stay valid everywhere. */
+  --surface-1: #f6f8f7;
+  --surface-2: #f1f4f3;
+  --surface-3: #ffffff;
+  /* Hover overlay — adapts to whatever surface it sits on (replaces opacity hovers) */
+  --surface-hover: color-mix(in srgb, var(--foreground) 4%, transparent);
+
+  /* Semantic status colours (token-driven; replaces hardcoded hex) */
+  --success: #059669;
+  --success-foreground: #ffffff;
+  --success-subtle: #ecfdf5;
+  --warning: #d97706;
+  --warning-foreground: #ffffff;
+  --warning-subtle: #fffbeb;
+  --info: #2563eb;
+  --info-foreground: #ffffff;
+  --info-subtle: #eff6ff;
+  --destructive-subtle: #fef2f2;
+
+  /* Data-viz ramp */
+  --chart-1: #00b775;
+  --chart-2: #0ea5b7;
+  --chart-3: #3b82f6;
+  --chart-4: #f59e0b;
+  --chart-5: #8b5cf6;
+
+  /* Motion easing (already used by .animate-fade-up) */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
   /* Radius scale — base maps to rounded cards (2xl) */
   --radius: 1rem;
@@ -74,6 +107,30 @@
   --border: #262b2a;
   --input: #262b2a;
   --ring: #2bdc97;
+  --border-strong: #313735;
+
+  /* Surface elevation reads by lightness: bg #0b0f0e → 1 → 2 → 3 */
+  --surface-1: #15191a;
+  --surface-2: #1b201f;
+  --surface-3: #21282a;
+  --surface-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
+
+  --success: #34d399;
+  --success-foreground: #04231a;
+  --success-subtle: color-mix(in srgb, var(--success) 14%, transparent);
+  --warning: #fbbf24;
+  --warning-foreground: #1a1203;
+  --warning-subtle: color-mix(in srgb, var(--warning) 14%, transparent);
+  --info: #60a5fa;
+  --info-foreground: #04122e;
+  --info-subtle: color-mix(in srgb, var(--info) 14%, transparent);
+  --destructive-subtle: color-mix(in srgb, var(--destructive) 14%, transparent);
+
+  --chart-1: #2bdc97;
+  --chart-2: #2dd4bf;
+  --chart-3: #60a5fa;
+  --chart-4: #fbbf24;
+  --chart-5: #a78bfa;
 }
 
 /* ------------------------------------------------------------------ */
@@ -98,8 +155,31 @@
   --color-destructive: var(--destructive);
   --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
   --color-input: var(--input);
   --color-ring: var(--ring);
+
+  --color-surface-1: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-surface-hover: var(--surface-hover);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-subtle: var(--info-subtle);
+  --color-destructive-subtle: var(--destructive-subtle);
+
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
 
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 4px);
@@ -134,6 +214,72 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Elevation ladder                                                    */
+/* Light mode reads depth from soft drop-shadows; dark mode reads it   */
+/* from surface lightness + a hairline border (set by the component) + */
+/* a faint 1px inset top highlight (the "lit edge" Linear/Vercel use), */
+/* since drop-shadows are nearly invisible on a dark canvas.           */
+/* ------------------------------------------------------------------ */
+@layer utilities {
+  .elev-1 {
+    box-shadow:
+      0 1px 3px rgba(0, 0, 0, 0.04),
+      0 8px 24px -12px rgba(0, 0, 0, 0.1);
+  }
+  .elev-2 {
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.06),
+      0 12px 28px -12px rgba(0, 0, 0, 0.14);
+  }
+  .elev-3 {
+    box-shadow: 0 6px 16px -4px rgba(0, 0, 0, 0.12);
+  }
+  .elev-4 {
+    box-shadow: 0 16px 48px -12px rgba(0, 0, 0, 0.2);
+  }
+
+  .dark .elev-1 {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  .dark .elev-2 {
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .dark .elev-3 {
+    box-shadow:
+      0 6px 20px -6px rgba(0, 0, 0, 0.5),
+      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+  .dark .elev-4 {
+    box-shadow:
+      0 16px 48px -12px rgba(0, 0, 0, 0.7),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  /* Interactive card: lifts from elev-1 to elev-2 on hover. Applied as a direct
+     class (not a hover: variant) so it composes with the custom elev-* classes. */
+  .elev-interactive {
+    transition:
+      transform 150ms ease,
+      box-shadow 150ms ease,
+      background-color 150ms ease,
+      border-color 150ms ease;
+  }
+  .elev-interactive:hover {
+    transform: translateY(-1px);
+    box-shadow:
+      0 2px 6px rgba(0, 0, 0, 0.06),
+      0 12px 28px -12px rgba(0, 0, 0, 0.14);
+  }
+  .dark .elev-interactive:hover {
+    box-shadow:
+      0 2px 8px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+}
+
+/* ------------------------------------------------------------------ */
 /* Entrance animation                                                  */
 /* A subtle fade + rise used to stagger dashboard sections in. The     */
 /* prefers-reduced-motion block below collapses the duration to ~0,    */
@@ -165,6 +311,29 @@
   }
 }
 
+/* Overlay/dialog entrance. The content keyframe keeps the centring translate so
+   the scale-in doesn't fight the -translate-x/y-1/2 positioning. Driven via
+   `animate-[dialog-*-in_…]` on the Radix data-[state=open] element; honoured by
+   the prefers-reduced-motion block above (which zeroes animation duration). */
+@keyframes dialog-overlay-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes dialog-content-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /* Landing page atmosphere                                             */
 /* A distinctive editorial display face for headlines (wired through   */
@@ -188,6 +357,37 @@
 }
 .cv-doc.font-sans {
   font-family: var(--font-cv-sans), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* CV paper is always a light "sheet" — it must match the printed PDF — even
+   when the app is in dark mode. The document itself uses literal slate/white
+   colours, but inherited borders (uncoloured border-b/border-l) and the
+   page-break guides read the app tokens, which would flip to dark values under
+   `.dark`. Re-pin those tokens to their light values on the CV subtree so the
+   sheet renders identically in both themes, framed by the dark workspace. */
+.dark .cv-doc,
+.dark .cv-page-guides {
+  --background: #ffffff;
+  --foreground: #0a0f0d;
+  --card: #f6f8f7;
+  --card-foreground: #0a0f0d;
+  --popover: #ffffff;
+  --popover-foreground: #0a0f0d;
+  --primary: #00b775;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f4f3;
+  --secondary-foreground: #0a0f0d;
+  --muted: #f1f4f3;
+  --muted-foreground: #5b6b66;
+  --accent: #e8f7f0;
+  --accent-foreground: #04532f;
+  --border: #e6eae8;
+  --input: #e6eae8;
+  --ring: #00b775;
+  --surface-1: #f6f8f7;
+  --surface-2: #f1f4f3;
+  --surface-3: #ffffff;
+  color-scheme: light;
 }
 
 /* On-screen page-break guides: a faint rule at each A4 page boundary so the
