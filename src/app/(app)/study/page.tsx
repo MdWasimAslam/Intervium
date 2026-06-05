@@ -32,7 +32,8 @@ export default async function StudyPage({
   const folderParam = first(sp.folder);
   const tag = first(sp.tag) || null;
   const query = first(sp.q) ?? "";
-  const includeSubfolders = first(sp.sub) !== "0";
+  // Subfolders are excluded by default; only `sub=1` opts a folder's subtree in.
+  const includeSubfolders = first(sp.sub) === "1";
 
   const selection: FolderSelection =
     !folderParam || folderParam === "all"

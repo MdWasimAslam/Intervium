@@ -185,6 +185,9 @@ export async function importQuestionsFromJson(
     return { ok: true, report };
   } catch (error) {
     console.error("[importQuestionsFromJson]", error);
-    return { ok: false, error: "Import failed. Please check the data and retry." };
+    return {
+      ok: false,
+      error: "Import failed. Please check the data and retry.",
+    };
   }
 }

@@ -8,6 +8,7 @@ import {
   CalendarClock,
   ChevronRight,
   Clock,
+  Download,
   Plus,
   Search,
   X,
@@ -20,6 +21,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { Label } from "@/components/ui/label";
 import { folderPath } from "@/lib/study/tree";
 import type { FolderInput, StudyNoteRow } from "@/lib/study/types";
+import { ExportDialog } from "./ExportDialog";
 import { FolderTree, type FolderSelection } from "./FolderTree";
 import { NoteDialog } from "./NoteDialog";
 import { NotesList } from "./NotesList";
@@ -73,8 +75,9 @@ export function StudyHome({
     const q = patch.q !== undefined ? patch.q : query;
     if (q) params.set("q", q);
 
+    // Subfolders are excluded by default; the param is only present when ON.
     const sub = patch.sub !== undefined ? patch.sub : includeSubfolders;
-    if (isFolder && sub === false) params.set("sub", "0");
+    if (isFolder && sub === true) params.set("sub", "1");
 
     const qs = params.toString();
     return qs ? `/study?${qs}` : "/study";
@@ -138,6 +141,14 @@ export function StudyHome({
           <Button variant="outline" onClick={runSearch}>
             Search
           </Button>
+          <ExportDialog
+            notes={notes}
+            trigger={
+              <Button variant="outline" disabled={notes.length === 0}>
+                <Download className="h-4 w-4" /> Export
+              </Button>
+            }
+          />
           <NoteDialog
             folders={folders}
             allTags={allTags}
@@ -156,7 +167,7 @@ export function StudyHome({
             <Switch
               checked={includeSubfolders}
               onCheckedChange={(v) =>
-                router.push(hrefWith({ sub: v ? null : false }))
+                router.push(hrefWith({ sub: v ? true : null }))
               }
             />
             Include subfolders

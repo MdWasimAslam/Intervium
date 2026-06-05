@@ -92,11 +92,15 @@ export async function listNotes(
     );
   }
 
-  return db
-    .select()
-    .from(studyNotes)
-    .where(and(...clauses))
-    .orderBy(desc(studyNotes.isPinned), desc(studyNotes.updatedAt));
+  return (
+    db
+      .select()
+      .from(studyNotes)
+      .where(and(...clauses))
+      // Pinned first, then newest first (by creation) so freshly added/imported
+      // notes surface at the top and stay put when older notes are edited.
+      .orderBy(desc(studyNotes.isPinned), desc(studyNotes.createdAt))
+  );
 }
 
 /** Distinct tags across the user's non-archived notes (for filter/autocomplete). */
