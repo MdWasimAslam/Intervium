@@ -22,6 +22,18 @@ import type {
 } from "@/components/admin/QuestionsAdmin";
 import { QuestionFields, type QuestionFormValue } from "./QuestionFields";
 
+/** The editable form fields for a question row. */
+function formFrom(question: QuestionRow): QuestionFormValue {
+  return {
+    roleId: question.roleId,
+    techStackId: question.techStackId,
+    category: question.category,
+    modality: question.modality,
+    questionText: question.questionText,
+    idealAnswer: question.idealAnswer,
+  };
+}
+
 function EditQuestionDialog({
   question,
   roles,
@@ -36,14 +48,19 @@ function EditQuestionDialog({
   const [error, setError] = useState<string>();
   const [pending, start] = useTransition();
   const [isActive, setIsActive] = useState(question.isActive);
-  const [value, setValue] = useState<QuestionFormValue>({
-    roleId: question.roleId,
-    techStackId: question.techStackId,
-    category: question.category,
-    modality: question.modality,
-    questionText: question.questionText,
-    idealAnswer: question.idealAnswer,
-  });
+  const [value, setValue] = useState<QuestionFormValue>(() => formFrom(question));
+
+  function onOpenChange(next: boolean) {
+    setOpen(next);
+    // Re-sync to the current question (and clear stale errors) on each open, so
+    // uncommitted edits from a cancelled session don't linger and the form
+    // reflects the latest saved values after a refresh.
+    if (next) {
+      setValue(formFrom(question));
+      setIsActive(question.isActive);
+      setError(undefined);
+    }
+  }
 
   function submit() {
     setError(undefined);
@@ -57,7 +74,7 @@ function EditQuestionDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm" aria-label="Edit">
           <Pencil className="h-4 w-4" />

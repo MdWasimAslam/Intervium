@@ -30,6 +30,8 @@ const EXPECTED_TABLES = [
   "dojo_question_topics",
   "dojo_attempts",
   "dojo_progress",
+  "study_folders",
+  "study_notes",
 ] as const;
 
 /** A missing one of these means the app cannot function. */

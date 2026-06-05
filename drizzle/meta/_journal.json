@@ -148,6 +148,20 @@
       "when": 1780498343329,
       "tag": "0020_careless_ultimates",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1780662203323,
+      "tag": "0021_sweet_slyde",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1780663576691,
+      "tag": "0022_spicy_iron_man",
+      "breakpoints": true
     }
   ]
 }

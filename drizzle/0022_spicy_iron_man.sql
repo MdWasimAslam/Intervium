@@ -1,0 +1,1 @@
+ALTER TABLE "study_notes" DROP COLUMN "front";

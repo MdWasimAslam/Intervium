@@ -11,6 +11,7 @@ import {
   timestamp,
   unique,
   uuid,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
 import type { StoredAtsReview } from "../src/lib/cv/types";
 
@@ -647,5 +648,98 @@ export const dojoProgress = pgTable(
   (table) => [
     primaryKey({ columns: [table.userId, table.questionId] }),
     index("dojo_progress_user_due_idx").on(table.userId, table.dueAt),
+  ],
+);
+
+/* ========================================================================== */
+/* STUDY NOTES                                                                */
+/* A standalone personal knowledge base: Markdown notes + front/back          */
+/* flashcards, organized in a user-built nested folder tree, with free-form   */
+/* tags and SM-2 spaced-repetition review. All rows are scoped to one user.   */
+/* ========================================================================== */
+
+// Anki-style self-rating that drives the study-note spaced-repetition schedule.
+export const studyNoteRatingEnum = pgEnum("study_note_rating", [
+  "again",
+  "hard",
+  "good",
+  "easy",
+]);
+
+/* -------------------------------------------------------------------------- */
+/* study_folders — self-referencing tree (JavaScript > Basics > Closures …)   */
+/* -------------------------------------------------------------------------- */
+export const studyFolders = pgTable(
+  "study_folders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    // NULL = a top-level folder. Self-reference makes the tree arbitrary-depth.
+    parentId: uuid("parent_id").references((): AnyPgColumn => studyFolders.id),
+    name: text("name").notNull(),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("study_folders_user_parent_idx").on(table.userId, table.parentId),
+  ],
+);
+
+/* -------------------------------------------------------------------------- */
+/* study_notes — notes & flashcards; SR state lives inline (rows are per-user)*/
+/* -------------------------------------------------------------------------- */
+export const studyNotes = pgTable(
+  "study_notes",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id),
+    // NULL = unfiled (lives at the root, outside any folder).
+    folderId: uuid("folder_id").references(() => studyFolders.id),
+    // The note heading; for a flashcard this doubles as the prompt ("front").
+    title: text("title").notNull(),
+    // Markdown body for a note; the flashcard "back" / answer for a flashcard.
+    content: text("content"),
+    // When true, the note enters the spaced-repetition review queue.
+    isFlashcard: boolean("is_flashcard").notNull().default(false),
+    // Free-form tags, lowercased + deduped on save. Cross-cutting filtering.
+    tags: text("tags")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
+    // SM-2 lite state (only meaningful for flashcards). `ease` is ×100 (250 = 2.5).
+    ease: integer("ease").notNull().default(250),
+    intervalDays: integer("interval_days").notNull().default(0),
+    // Null = brand-new card, due immediately.
+    dueAt: timestamp("due_at", { withTimezone: true }),
+    lastRating: studyNoteRatingEnum("last_rating"),
+    lastReviewedAt: timestamp("last_reviewed_at", { withTimezone: true }),
+    reviewCount: integer("review_count").notNull().default(0),
+    // Pinned notes sort to the top of any list.
+    isPinned: boolean("is_pinned").notNull().default(false),
+    // Powers the "recently viewed" strip and resume affordance.
+    lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }),
+    isArchived: boolean("is_archived").notNull().default(false),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("study_notes_user_folder_idx").on(table.userId, table.folderId),
+    index("study_notes_user_due_idx").on(table.userId, table.dueAt),
+    index("study_notes_user_viewed_idx").on(table.userId, table.lastViewedAt),
+    // GIN index over the tags array for fast "contains tag" filtering.
+    index("study_notes_tags_idx").using("gin", table.tags),
   ],
 );

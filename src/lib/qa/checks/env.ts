@@ -15,7 +15,6 @@ const OPTIONAL: { key: string; note: string }[] = [
   { key: "GROQ_FAST_MODEL", note: "Defaults to llama-3.1-8b-instant." },
   { key: "GROQ_SMART_MODEL", note: "Defaults to llama-3.3-70b-versatile." },
   { key: "AI_DAILY_BUDGET", note: "Defaults to the built-in daily cap." },
-  { key: "QA_DASHBOARD_ENABLED", note: "Gates this dashboard in production." },
 ];
 
 type State = "set" | "empty" | "missing";

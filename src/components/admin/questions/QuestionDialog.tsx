@@ -50,8 +50,14 @@ function QuestionDialog({
     });
   }
 
+  function onOpenChange(next: boolean) {
+    setOpen(next);
+    // Clear any stale validation error when reopening the dialog.
+    if (next) setError(undefined);
+  }
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-xl">
         <DialogHeader>

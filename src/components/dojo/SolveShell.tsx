@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Chip } from "@/components/ui/chip";
+import { Markdown } from "@/components/ui/markdown";
 import { SplitPane } from "@/components/ui/SplitPane";
 import { CodeEditor } from "@/components/code/CodeEditor";
 import { ResultsPanel } from "@/components/code/ResultsPanel";
@@ -378,9 +379,7 @@ export function SolveShell({
         )}
 
         <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-5">
-          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-[var(--foreground)]">
-            {question.prompt}
-          </pre>
+          <Markdown>{question.prompt}</Markdown>
         </div>
 
         <HintPanel
@@ -408,9 +407,7 @@ export function SolveShell({
               {question.title}
             </summary>
             <div className="max-h-48 overflow-auto border-t border-[var(--border)] px-4 py-3">
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-[var(--foreground)]">
-                {question.prompt}
-              </pre>
+              <Markdown>{question.prompt}</Markdown>
             </div>
           </details>
         )}

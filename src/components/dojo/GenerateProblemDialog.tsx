@@ -7,6 +7,7 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Chip } from "@/components/ui/chip";
+import { Markdown } from "@/components/ui/markdown";
 import {
   Select,
   SelectContent,
@@ -52,7 +53,13 @@ export function GenerateProblemDialog({
   const [difficulty, setDifficulty] = useState<DojoDifficulty>("easy");
   const [promptText, setPromptText] = useState("");
 
-  const { draft, generating, error: genError, generate, reset } = useDojoDraft();
+  const {
+    draft,
+    generating,
+    error: genError,
+    generate,
+    reset,
+  } = useDojoDraft();
   const { state: runState, run, reset: resetRun } = useJsRunner();
   const [verifying, setVerifying] = useState(false);
   const [verified, setVerified] = useState(false);
@@ -96,7 +103,8 @@ export function GenerateProblemDialog({
       outcome.total > 0 &&
       outcome.passed === outcome.total;
     if (allPass) setVerified(true);
-    else if (!isRetry) await doGenerate(true); // one silent retry
+    else if (!isRetry)
+      await doGenerate(true); // one silent retry
     else setVerified(false);
   }
 
@@ -130,7 +138,8 @@ export function GenerateProblemDialog({
       <DialogContent className="max-h-[90vh] max-w-xl overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-[var(--primary)]" /> Generate a problem
+            <Sparkles className="h-5 w-5 text-[var(--primary)]" /> Generate a
+            problem
           </DialogTitle>
         </DialogHeader>
 
@@ -222,25 +231,25 @@ export function GenerateProblemDialog({
                   </Chip>
                 ))}
               </div>
-              <p className="max-h-32 overflow-auto whitespace-pre-wrap text-sm text-[var(--muted-foreground)]">
-                {draft.prompt}
-              </p>
+              <div className="max-h-32 overflow-auto text-[var(--muted-foreground)]">
+                <Markdown>{draft.prompt}</Markdown>
+              </div>
 
               {verifying ? (
                 <p className="flex items-center gap-2 text-sm text-[var(--muted-foreground)]">
-                  <Loader2 className="h-4 w-4 animate-spin" /> Verifying the test
-                  cases…
+                  <Loader2 className="h-4 w-4 animate-spin" /> Verifying the
+                  test cases…
                 </p>
               ) : verified ? (
                 <p className="flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                  <Check className="h-4 w-4" /> Verified — the reference solution
-                  passes all {draft.testCases.length} test cases.
+                  <Check className="h-4 w-4" /> Verified — the reference
+                  solution passes all {draft.testCases.length} test cases.
                 </p>
               ) : (
                 <div className="space-y-2">
                   <p className="text-sm font-medium text-[var(--destructive)]">
-                    The generated solution didn&apos;t pass its own tests. Regenerate
-                    to try again.
+                    The generated solution didn&apos;t pass its own tests.
+                    Regenerate to try again.
                   </p>
                   <TestResults state={runState} />
                 </div>
@@ -252,7 +261,11 @@ export function GenerateProblemDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" disabled={saving} onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            disabled={saving}
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
           <LoadingButton

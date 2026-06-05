@@ -1,12 +1,78 @@
 import "server-only";
 import { isLocalDatabase } from "@db";
+import { MODEL_CATALOG } from "@/lib/ai/catalog";
+import { getModel } from "@/lib/ai/client";
+import type { AiProvider } from "@/lib/ai/client";
 import type { CheckResult, RunContext, SectionOutput } from "../types";
 
 /**
  * §5 API Integration Health. Validates configuration for every real integration
- * (Groq, NextAuth, Postgres). When liveProbe is on it also makes ONE token-free
- * GET to Groq's /models endpoint to measure latency — no LLM call, no tokens.
+ * (Groq, DeepSeek, NextAuth, Postgres). When liveProbe is on it also:
+ *   - makes ONE token-free GET to Groq's /models endpoint (latency/auth), and
+ *   - sends a tiny prompt to EACH catalog model to confirm it actually answers
+ *     (this one spends a few tokens — hence it's gated behind live probe).
  */
+
+/** Env var holding each provider's API key. */
+const PROVIDER_KEY_ENV: Record<AiProvider, string> = {
+  groq: "GROQ_API_KEY",
+  deepseek: "DEEPSEEK_API_KEY",
+};
+
+/**
+ * Actually invoke one model with a minimal prompt and confirm a non-empty
+ * reply. Returns a skip when the provider's key isn't set (so an unconfigured
+ * optional provider like DeepSeek doesn't read as a failure).
+ */
+async function probeModel(
+  provider: AiProvider,
+  model: string,
+): Promise<CheckResult> {
+  const id = `model-${provider}-${model}`;
+  const label = `Model · ${provider}/${model}`;
+
+  if (!process.env[PROVIDER_KEY_ENV[provider]]?.trim()) {
+    return {
+      id,
+      label,
+      status: "skip",
+      detail: `${PROVIDER_KEY_ENV[provider]} not set — provider not configured`,
+    };
+  }
+
+  const start = performance.now();
+  try {
+    const text = await getModel({
+      json: false,
+      temperature: 0,
+      provider,
+      model,
+    }).generateContent("Reply with the single word OK and nothing else.");
+    const latencyMs = Math.round(performance.now() - start);
+    const reply = text.trim();
+    return {
+      id,
+      label,
+      status: reply.length > 0 ? "pass" : "warning",
+      detail:
+        reply.length > 0
+          ? `Responded: "${reply.slice(0, 40)}"`
+          : "Empty response from model",
+      latencyMs,
+      recommendation:
+        reply.length > 0 ? undefined : "Model reachable but returned nothing.",
+    };
+  } catch (error) {
+    return {
+      id,
+      label,
+      status: "fail",
+      detail: error instanceof Error ? error.message : "Model call failed",
+      latencyMs: Math.round(performance.now() - start),
+      recommendation: `Check the ${provider} key/model id and provider status.`,
+    };
+  }
+}
 
 const GROQ_MODELS_URL = "https://api.groq.com/openai/v1/models";
 const PROBE_TIMEOUT_MS = 8_000;
@@ -14,7 +80,9 @@ const PROBE_TIMEOUT_MS = 8_000;
 async function timedFetch(
   url: string,
   init: RequestInit,
-): Promise<{ ok: boolean; status: number; latencyMs: number } | { error: string }> {
+): Promise<
+  { ok: boolean; status: number; latencyMs: number } | { error: string }
+> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), PROBE_TIMEOUT_MS);
   const start = performance.now();
@@ -32,7 +100,9 @@ async function timedFetch(
   }
 }
 
-export async function checkIntegrations(ctx: RunContext): Promise<SectionOutput> {
+export async function checkIntegrations(
+  ctx: RunContext,
+): Promise<SectionOutput> {
   const checks: CheckResult[] = [];
 
   // --- Groq (AI provider) ---------------------------------------------------
@@ -64,7 +134,8 @@ export async function checkIntegrations(ctx: RunContext): Promise<SectionOutput>
           label: "Groq · connectivity",
           status: "warning",
           detail: `Probe failed: ${result.error}`,
-          recommendation: "Network issue or Groq unreachable; AI calls may fail.",
+          recommendation:
+            "Network issue or Groq unreachable; AI calls may fail.",
         });
       } else if (result.status === 401 || result.status === 403) {
         checks.push({
@@ -114,6 +185,17 @@ export async function checkIntegrations(ctx: RunContext): Promise<SectionOutput>
         : "Use a 32+ character random AUTH_SECRET in production.",
   });
 
+  // --- DeepSeek (optional secondary AI provider) ---------------------------
+  const hasDeepseek = Boolean(process.env.DEEPSEEK_API_KEY?.trim());
+  checks.push({
+    id: "deepseek-config",
+    label: "DeepSeek · configuration",
+    status: hasDeepseek ? "pass" : "skip",
+    detail: hasDeepseek
+      ? "key set"
+      : "DEEPSEEK_API_KEY not set — optional provider, DeepSeek models will be skipped",
+  });
+
   // --- Postgres (config view; live ping is §3) ------------------------------
   const hasDbUrl = Boolean(process.env.DATABASE_URL?.trim());
   checks.push({
@@ -126,5 +208,27 @@ export async function checkIntegrations(ctx: RunContext): Promise<SectionOutput>
     recommendation: hasDbUrl ? undefined : "Set DATABASE_URL.",
   });
 
-  return { checks };
+  // --- LLM model health: actually answer with each catalog model -----------
+  // A real (tiny) completion per model — the only true "is the LLM working?"
+  // test. Token cost is a handful of tokens per model, so it's gated behind
+  // live probe like every other network call here.
+  let note: string | undefined;
+  if (ctx.liveProbe) {
+    const probes = await Promise.all(
+      MODEL_CATALOG.map((m) => probeModel(m.provider, m.model)),
+    );
+    checks.push(...probes);
+  } else {
+    checks.push({
+      id: "model-health",
+      label: `LLM model health (${MODEL_CATALOG.length} models)`,
+      status: "skip",
+      detail:
+        "Live probe off — enable 'Live probes' to send a tiny prompt to each catalog model (spends a few tokens).",
+    });
+    note =
+      "Per-model LLM probes run only with live probing on, since they spend a few tokens each.";
+  }
+
+  return { checks, note };
 }

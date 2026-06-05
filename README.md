@@ -116,7 +116,6 @@ See [`.env.example`](.env.example) for the full, commented list. Summary:
 | `GROQ_FAST_MODEL` / `GROQ_SMART_MODEL` | ⬜ | Override default Groq models |
 | `GROQ_MODEL_LIMITS` / `AI_DAILY_BUDGET` | ⬜ | Tune AI usage limits/budget |
 | `DEEPSEEK_API_KEY` / `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` | ⬜ | Optional DeepSeek provider |
-| `QA_DASHBOARD_ENABLED` | ⬜ | Force the QA Center on/off |
 | `NEXT_PUBLIC_SITE_URL` | ⬜ | Absolute URL for OG/social images |
 
 Required vars are validated at boot in [`src/lib/env.ts`](src/lib/env.ts) — the app fails fast with a clear message if any are missing.
@@ -194,7 +193,7 @@ Full conventions and the critical "do-not-break" list are in [`CLAUDE.md`](CLAUD
 | `drizzle-kit` can't connect | `DATABASE_URL` not loaded — `drizzle.config.ts` reads `.env.local`; confirm it exists |
 | Interviews fail to generate / score | Check `GROQ_API_KEY`; AI may be over the daily budget (`AI_DAILY_BUDGET`) — surfaced as a friendly message |
 | Admin can't sign in | Re-run `npm run db:seed` (idempotent) and set `ADMIN_PASSWORD`, or reset via the admin panel |
-| QA Center 404s | It's admin-only and disabled in production unless `QA_DASHBOARD_ENABLED=true` |
+| QA Center 404s / redirects | It's admin-only — sign in with an admin account |
 
 ---
 

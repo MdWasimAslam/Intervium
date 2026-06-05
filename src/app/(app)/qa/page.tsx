@@ -10,9 +10,9 @@ export const dynamic = "force-dynamic";
 /**
  * Developer-only Production Readiness Dashboard.
  *
- * Gated by {@link requireQaAccess} (admin role + QA_DASHBOARD_ENABLED). Every
- * check is deterministic and AI-free; the work happens in the QaDashboard
- * client component via POST /api/qa/run.
+ * Gated by {@link requireQaAccess} (admin role only). Every check is
+ * deterministic and AI-free; the work happens in the QaDashboard client
+ * component via POST /api/qa/run.
  */
 export default async function QaPage() {
   await requireQaAccess();

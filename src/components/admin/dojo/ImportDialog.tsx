@@ -51,8 +51,17 @@ function ImportDialog() {
         setReport(undefined);
         return;
       }
+      if (!dryRun) {
+        router.refresh();
+        // Clean import: close and let the refreshed table speak for itself.
+        // Keep the dialog open (showing the report) only when there's something
+        // worth reviewing — duplicates skipped or items that failed.
+        if (res.report && res.report.inserted > 0 && res.report.failed === 0) {
+          setOpen(false);
+          return;
+        }
+      }
       setReport(res.report);
-      if (!dryRun) router.refresh();
     });
   }
 

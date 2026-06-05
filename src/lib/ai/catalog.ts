@@ -27,11 +27,8 @@ export const MODEL_CATALOG: ModelOption[] = [
   // Groq
   { provider: "groq", model: "llama-3.1-8b-instant", label: "Llama 3.1 8B Instant — fast & cheap" },
   { provider: "groq", model: "llama-3.3-70b-versatile", label: "Llama 3.3 70B Versatile — balanced" },
-  { provider: "groq", model: "openai/gpt-oss-20b", label: "GPT-OSS 20B" },
-  { provider: "groq", model: "openai/gpt-oss-120b", label: "GPT-OSS 120B — strongest" },
   // DeepSeek
-  { provider: "deepseek", model: "deepseek-chat", label: "DeepSeek Chat (V3)" },
-  { provider: "deepseek", model: "deepseek-reasoner", label: "DeepSeek Reasoner (R1)" },
+  { provider: "deepseek", model: "deepseek-v4-flash", label: "DeepSeek Flash (V4)" },
 ];
 
 /** A per-feature model choice persisted in app settings. */

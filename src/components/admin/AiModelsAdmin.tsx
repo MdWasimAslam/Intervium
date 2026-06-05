@@ -31,6 +31,11 @@ function inCatalog(choice: FeatureModelChoice): boolean {
   );
 }
 
+/** A short, human-readable "Provider · model" label for a concrete choice. */
+function describeChoice(choice: FeatureModelChoice): string {
+  return `${AI_PROVIDER_LABELS[choice.provider]} · ${choice.model}`;
+}
+
 /** The <select> value that represents a feature's current choice. */
 function selectValue(choice: FeatureModelChoice | null): string {
   if (!choice) return DEFAULT;
@@ -40,9 +45,12 @@ function selectValue(choice: FeatureModelChoice | null): string {
 export function AiModelsAdmin({
   featureModels,
   scoringProvider,
+  defaults,
 }: {
   featureModels: FeatureModels;
   scoringProvider: ScoringProvider;
+  /** The concrete model each feature falls back to when left on "Default". */
+  defaults: Record<string, FeatureModelChoice>;
 }) {
   const router = useRouter();
   const [choices, setChoices] = useState<
@@ -64,6 +72,16 @@ export function AiModelsAdmin({
   function setChoice(key: string, choice: FeatureModelChoice | null) {
     setSaved(false);
     setChoices((c) => ({ ...c, [key]: choice }));
+  }
+
+  /** Clear every per-feature override so all features fall back to Default. */
+  function resetAll() {
+    setSaved(false);
+    setChoices(() => {
+      const reset: Record<string, FeatureModelChoice | null> = {};
+      for (const f of AI_FEATURES) reset[f.key] = null;
+      return reset;
+    });
   }
 
   function onSelect(key: string, value: string) {
@@ -133,6 +151,10 @@ export function AiModelsAdmin({
               const choice = choices[f.key];
               const value = selectValue(choice);
               const isCustom = value === CUSTOM;
+              const fallback = defaults[f.key];
+              const defaultLabel = fallback
+                ? describeChoice(fallback)
+                : "global provider";
               return (
                 <div
                   key={f.key}
@@ -141,7 +163,9 @@ export function AiModelsAdmin({
                   <div className="min-w-0">
                     <p className="text-sm font-medium">{f.label}</p>
                     <p className="text-xs text-[var(--muted-foreground)]">
-                      {f.defaultHint}
+                      {choice
+                        ? `Running on ${describeChoice(choice)}`
+                        : `Default → ${defaultLabel}`}
                     </p>
                   </div>
 
@@ -152,7 +176,9 @@ export function AiModelsAdmin({
                       onChange={(e) => onSelect(f.key, e.target.value)}
                       className={`${fieldCls} sm:w-72`}
                     >
-                      <option value={DEFAULT}>Default</option>
+                      <option value={DEFAULT}>
+                        {fallback ? `Default (${defaultLabel})` : "Default"}
+                      </option>
                       {(["groq", "deepseek"] as AiProvider[]).map((provider) => (
                         <optgroup
                           key={provider}
@@ -221,6 +247,13 @@ export function AiModelsAdmin({
       <div className="flex items-center gap-3">
         <Button onClick={submit} disabled={pending}>
           {pending ? "Saving…" : "Save changes"}
+        </Button>
+        <Button
+          variant="outline"
+          onClick={resetAll}
+          disabled={pending || overrideCount === 0}
+        >
+          Reset all to default
         </Button>
         <span className="text-xs text-[var(--muted-foreground)]">
           {overrideCount === 0

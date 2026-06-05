@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   Code2,
   FileText,
   History,
@@ -33,7 +34,6 @@ export const NAV_LINKS: NavLink[] = [
     href: "/dashboard",
     label: "Dashboard",
     icon: LayoutDashboard,
-    inHeader: true,
   },
   {
     href: "/interview/new",
@@ -56,6 +56,13 @@ export const NAV_LINKS: NavLink[] = [
     inHeader: true,
   },
   {
+    href: "/study",
+    label: "Study Notes",
+    icon: BookOpen,
+    inShortcuts: true,
+    inHeader: true,
+  },
+  {
     href: "/dojo?random=1",
     label: "Random DSA",
     icon: Shuffle,
@@ -66,14 +73,12 @@ export const NAV_LINKS: NavLink[] = [
     label: "Gap analysis",
     icon: Target,
     inShortcuts: true,
-    inHeader: true,
   },
   {
     href: "/history",
     label: "History",
     icon: History,
     inShortcuts: true,
-    inHeader: true,
   },
   { href: "/profile", label: "Edit profile", icon: Pencil, inShortcuts: true },
   {

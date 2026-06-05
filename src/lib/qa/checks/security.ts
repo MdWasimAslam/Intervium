@@ -92,18 +92,14 @@ export function checkSecurity(): SectionOutput {
         : undefined,
   });
 
-  // 7. Self-aware: this dashboard exposed in production.
-  const qaFlag = process.env.QA_DASHBOARD_ENABLED?.trim().toLowerCase();
-  const qaOnInProd = isProd && (qaFlag === "true" || qaFlag === "1");
+  // 7. Self-aware: this dashboard is admin-only in every environment.
   checks.push({
     id: "qa-exposure",
     label: "QA dashboard exposure",
-    status: qaOnInProd ? "warning" : "pass",
-    detail: qaOnInProd
-      ? "enabled in production (admin-only)"
-      : "not force-enabled in production",
-    recommendation: qaOnInProd
-      ? "Keep /qa admin-only; disable QA_DASHBOARD_ENABLED in prod once validated."
+    status: "pass",
+    detail: "admin-only (available in all environments)",
+    recommendation: isProd
+      ? "Keep /qa strictly behind the admin role check; it reports no secret values."
       : undefined,
   });
 
