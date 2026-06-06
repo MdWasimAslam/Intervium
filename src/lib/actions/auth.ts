@@ -53,6 +53,13 @@ export async function registerAction(
     return { error: "An access code is required." };
   }
 
+  // Hash BEFORE opening the transaction: bcrypt is ~250–400ms of CPU work, and
+  // doing it inside the tx would pin a pooled connection (and the access-code
+  // row lock) for that whole time — under burst registrations (cohorts/access
+  // codes) that exhausts the small pool. Hashing for an eventually-invalid code
+  // is harmless and bounded by rate limiting.
+  const passwordHash = await bcrypt.hash(password, 12);
+
   try {
     await withTransaction(async (tx) => {
       // Lock the access-code row for the duration of the transaction.
@@ -84,8 +91,6 @@ export async function registerAction(
           "An account with this email already exists.",
         );
       }
-
-      const passwordHash = await bcrypt.hash(password, 12);
 
       const [user] = await tx
         .insert(users)

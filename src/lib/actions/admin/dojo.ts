@@ -32,7 +32,10 @@ const fields = {
     .trim()
     .min(1, "Slug is required.")
     .max(120)
-    .regex(/^[a-z0-9-]+$/, "Slug: lowercase letters, numbers and hyphens only."),
+    .regex(
+      /^[a-z0-9-]+$/,
+      "Slug: lowercase letters, numbers and hyphens only.",
+    ),
   title: z.string().trim().min(1, "Title is required.").max(200),
   prompt: z.string().trim().min(1, "Prompt is required.").max(8000),
   difficulty: z.enum(["easy", "medium", "hard"]),
@@ -41,7 +44,10 @@ const fields = {
     .trim()
     .min(1, "Function name is required.")
     .max(80)
-    .regex(/^[A-Za-z_$][A-Za-z0-9_$]*$/, "Function name must be a valid identifier."),
+    .regex(
+      /^[A-Za-z_$][A-Za-z0-9_$]*$/,
+      "Function name must be a valid identifier.",
+    ),
   starterCode: z.string().min(1, "Starter code is required.").max(20000),
   testCases: z.array(testCaseSchema).min(1, "Add at least one test case."),
   // Topic NAMES (existing or new); resolved to topic rows by slug.
@@ -73,7 +79,10 @@ export async function createDojoQuestion(input: unknown): Promise<AdminResult> {
     await setQuestionTopics(row.id, await resolveTopicIds(topics));
   } catch (error) {
     if (isUniqueViolation(error)) {
-      return { ok: false, error: `A question with slug "${q.slug}" already exists.` };
+      return {
+        ok: false,
+        error: `A question with slug "${q.slug}" already exists.`,
+      };
     }
     console.error("[createDojoQuestion]", error);
     return { ok: false, error: "Could not save the question." };
@@ -113,7 +122,10 @@ export async function updateDojoQuestion(input: unknown): Promise<AdminResult> {
     await setQuestionTopics(id, await resolveTopicIds(topics));
   } catch (error) {
     if (isUniqueViolation(error)) {
-      return { ok: false, error: `A question with slug "${q.slug}" already exists.` };
+      return {
+        ok: false,
+        error: `A question with slug "${q.slug}" already exists.`,
+      };
     }
     console.error("[updateDojoQuestion]", error);
     return { ok: false, error: "Could not update the question." };
@@ -185,7 +197,10 @@ export async function importDojoQuestionsFromJson(
     return { ok: true, report };
   } catch (error) {
     console.error("[importDojoQuestionsFromJson]", error);
-    return { ok: false, error: "Import failed. Please check the data and retry." };
+    return {
+      ok: false,
+      error: "Import failed. Please check the data and retry.",
+    };
   }
 }
 
@@ -197,18 +212,21 @@ export async function deleteDojoQuestion(input: unknown): Promise<AdminResult> {
 
   // Keep questions that learners have already practised — their attempt history
   // and review schedule reference them. Deactivate those instead.
-  const [{ n }] = await db
-    .select({ n: count() })
-    .from(dojoAttempts)
-    .where(eq(dojoAttempts.questionId, id));
-  const [{ n: p2 }] = await db
-    .select({ n: count() })
-    .from(dojoProgress)
-    .where(eq(dojoProgress.questionId, id));
+  const [[{ n }], [{ n: p2 }]] = await Promise.all([
+    db
+      .select({ n: count() })
+      .from(dojoAttempts)
+      .where(eq(dojoAttempts.questionId, id)),
+    db
+      .select({ n: count() })
+      .from(dojoProgress)
+      .where(eq(dojoProgress.questionId, id)),
+  ]);
   if (n > 0 || p2 > 0) {
     return {
       ok: false,
-      error: "This question has practice history. Deactivate it instead of deleting.",
+      error:
+        "This question has practice history. Deactivate it instead of deleting.",
     };
   }
 
