@@ -29,3 +29,16 @@ export function allowAction(key: string, max = 5, windowMs = 60_000): boolean {
   buckets.set(key, recent);
   return true;
 }
+
+/**
+ * Like {@link allowAction} but does NOT record the action — it only reports
+ * whether the key currently has headroom. Use this to check a limit before a
+ * fallible side effect, then call {@link allowAction} to consume a slot only
+ * once the side effect actually succeeds (so failures don't burn the budget).
+ */
+export function peekAction(key: string, max = 5, windowMs = 60_000): boolean {
+  const now = Date.now();
+  const recent = (buckets.get(key) ?? []).filter((t) => now - t < windowMs);
+  buckets.set(key, recent);
+  return recent.length < max;
+}

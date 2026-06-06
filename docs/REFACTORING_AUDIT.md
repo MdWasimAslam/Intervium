@@ -1,6 +1,6 @@
 # Intervium — Refactoring & Standardization Audit
 
-**Date:** 2026-06-02 · **Scope:** full app (~31K LOC TS/TSX, Next.js 16 App Router, Drizzle + Neon, Auth.js v5, Tailwind v4, shadcn/ui, Groq AI) · **Lens:** maintainability, readability, architecture, consistency. Correctness/security/UX/a11y/perf bugs are covered separately in [`PRODUCTION_AUDIT.md`](PRODUCTION_AUDIT.md).
+**Date:** 2026-06-02 · **Scope:** full app (~31K LOC TS/TSX, Next.js 16 App Router, Drizzle + Supabase Postgres, Auth.js v5, Tailwind v4, shadcn/ui, Groq AI) · **Lens:** maintainability, readability, architecture, consistency. Correctness/security/UX/a11y/perf bugs are covered separately in [`PRODUCTION_AUDIT.md`](PRODUCTION_AUDIT.md).
 
 ## Headline
 

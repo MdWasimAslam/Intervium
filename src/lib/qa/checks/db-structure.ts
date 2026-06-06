@@ -25,6 +25,7 @@ const EXPECTED_TABLES = [
   "ai_usage_log",
   "cv_versions",
   "cover_letters",
+  "ai_cv_cache",
   "dojo_questions",
   "dojo_topics",
   "dojo_question_topics",
@@ -32,6 +33,7 @@ const EXPECTED_TABLES = [
   "dojo_progress",
   "study_folders",
   "study_notes",
+  "demo_requests",
 ] as const;
 
 /** A missing one of these means the app cannot function. */
@@ -74,7 +76,12 @@ export async function checkDbStructure(): Promise<SectionOutput> {
   checks.push({
     id: "expected-tables",
     label: "Expected tables present",
-    status: missingCritical.length > 0 ? "fail" : missing.length > 0 ? "warning" : "pass",
+    status:
+      missingCritical.length > 0
+        ? "fail"
+        : missing.length > 0
+          ? "warning"
+          : "pass",
     detail:
       missing.length === 0
         ? `All ${EXPECTED_TABLES.length} expected tables present`
@@ -116,8 +123,7 @@ export async function checkDbStructure(): Promise<SectionOutput> {
       label: "Migration status",
       status: "warning",
       detail: `${journalCount} migration(s) in journal; applied count unavailable (drizzle.__drizzle_migrations not found)`,
-      recommendation:
-        "If this is a fresh database, run `npm run db:migrate`.",
+      recommendation: "If this is a fresh database, run `npm run db:migrate`.",
     });
   } else {
     const drift = journalCount - appliedCount;

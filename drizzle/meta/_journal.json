@@ -162,6 +162,34 @@
       "when": 1780663576691,
       "tag": "0022_spicy_iron_man",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1780744596961,
+      "tag": "0023_glamorous_sprite",
+      "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "7",
+      "when": 1780746712844,
+      "tag": "0024_right_gravity",
+      "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1780748046897,
+      "tag": "0025_shiny_bloodstorm",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1780750269864,
+      "tag": "0026_clever_wendigo",
+      "breakpoints": true
     }
   ]
 }

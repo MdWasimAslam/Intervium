@@ -6,9 +6,25 @@ import { useRouter } from "next/navigation";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { Markdown } from "@/components/ui/markdown";
 import { rateStudyNote } from "@/lib/actions/study";
 import type { StudyRating, StudyReviewCard } from "@/lib/study/types";
+
+/**
+ * Fisher–Yates shuffle (non-mutating). Interleaving the due queue mixes topics
+ * within a session — a "desirable difficulty" that improves delayed retention
+ * (strongest for quantitative/coding material) versus reviewing one topic in a
+ * block. The cards are all due, so order among them carries little priority.
+ */
+function interleave<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 const OPTIONS: { rating: StudyRating; label: string; cls: string }[] = [
   {
@@ -35,13 +51,16 @@ const OPTIONS: { rating: StudyRating; label: string; cls: string }[] = [
 
 export function StudyReview({ cards }: { cards: StudyReviewCard[] }) {
   const router = useRouter();
+  // Shuffle once per session so consecutive cards interleave across topics.
+  const [deck] = useState(() => interleave(cards));
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
+  const [attempt, setAttempt] = useState("");
   const [pending, setPending] = useState<StudyRating | null>(null);
   const [error, setError] = useState<string>();
 
-  const card = cards[index];
-  const done = index >= cards.length;
+  const card = deck[index];
+  const done = index >= deck.length;
 
   async function rate(rating: StudyRating) {
     if (!card) return;
@@ -54,6 +73,7 @@ export function StudyReview({ cards }: { cards: StudyReviewCard[] }) {
       return;
     }
     setRevealed(false);
+    setAttempt("");
     setIndex((i) => i + 1);
   }
 
@@ -65,7 +85,7 @@ export function StudyReview({ cards }: { cards: StudyReviewCard[] }) {
           <div className="space-y-1">
             <h3 className="font-semibold">Review complete</h3>
             <p className="text-sm text-[var(--muted-foreground)]">
-              You reviewed {cards.length} card{cards.length === 1 ? "" : "s"}.
+              You reviewed {deck.length} card{deck.length === 1 ? "" : "s"}.
               Nice work.
             </p>
           </div>
@@ -79,7 +99,7 @@ export function StudyReview({ cards }: { cards: StudyReviewCard[] }) {
     <div className="space-y-4">
       <div className="flex items-center justify-between text-sm text-[var(--muted-foreground)]">
         <span>
-          Card {index + 1} of {cards.length}
+          Card {index + 1} of {deck.length}
         </span>
         <Link href="/study" className="hover:text-[var(--foreground)]">
           Exit
@@ -93,20 +113,51 @@ export function StudyReview({ cards }: { cards: StudyReviewCard[] }) {
         <p className="text-lg font-medium">{card.title}</p>
 
         {revealed ? (
-          <div className="mt-5 space-y-2 border-t border-[var(--border)] pt-5">
-            <p className="text-xs font-semibold uppercase tracking-wide text-[var(--muted-foreground)]">
-              Answer
-            </p>
-            {card.content ? (
-              <Markdown>{card.content}</Markdown>
-            ) : (
-              <p className="text-sm text-[var(--muted-foreground)]">
-                (No answer recorded.)
-              </p>
+          <div className="mt-5 space-y-4 border-t border-[var(--border)] pt-5">
+            {attempt.trim() && (
+              <div className="space-y-1">
+                <p className="text-xs font-semibold tracking-wide text-[var(--muted-foreground)] uppercase">
+                  Your recall
+                </p>
+                <p className="text-sm whitespace-pre-wrap text-[var(--muted-foreground)]">
+                  {attempt}
+                </p>
+              </div>
             )}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold tracking-wide text-[var(--muted-foreground)] uppercase">
+                Answer
+              </p>
+              {card.content ? (
+                <Markdown variant="colorful">{card.content}</Markdown>
+              ) : (
+                <p className="text-sm text-[var(--muted-foreground)]">
+                  (No answer recorded.)
+                </p>
+              )}
+            </div>
           </div>
         ) : (
-          <div className="mt-6">
+          <div className="mt-6 space-y-3">
+            <div className="space-y-1.5">
+              <label
+                htmlFor="recall"
+                className="text-xs font-semibold tracking-wide text-[var(--muted-foreground)] uppercase"
+              >
+                Recall it first (optional)
+              </label>
+              <Textarea
+                id="recall"
+                value={attempt}
+                rows={3}
+                placeholder="Type what you remember before revealing — generating the answer from memory strengthens it more than just reading it."
+                onChange={(e) => setAttempt(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "Enter")
+                    setRevealed(true);
+                }}
+              />
+            </div>
             <Button onClick={() => setRevealed(true)}>Reveal answer</Button>
           </div>
         )}

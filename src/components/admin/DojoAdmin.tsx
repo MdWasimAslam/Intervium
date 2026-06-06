@@ -2,7 +2,15 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Pencil, Play, Plus, Sparkles } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Pencil,
+  Play,
+  Plus,
+  Sparkles,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
@@ -62,17 +70,31 @@ const TESTS_TEMPLATE = `[
 export function DojoAdmin({
   rows,
   topicSuggestions,
+  page,
+  totalPages,
+  total,
 }: {
   rows: DojoAdminRow[];
   topicSuggestions: string[];
+  page: number;
+  totalPages: number;
+  total: number;
 }) {
+  const router = useRouter();
+
+  function goToPage(p: number) {
+    const params = new URLSearchParams(window.location.search);
+    params.set("page", String(p));
+    router.push(`?${params.toString()}`);
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold">Code Dojo</h1>
           <p className="mt-1 text-sm text-[var(--muted-foreground)]">
-            Practice problems for the personal coding ground. {rows.length} total.
+            Practice problems for the personal coding ground. {total} total.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -102,7 +124,10 @@ export function DojoAdmin({
           <tbody className="divide-y divide-[var(--border)]">
             {rows.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-[var(--muted-foreground)]">
+                <td
+                  colSpan={5}
+                  className="px-4 py-8 text-center text-[var(--muted-foreground)]"
+                >
                   No problems yet — add your first one.
                 </td>
               </tr>
@@ -148,6 +173,33 @@ export function DojoAdmin({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination ------------------------------------------------------- */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between">
+          <span className="text-sm text-[var(--muted-foreground)]">
+            Page {page} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => goToPage(page - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" /> Prev
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => goToPage(page + 1)}
+            >
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -186,7 +238,11 @@ function Field({
         {label}
       </span>
       {children}
-      {hint && <span className="block text-xs text-[var(--muted-foreground)]">{hint}</span>}
+      {hint && (
+        <span className="block text-xs text-[var(--muted-foreground)]">
+          {hint}
+        </span>
+      )}
     </label>
   );
 }
@@ -252,10 +308,15 @@ function QuestionDialog({
   const [genTopic, setGenTopic] = useState("");
   const [genPrompt, setGenPrompt] = useState("");
 
-  const set = (patch: Partial<FormValue>) => setValue((v) => ({ ...v, ...patch }));
+  const set = (patch: Partial<FormValue>) =>
+    setValue((v) => ({ ...v, ...patch }));
 
   const kebab = (s: string) =>
-    s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+    s
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
 
   async function aiDraft() {
     setError(undefined);
@@ -332,7 +393,11 @@ function QuestionDialog({
 
     start(async () => {
       const res = row
-        ? await updateDojoQuestion({ ...payload, id: row.id, isActive: row.isActive })
+        ? await updateDojoQuestion({
+            ...payload,
+            id: row.id,
+            isActive: row.isActive,
+          })
         : await createDojoQuestion(payload);
       if (res.ok) {
         setOpen(false);
@@ -389,7 +454,9 @@ function QuestionDialog({
               Uses the difficulty selected below. Fills the fields + reference
               solution — then run it to verify before saving.
             </p>
-            {genError && <p className="text-xs text-[var(--destructive)]">{genError}</p>}
+            {genError && (
+              <p className="text-xs text-[var(--destructive)]">{genError}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -434,7 +501,10 @@ function QuestionDialog({
             </Field>
           </div>
 
-          <Field label="Topics" hint="Comma-separated; new ones are created automatically">
+          <Field
+            label="Topics"
+            hint="Comma-separated; new ones are created automatically"
+          >
             <Input
               value={value.topicsText}
               onChange={(e) => set({ topicsText: e.target.value })}
@@ -448,7 +518,10 @@ function QuestionDialog({
             </datalist>
           </Field>
 
-          <Field label="Prompt" hint="Problem statement (plain text; examples welcome)">
+          <Field
+            label="Prompt"
+            hint="Problem statement (plain text; examples welcome)"
+          >
             <Textarea
               rows={5}
               value={value.prompt}
@@ -516,10 +589,18 @@ function QuestionDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" disabled={pending} onClick={() => onOpenChange(false)}>
+          <Button
+            variant="outline"
+            disabled={pending}
+            onClick={() => onOpenChange(false)}
+          >
             Cancel
           </Button>
-          <LoadingButton loading={pending} loadingText="Saving…" onClick={submit}>
+          <LoadingButton
+            loading={pending}
+            loadingText="Saving…"
+            onClick={submit}
+          >
             {row ? "Save changes" : "Create problem"}
           </LoadingButton>
         </DialogFooter>

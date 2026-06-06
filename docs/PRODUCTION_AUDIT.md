@@ -1,6 +1,6 @@
 # Intervium — Production-Readiness Audit
 
-**Date:** 2026-05-31  ·  **Reviewed build:** `main` @ `a59ddac`  ·  **Scope:** full app (17.7K LOC, Next.js 16 App Router, TypeScript, Drizzle + Neon Postgres, Auth.js v5, Tailwind v4, shadcn/ui, Groq AI)
+**Date:** 2026-05-31  ·  **Reviewed build:** `main` @ `a59ddac`  ·  **Scope:** full app (17.7K LOC, Next.js 16 App Router, TypeScript, Drizzle + Supabase Postgres, Auth.js v5, Tailwind v4, shadcn/ui, Groq AI)
 
 **Method:** static checks run against the repo (typecheck, lint, production build, dependency audit) + a 10-dimension code audit (auth, security, CRUD, AI engine, voice, UX, UI, a11y, performance, DB/ops) with every Critical/High finding adversarially re-verified against the actual source. File:line evidence is cited throughout.
 
@@ -222,7 +222,7 @@
 | **Error tracking** | 🔴 Missing | No SDK / `instrumentation.ts` |
 | **Analytics** | 🔴 Missing | No product analytics |
 | **Rate limiting** | 🟡 Weak | In-memory only — ineffective on serverless; none on auth |
-| **Backup strategy** | 🔴 Undocumented | No Neon PITR/branching doc, no tested restore |
+| **Backup strategy** | 🔴 Undocumented | No Supabase PITR/backup doc, no tested restore |
 | **Deployment** | 🟡 Mostly | Builds on Vercel; manual migrations, no migrate-on-deploy; rename `middleware`→`proxy` (Next 16) |
 | **Env validation** | 🟡 Partial | Only `DATABASE_URL` validated at boot |
 

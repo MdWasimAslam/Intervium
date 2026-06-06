@@ -55,7 +55,7 @@ export function FolderTree({
       </div>
 
       <PseudoLink
-        href="/study"
+        href="/study?folder=all"
         active={selected === "all"}
         icon={<Layers className="h-4 w-4" />}
         label="All notes"
@@ -134,7 +134,7 @@ function TreeNode({
       const res = await deleteFolder({ id: node.id });
       setConfirming(false);
       if (res.ok) {
-        if (active) router.push("/study");
+        if (active) router.push("/study?folder=all");
         router.refresh();
       }
     });

@@ -1,208 +1,300 @@
-# Intervium
+<div align="center">
 
-AI-powered mock interviews with instant, actionable feedback. Pick a role, tech
-stack, focus area and difficulty; answer in your own words; get per-question
-scoring and a results breakdown — all powered by **Groq model routing**. The app
-also includes a CV workspace (ATS analysis, AI optimization, cover letters), a
-gap-analysis view, and a "Code Dojo" coding-practice ground.
+# 🎯 Intervium
 
-Built with **Next.js 16 (App Router)**, **TypeScript**, **Tailwind CSS v4**,
-**Drizzle ORM + Neon Postgres**, **Auth.js (NextAuth v5)**, and **shadcn/ui**.
+### Practice the interview. Then ace the real one.
 
-> New here? Read [`CLAUDE.md`](CLAUDE.md) for architecture conventions and the
-> "do-not-break" rules before making changes. Planning/audit docs live in
-> [`docs/`](docs/README.md).
+**Intervium is an AI-powered mock-interview platform.** Run realistic practice
+interviews, get every answer scored instantly with specific feedback, sharpen
+your CV, drill coding problems, and turn your weak spots into study notes —
+all in one place.
 
----
+Built with **Next.js 16 · TypeScript · Tailwind v4 · Drizzle + Supabase Postgres · Auth.js v5 · Groq AI**
 
-## Features
-
-- 🔐 **Access-code gated registration** + email/password auth (JWT sessions, bcrypt)
-- 🧭 **Onboarding wizard** that builds the candidate profile
-- ⚙️ **Interview setup** wired entirely to admin-managed DB content
-- 🤖 **Cache-first question engine** — reuses past questions, generates with Groq only when needed
-- ⌨️ **Text & coding interviews** — type answers, or solve coding problems in an in-browser Monaco editor
-- 📊 **AI scoring** with per-question feedback, strengths/improvements, and an overall summary
-- 📄 **CV workspace** — import, edit, ATS scoring, AI optimization, and cover-letter generation
-- 🥋 **Code Dojo** — a personal coding-practice ground with AI hints and spaced repetition
-- 🛠️ **Admin panel** — full CRUD for roles, focus areas, tech stacks, access codes, questions, settings, and users
-- 🧪 **QA Center** — an admin-only, environment-gated diagnostics dashboard
-- 🌗 Light/dark themes, brand green `#00B775`, responsive, `prefers-reduced-motion` aware
+</div>
 
 ---
 
-## Tech Stack
+## ✨ What you can do
 
-| Concern | Choice | Why |
-| --- | --- | --- |
-| Framework | **Next.js 16 (App Router)** | Server Components + Server Actions; route groups for `(app)` / `(public)` |
-| Language | **TypeScript (strict)** | Zero `any`; types inferred from zod where possible |
-| Question generation | **Groq llama-3.1-8b-instant** | Fast, generous free-tier budget, cache-friendly |
-| Scoring & CV AI | **Groq llama-3.3-70b-versatile** | Stronger judgment for feedback, code review, ATS, rewrites |
-| DB | **Neon Postgres** + **Drizzle ORM** | Serverless-friendly; HTTP driver for queries, WS pool for transactions |
-| Auth | **Auth.js v5** Credentials + JWT | JWT strategy required for credentials; role carried on the session |
-| UI | **Tailwind v4 + shadcn/ui** | Token-driven design system, light/dark |
+Think of Intervium as a personal interview coach that never sleeps.
+
+### 🎤 Mock interviews that feel real
+
+Pick a role, seniority, and focus, then answer in your own words — **behavioral,
+system-design, or coding**. Coding questions run in a real in-browser editor
+where you write and test code against test cases.
+
+### ⚡ Instant, honest feedback
+
+The moment you finish, every answer is **scored by AI** with:
+
+- a clear score + rubric breakdown,
+- what you did well and what to fix,
+- a **model answer** and the exact concepts you missed.
+
+### 🎯 Skill-gap analysis
+
+See which topics keep dragging your scores down across sessions, with a focused
+**learning path** to close the gaps before they cost you the offer.
+
+### 📄 CV & ATS toolkit
+
+Import your résumé, check it against **applicant-tracking systems (ATS)**, get
+AI rewrite suggestions, and generate **tailored cover letters** in seconds.
+
+### 🥋 Code Dojo
+
+A coding gym with real problems. Run your solution against tests, get AI hints,
+and let **spaced repetition** resurface the ones you fumbled.
+
+### 📝 Study Notes
+
+Your own knowledge base — **Markdown notes + flashcards**, folders & tags, and
+**spaced-repetition review**. Plus the nice touches:
+
+- `{{c1::cloze}}` blanks that turn any note into active recall,
+- **read-aloud** (the browser speaks your notes),
+- one-click **"save a weak interview answer as a note"**,
+- export your notes as JSON.
+
+### 🛡️ Progress Shield
+
+One gamified dashboard card that turns **everything** you do into a single,
+ever-rising score — **+10** per scored interview answer, **+15** per solved Code
+Dojo problem, **+3** per study note. Your shield levels up through five ranks
+(Apprentice → Candidate → Specialist → Expert → Master) and then **prestiges**
+into the next cycle (Cycle II, III, …) — it never ends, and later tiers cost
+progressively more. The card shows your rank, a points-to-next ring, a "+this
+week" delta, a breakdown across the three sources (nudging you toward the one
+you've neglected), and fires a one-time celebration when you tier up — all
+computed from data you already have, with no extra tracking.
+
+### 📊 Dashboard, history & streaks
+
+Track your scores over time, revisit past interviews, and keep your daily streak
+alive.
+
+### 🛠️ For the owner (admin)
+
+A full **admin panel** (roles, tech stacks, questions, access codes, AI models,
+settings, users), a **QA diagnostics** dashboard, and a built-in **shareable
+demo account** (more below).
+
+### 🌗 Polished by default
+
+Light/dark themes, a brand-green design system, fully responsive, and respects
+`prefers-reduced-motion`.
 
 ---
 
-## Architecture
+## 🚀 Try it without an account — the Demo
 
-Intervium adapts the classic layered backend to the Next.js App Router:
+Want to show the app to someone with zero friction? Intervium ships a **shared
+demo account** ("John Doe") pre-loaded with sample interviews, notes, and
+practice data:
+
+- On the landing page, a visitor clicks **"Get demo access"**, gets a gentle
+  nudge to ⭐ star the repo, then we **email them the login**.
+- The demo account is **locked down**: AI features and destructive deletes are
+  always off, so strangers can't run up your AI bill or wipe the showcase.
+- Admins get a **on/off toggle**, a **one-click "Reset demo account"**, and
+  simple **"who's trying it" analytics** — all in _Admin → Settings_.
+
+---
+
+## 🧠 How it works (in 3 steps)
 
 ```
-Route / Page (src/app/**)            server components fetch data, render client islands
-  → Server Action (src/lib/actions)  'use server' — validate (zod) + authorize + orchestrate
-    → Service / domain (src/lib/**)   business logic: scoring, question-engine, gap-analysis…
-      → AI client (src/lib/ai/**)     Groq/DeepSeek HTTP, retry/timeout, prompt building
-      → Data access (Drizzle + @db)   parameterized queries; withTransaction for multi-table writes
+1. Set the scene   →  pick role, focus, seniority, length
+2. Interview       →  answer in your words (or code it live)
+3. See what to fix →  instant scores, model answers, ranked weak spots
 ```
 
-Key rules (see [`CLAUDE.md`](CLAUDE.md) for the full list):
-
-- **Every** server action and API route re-checks `getCurrentUser()`/`requireAdmin()`
-  server-side and scopes queries by `userId` (IDOR-safe) — middleware is a convenience, not the gate.
-- Inputs are **zod-validated** before any DB or AI call; actions return a typed `{ ok, error }`.
-- AI calls are guarded by a **daily budget** (`ai-budget.ts`) and **rate limiting** (`rate-limit.ts`),
-  use **batch scoring** to minimize calls, and are **idempotent** (already-scored work is skipped).
-- A **signature hash** (`sha256` of role + tech + focus + difficulty + interview type) keys the
-  question cache, so identical configs share a pool and the app relies less on live AI over time.
+Behind the scenes, a **cache-first question engine** reuses past questions and
+only calls the AI when it needs to — so the app gets cheaper and faster the more
+it's used.
 
 ---
 
-## Folder Structure
+## 🛠️ Tech stack
 
-```
-db/                     Drizzle schema, client, migrations, seed/load scripts
-drizzle/                Generated SQL migrations + snapshots
-docs/                   Planning & audit documents (see docs/README.md)
-src/
-  app/                  App Router: (app) authed pages, (public) auth pages, api/ route handlers
-  auth.ts, auth.config.ts, middleware.ts   Auth.js setup + edge route protection
-  components/           UI by feature: admin, auth, cv, dojo, interview, onboarding, code, ui (shadcn)…
-  lib/
-    actions/            Server actions ('use server'), grouped by feature (+ admin/)
-    ai/                 Groq/DeepSeek client + capability modules (interview, cv, skill-gap, dojo)
-    cv/, dojo/, qa/     Domain logic per feature
-    *.ts                Cross-cutting services: scoring, question-engine, dashboard, settings, env…
-  constants/, types/    Shared constants and ambient type declarations
-```
+| Layer     | Choice                               | Why it's here                           |
+| --------- | ------------------------------------ | --------------------------------------- |
+| Framework | **Next.js 16 (App Router)**          | Server Components + Server Actions      |
+| Language  | **TypeScript (strict)**              | Zero `any`; types inferred from zod     |
+| Styling   | **Tailwind v4 + shadcn/ui**          | Token-driven design system, light/dark  |
+| Database  | **Supabase Postgres + Drizzle ORM**  | Managed Postgres, type-safe SQL         |
+| Auth      | **Auth.js v5** (credentials + JWT)   | Role-aware sessions                     |
+| AI        | **Groq** (fast + smart Llama models) | Question generation, scoring, CV, hints |
+| Email     | **Resend**                           | Demo-access invites                     |
 
 ---
 
-## Getting Started
+## 📁 Project structure
+
+Everything is grouped by **feature**, so related code lives together.
+
+```
+intervium/
+├─ db/                      # Database layer
+│   ├─ schema.ts            #   all tables (the single source of truth)
+│   ├─ index.ts, tx.ts      #   Drizzle client + transaction helper
+│   ├─ migrate.ts           #   applies migrations
+│   ├─ seed.ts              #   base data (admin user, a role, access codes)
+│   ├─ demo-seed.ts         #   demo users + John Doe showcase account
+│   ├─ demo-data.ts         #   the demo account's content (shared, no drift)
+│   └─ seed-dojo.ts / load-questions.ts   # content loaders
+│
+├─ drizzle/                 # Auto-generated SQL migrations + snapshots
+│
+├─ docs/                    # Planning & audit notes (start at docs/README.md)
+│
+├─ src/
+│   ├─ app/                 # Pages & routes (App Router)
+│   │   ├─ (public)/        #   logged-out: landing, login, register
+│   │   ├─ (app)/           #   logged-in: dashboard, interview, cv, dojo,
+│   │   │                   #   study, gap-analysis, history, admin…
+│   │   ├─ api/             #   3 HTTP routes (auth, questions, QA run)
+│   │   ├─ layout.tsx       #   root layout (fonts, theme provider)
+│   │   └─ globals.css      #   design tokens + animations
+│   │
+│   ├─ components/          # UI, grouped by feature
+│   │   ├─ ui/              #   shadcn primitives (button, dialog, card…)
+│   │   ├─ interview/  cv/  dojo/  study/  gap/  onboarding/
+│   │   ├─ admin/           #   admin panel screens
+│   │   ├─ layout/          #   header, nav, demo banner/modal
+│   │   └─ marketing/  brand/   # landing page + logo
+│   │
+│   ├─ lib/                 # The brains
+│   │   ├─ actions/         #   server actions ('use server') per feature (+ admin/)
+│   │   ├─ ai/              #   Groq/DeepSeek client + prompts (interview, cv, dojo…)
+│   │   ├─ cv/  dojo/  study/  qa/   # domain logic per feature
+│   │   ├─ scoring.ts, question-engine.ts     # core interview services
+│   │   ├─ demo.ts, demo-reset.ts, demo-analytics.ts, email.ts   # demo system
+│   │   └─ session.ts, settings.ts, ai-budget.ts, rate-limit.ts, env.ts
+│   │
+│   ├─ auth.ts, auth.config.ts, middleware.ts   # Auth.js + route protection
+│   └─ constants/, types/
+│
+└─ CLAUDE.md                # Architecture rules & "do-not-break" list (read before editing)
+```
+
+**The flow of a request, top to bottom:**
+
+```
+Page (src/app)  →  Server Action (src/lib/actions)  →  Service (src/lib)  →  AI (src/lib/ai)
+                   validate + authorize                 business logic        + Database (Drizzle)
+```
+
+A few rules that keep it safe (full list in [`CLAUDE.md`](CLAUDE.md)):
+
+- **Every** action re-checks who you are and scopes data to _your_ user (no peeking at others' data).
+- **All inputs are validated** before any database or AI call.
+- AI calls are **budget-capped, rate-limited, and idempotent** (already-scored work is never re-charged).
+
+---
+
+## ⚡ Getting started
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in the values
-npm run db:migrate           # apply migrations to your Neon database
-npm run db:seed              # seed admin user, a demo role, and access codes
-npm run dev                  # http://localhost:3000
+cp .env.example .env.local    # then fill in the values
+npm run db:migrate            # create the tables in your Supabase database
+npm run db:seed               # admin user + a starter role + access codes
+npm run dev                   # → http://localhost:3000
 ```
 
-The seed creates the admin account (default email `admin@intervium.app`). Set
-`ADMIN_PASSWORD` before seeding to choose the password; if it's unset, the seed
-generates a random one and prints **only** a notice to set/rotate it (never the
-password itself). **Set or rotate the admin password before first login.**
+Optional content & demo:
+
+```bash
+npm run db:seed-dojo          # load Code Dojo practice problems
+npm run db:demo               # create the demo accounts (incl. John Doe)
+```
+
+> The seed creates the admin account (`admin@intervium.app`). Set
+> `ADMIN_PASSWORD` before seeding, or the seed makes a random one and tells you
+> to rotate it. **Set/rotate the admin password before first login.**
 
 ### Environment variables
 
-See [`.env.example`](.env.example) for the full, commented list. Summary:
+Full, commented list in [`.env.example`](.env.example). The essentials:
 
-| Var | Required | Purpose |
-| --- | --- | --- |
-| `DATABASE_URL` | ✅ | Neon Postgres connection string |
-| `AUTH_SECRET` | ✅ | Signs Auth.js JWT sessions (`openssl rand -base64 32`) |
-| `GROQ_API_KEY` | ✅ | Question generation, scoring, and CV AI |
-| `GROQ_FAST_MODEL` / `GROQ_SMART_MODEL` | ⬜ | Override default Groq models |
-| `GROQ_MODEL_LIMITS` / `AI_DAILY_BUDGET` | ⬜ | Tune AI usage limits/budget |
-| `DEEPSEEK_API_KEY` / `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` | ⬜ | Optional DeepSeek provider |
-| `NEXT_PUBLIC_SITE_URL` | ⬜ | Absolute URL for OG/social images |
+| Variable                              | Required | What it's for                                    |
+| ------------------------------------- | -------- | ------------------------------------------------ |
+| `DATABASE_URL`                        | ✅       | Supabase Postgres connection string              |
+| `AUTH_SECRET`                         | ✅       | Signs login sessions (`openssl rand -base64 32`) |
+| `GROQ_API_KEY`                        | ✅       | All AI: questions, scoring, CV, hints            |
+| `AI_DAILY_BUDGET`                     | ⬜       | Daily cap on AI calls (default 180)              |
+| `RESEND_API_KEY`                      | ⬜       | Sends demo-access invite emails                  |
+| `DEMO_USER_EMAIL` / `DEMO_ACCESS_KEY` | ⬜       | The shared demo login (enables the demo system)  |
+| `DEMO_INVITE_FROM`                    | ⬜       | Verified "from" address for invite emails        |
+| `NEXT_PUBLIC_GITHUB_REPO_URL`         | ⬜       | Repo the demo "star" button points to            |
+| `NEXT_PUBLIC_SITE_URL`                | ⬜       | Absolute URL for social/OG images + invite links |
 
-Required vars are validated at boot in [`src/lib/env.ts`](src/lib/env.ts) — the app fails fast with a clear message if any are missing.
-
----
-
-## Development Workflow
-
-1. Branch from `main`.
-2. Make changes; keep server actions thin (validate → authorize → delegate to a service).
-3. Run the local gate before pushing:
-   ```bash
-   npm run type-check && npm run lint && npm run format:check && npm run build
-   ```
-4. Open a PR. CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the same gate.
-
-### Scripts
-
-| Script | Description |
-| --- | --- |
-| `npm run dev` | Dev server |
-| `npm run build` / `start` | Production build / serve |
-| `npm run lint` / `type-check` / `format:check` | ESLint / TypeScript / Prettier |
-| `npm run db:generate` / `db:migrate` / `db:seed` | Drizzle migrations & seed |
-| `npm run db:load-questions` / `db:seed-dojo` / `db:demo` | Content loaders |
+Required vars are checked at boot ([`src/lib/env.ts`](src/lib/env.ts)) — the app
+fails fast with a clear message if any are missing.
 
 ---
 
-## API & Server Actions
+## 🧰 Scripts
 
-Most mutations are **server actions** (`src/lib/actions/**`, `'use server'`), not REST endpoints —
-they validate with zod, authorize, and return a typed `{ ok, error }`/`{ error }` result. There are
-three HTTP route handlers under `src/app/api/`:
+| Script                                                   | What it does             |
+| -------------------------------------------------------- | ------------------------ |
+| `npm run dev`                                            | Start the dev server     |
+| `npm run build` / `start`                                | Production build / serve |
+| `npm run lint` / `type-check` / `format:check`           | The quality gate         |
+| `npm test`                                               | Unit tests (tier engine) |
+| `npm run db:generate` / `db:migrate` / `db:seed`         | Migrations & base seed   |
+| `npm run db:demo` / `db:seed-dojo` / `db:load-questions` | Demo + content loaders   |
 
-| Route | Purpose |
-| --- | --- |
-| `/api/auth/[...nextauth]` | Auth.js handler (sign-in/out, session) |
-| `/api/interview/[sessionId]/questions` | Returns (and lazily generates) the question set for a session |
-| `/api/qa/run` | Runs a QA Center diagnostic check (admin + env-gated) |
+**Before every PR**, run the gate:
+
+```bash
+npm run type-check && npm run lint && npm run format:check && npm run build
+```
 
 ---
 
-## Production Deployment (Vercel)
+## ☁️ Deploy (Vercel + Supabase)
 
 1. Import the repo at [vercel.com/new](https://vercel.com/new).
-2. Add the **Neon** integration (auto-sets `DATABASE_URL` / `POSTGRES_*`).
-3. Set `AUTH_SECRET`, `GROQ_API_KEY`, and `NEXT_PUBLIC_SITE_URL`.
-4. Deploy. Run `npm run db:migrate && npm run db:seed` against the production DB once.
+2. Create a **Supabase** project and set `DATABASE_URL` to its Postgres connection string (use the pooled connection for serverless).
+3. Add `AUTH_SECRET`, `GROQ_API_KEY`, `NEXT_PUBLIC_SITE_URL` (and the demo vars if you want the demo).
+4. Deploy, then run `npm run db:migrate && npm run db:seed` against the prod DB once.
 
-Admin-managed content means the app can be reconfigured (new roles, questions,
-timer, etc.) **without a redeploy**.
-
----
-
-## Coding Standards
-
-- **TypeScript strict**, zero `any`. Prefer inferring types from zod schemas (`z.infer`).
-- **Naming:** PascalCase components & hooks files (`useFoo.ts`); kebab-case for non-component
-  libs; shadcn `ui/*` stays lowercase by convention. Functions are verb-phrased and
-  intention-revealing; booleans use `is/has/should`.
-- **Server actions** stay thin: validate → authorize → delegate to a service; never trust the client.
-- **Errors:** throw typed domain errors (`ScoringError`, `CvAiError`, …) inside services; actions
-  catch and return `{ ok:false, error }`. Log with a `[context]` prefix.
-- Run the local gate (type-check, lint, format, build) before every PR.
-
-Full conventions and the critical "do-not-break" list are in [`CLAUDE.md`](CLAUDE.md).
+> Migrations aren't auto-applied on deploy — run `db:migrate` against production
+> after schema changes. Most content (roles, questions, timers, demo on/off) is
+> **admin-editable without a redeploy**.
 
 ---
 
-## Troubleshooting
+## 🩹 Troubleshooting
 
-| Symptom | Likely cause / fix |
-| --- | --- |
-| App throws `Missing required environment variable(s)` at boot | A required var is unset — copy `.env.example` to `.env.local` and fill it in |
-| `drizzle-kit` can't connect | `DATABASE_URL` not loaded — `drizzle.config.ts` reads `.env.local`; confirm it exists |
-| Interviews fail to generate / score | Check `GROQ_API_KEY`; AI may be over the daily budget (`AI_DAILY_BUDGET`) — surfaced as a friendly message |
-| Admin can't sign in | Re-run `npm run db:seed` (idempotent) and set `ADMIN_PASSWORD`, or reset via the admin panel |
-| QA Center 404s / redirects | It's admin-only — sign in with an admin account |
+| Symptom                                            | Likely fix                                                                              |
+| -------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `Missing required environment variable(s)` at boot | Copy `.env.example` → `.env.local` and fill it in                                       |
+| `column "…" does not exist`                        | A migration isn't applied — run `npm run db:migrate`                                    |
+| Interviews won't generate/score                    | Check `GROQ_API_KEY`; you may be over the daily AI budget (shown as a friendly message) |
+| Demo login says "invalid"                          | Run `npm run db:demo`, and set `DEMO_USER_EMAIL` / `DEMO_ACCESS_KEY`                    |
+| Demo banner/lock not showing                       | Set `DEMO_USER_EMAIL` and **restart** the server (env loads at startup)                 |
+| Admin can't sign in                                | Re-run `npm run db:seed` (idempotent) and set `ADMIN_PASSWORD`                          |
 
 ---
 
-## Future Improvements
+## 🤝 Contributing & conventions
 
-Tracked in detail in [`docs/PRODUCTION_AUDIT.md`](docs/PRODUCTION_AUDIT.md) and
-[`docs/REFACTORING_AUDIT.md`](docs/REFACTORING_AUDIT.md). Highlights:
+Architecture rules, naming, and the critical **"do-not-break"** list live in
+[`CLAUDE.md`](CLAUDE.md). In short: strict TypeScript, server-side auth on every
+action, zod-validate all inputs, keep actions thin, and keep the gate green.
 
-- Automated test suite (no test framework yet).
-- Shared-store (Redis/Upstash) rate limiting for serverless.
-- Error tracking / observability (Sentry/OTel) and structured logging.
-- Migrate import sites from the `groq.ts` barrel to the `src/lib/ai/*` modules directly.
+---
+
+<div align="center">
+
+Built by [**Wasim Aslam**](https://wasimaslam.vercel.app/) ·
+[GitHub](https://github.com/MdWasimAslam/Intervium)
+
+If Intervium helped you prep, a ⭐ on the repo means a lot.
+
+</div>

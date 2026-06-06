@@ -27,7 +27,10 @@ export function LogoMark({ className }: { className?: string }) {
 
 /**
  * Full logo: mark + "Intervium" wordmark.
- * The wordmark uses the foreground token so it flips with the theme.
+ *
+ * The wordmark is set in the brand display typeface (Space Grotesk, exposed as
+ * `--font-brand` from the root layout) so it reads as a logo rather than UI
+ * text. Colour uses the foreground token, so it flips cleanly with the theme.
  */
 export function Logo({
   className,
@@ -40,7 +43,10 @@ export function Logo({
     <span className={cn("inline-flex items-center gap-2.5", className)}>
       <LogoMark />
       {showWordmark && (
-        <span className="text-xl font-bold tracking-tight text-[var(--foreground)]">
+        <span
+          style={{ fontFamily: "var(--font-brand)" }}
+          className="text-[1.35rem] font-bold tracking-tight text-[var(--foreground)]"
+        >
           Intervium
         </span>
       )}

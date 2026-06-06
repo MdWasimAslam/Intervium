@@ -143,6 +143,7 @@ export default async function ResultsPage({
       <QuestionResults
         results={results}
         isTechnical={session.professionType === "technical"}
+        sessionId={sessionId}
       />
 
       {/* Actions */}

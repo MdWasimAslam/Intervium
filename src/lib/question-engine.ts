@@ -1,4 +1,4 @@
-import { and, asc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, notInArray, sql } from "drizzle-orm";
 import {
   bankQuestions,
   db,
@@ -40,16 +40,6 @@ interface PickedQuestion {
   questionText: string;
   idealAnswer: string;
   modality: "text" | "coding";
-}
-
-/** Fisher–Yates shuffle (non-mutating). */
-function shuffle<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
 }
 
 /** Read a session's transcript rows in order (the engine's idempotent answer). */
@@ -123,56 +113,64 @@ export async function getQuestionsForSession(
 async function pickBankQuestions(
   session: SessionConfig,
 ): Promise<PickedQuestion[]> {
-  const [pool, seenRows] = await Promise.all([
-    db
-      .select({
-        id: bankQuestions.id,
-        questionText: bankQuestions.questionText,
-        idealAnswer: bankQuestions.idealAnswer,
-        modality: bankQuestions.modality,
-      })
+  const cols = {
+    id: bankQuestions.id,
+    questionText: bankQuestions.questionText,
+    idealAnswer: bankQuestions.idealAnswer,
+    modality: bankQuestions.modality,
+  };
+  const base = and(
+    eq(bankQuestions.roleId, session.jobRoleId),
+    eq(bankQuestions.techStackId, session.techStackId),
+    eq(bankQuestions.isActive, true),
+  );
+
+  // Bank questions this user has already been served (any past session). Used as
+  // a subquery so the full history is never pulled into app memory; isNotNull
+  // also keeps NOT IN well-behaved (a NULL in the set would zero out the match).
+  const seenIds = db
+    .select({ id: sessionQuestions.bankQuestionId })
+    .from(sessionQuestions)
+    .innerJoin(
+      interviewSessions,
+      eq(interviewSessions.id, sessionQuestions.sessionId),
+    )
+    .where(
+      and(
+        eq(interviewSessions.userId, session.userId),
+        isNotNull(sessionQuestions.bankQuestionId),
+      ),
+    );
+
+  // Prefer unseen questions, chosen at random, bounded to what the session needs
+  // — selection happens in SQL so a large bank never loads wholesale.
+  const picked = await db
+    .select(cols)
+    .from(bankQuestions)
+    .where(and(base, notInArray(bankQuestions.id, seenIds)))
+    .orderBy(sql`random()`)
+    .limit(session.questionCount);
+
+  // Exhausted the unseen pool? Top up with random repeats, never re-picking one
+  // already chosen for this session.
+  if (picked.length < session.questionCount) {
+    const pickedIds = picked.map((q) => q.id);
+    const topUp = await db
+      .select(cols)
       .from(bankQuestions)
       .where(
-        and(
-          eq(bankQuestions.roleId, session.jobRoleId),
-          eq(bankQuestions.techStackId, session.techStackId),
-          eq(bankQuestions.isActive, true),
-        ),
-      ),
-    // Bank questions this user has already been served (any past session).
-    db
-      .select({ bankQuestionId: sessionQuestions.bankQuestionId })
-      .from(sessionQuestions)
-      .innerJoin(
-        interviewSessions,
-        eq(interviewSessions.id, sessionQuestions.sessionId),
+        pickedIds.length
+          ? and(base, notInArray(bankQuestions.id, pickedIds))
+          : base,
       )
-      .where(
-        and(
-          eq(interviewSessions.userId, session.userId),
-          isNotNull(sessionQuestions.bankQuestionId),
-        ),
-      ),
-  ]);
-
-  if (pool.length === 0) {
-    throw new QuestionGenerationError(
-      "This role and tech stack has no question-bank questions yet. Ask an admin to add some, or try an AI interview.",
-    );
+      .orderBy(sql`random()`)
+      .limit(session.questionCount - picked.length);
+    picked.push(...topUp);
   }
 
-  const seen = new Set(seenRows.map((r) => r.bankQuestionId));
-  const unseen = pool.filter((q) => !seen.has(q.id));
-
-  // Prefer unseen; if the user has exhausted the pool, top up with repeats.
-  const picked = shuffle(unseen).slice(0, session.questionCount);
-  if (picked.length < session.questionCount) {
-    const pickedIds = new Set(picked.map((q) => q.id));
-    picked.push(
-      ...shuffle(pool.filter((q) => !pickedIds.has(q.id))).slice(
-        0,
-        session.questionCount - picked.length,
-      ),
+  if (picked.length === 0) {
+    throw new QuestionGenerationError(
+      "This role and tech stack has no question-bank questions yet. Ask an admin to add some, or try an AI interview.",
     );
   }
 

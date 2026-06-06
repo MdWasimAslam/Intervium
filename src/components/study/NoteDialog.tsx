@@ -151,7 +151,7 @@ export function NoteDialog({
               value={content}
               rows={isFlashcard ? 5 : 8}
               maxLength={50_000}
-              placeholder="Write in Markdown. Use ``` for code blocks."
+              placeholder="Write in Markdown. Use ``` for code blocks, and {{c1::hidden}} to make a click-to-reveal blank for active recall."
               onChange={(e) => setContent(e.target.value)}
             />
           </div>

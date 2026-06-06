@@ -208,6 +208,23 @@ export async function checkIntegrations(
     recommendation: hasDbUrl ? undefined : "Set DATABASE_URL.",
   });
 
+  // --- Resend (transactional email for demo invites) -----------------------
+  // Config-only: there's no token-free health endpoint, and a live probe would
+  // send real mail, so we report presence rather than pinging the API.
+  const hasResend = Boolean(process.env.RESEND_API_KEY?.trim());
+  checks.push({
+    id: "resend-config",
+    label: "Resend (email) · configuration",
+    status: hasResend ? "pass" : "skip",
+    detail: hasResend
+      ? `key set · from=${process.env.DEMO_INVITE_FROM?.trim() || "onboarding@resend.dev (test sender — dev-only delivery)"}`
+      : "RESEND_API_KEY not set — demo-invite emails won't send (optional unless demo access is enabled)",
+    recommendation:
+      hasResend || !process.env.DEMO_USER_EMAIL?.trim()
+        ? undefined
+        : "A demo account is configured but email isn't — demo-access requests will fail. Set RESEND_API_KEY (and a verified DEMO_INVITE_FROM).",
+  });
+
   // --- LLM model health: actually answer with each catalog model -----------
   // A real (tiny) completion per model — the only true "is the LLM working?"
   // test. Token cost is a handful of tokens per model, so it's gated behind

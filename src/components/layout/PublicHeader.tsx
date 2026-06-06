@@ -13,7 +13,7 @@ import { ThemeToggle } from "@/components/ui/theme-toggle";
 export function PublicHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-[var(--border)] bg-[var(--background)]/80 backdrop-blur">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
+      <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between px-6">
         <Link href="/" aria-label="Intervium home">
           <Logo />
         </Link>

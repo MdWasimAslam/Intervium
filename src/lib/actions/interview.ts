@@ -12,6 +12,7 @@ import {
   techStacks,
 } from "@db";
 import { getCurrentUser } from "@/lib/session";
+import { DEMO_AI_MESSAGE, isDemoEmail } from "@/lib/demo";
 import {
   CUSTOM_TIMER_ID,
   getSettings,
@@ -57,6 +58,7 @@ export async function startInterview(
 ): Promise<StartResult> {
   const user = await getCurrentUser();
   if (!user) return { error: "Not authenticated." };
+  if (isDemoEmail(user.email)) return { error: DEMO_AI_MESSAGE };
 
   const parsed = startSchema.safeParse(input);
   if (!parsed.success) {

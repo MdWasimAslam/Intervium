@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { logAiCall } from "@/lib/ai-logging";
 import { resolveFeatureModel } from "@/lib/settings";
+import { DEMO_AI_MESSAGE, isDemoSession } from "@/lib/demo";
 
 /** A clean, UI-safe error for any generation failure. */
 export class QuestionGenerationError extends Error {}
@@ -47,7 +48,10 @@ function resolveProvider(
     return {
       apiKey,
       url: `${base}/chat/completions`,
-      model: override || process.env.DEEPSEEK_MODEL?.trim() || DEEPSEEK_DEFAULT_MODEL,
+      model:
+        override ||
+        process.env.DEEPSEEK_MODEL?.trim() ||
+        DEEPSEEK_DEFAULT_MODEL,
       label: "DeepSeek",
     };
   }
@@ -158,6 +162,12 @@ export function getModel(
 
   return {
     async generateContent(prompt: string): Promise<string> {
+      // Airtight backstop: the demo account never reaches an external AI API,
+      // whatever feature called in. Thrown before any network request.
+      if (await isDemoSession()) {
+        throw new QuestionGenerationError(DEMO_AI_MESSAGE);
+      }
+
       const systemPrompt = json
         ? "Return only valid JSON matching the user's requested shape. Do not include markdown, code fences, or explanatory prose."
         : "Follow the user's output instructions exactly. Keep the response concise.";
@@ -406,6 +416,8 @@ export async function generateJson<T>(
     try {
       raw = await model.generateContent(buildPrompt(attempt === 2));
     } catch (error) {
+      // Surface intentional guard errors (demo lock / unconfigured provider) as-is.
+      if (error instanceof QuestionGenerationError) throw error;
       console.error(`[groq:${opts.label}] request failed:`, error);
       throw new CvAiError(
         "We couldn't reach the AI right now. Please try again.",

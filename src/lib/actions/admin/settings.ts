@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { appSettings, db } from "@db";
 import { requireAdmin } from "@/lib/session";
+import { resetDemoAccount } from "@/lib/demo-reset";
 import { AI_FEATURE_KEYS } from "@/lib/ai/catalog";
 import { zodError, type AdminResult } from "./util";
 
@@ -33,16 +34,28 @@ const schema = z
     const timerIds = d.timerPresets.map((p) => p.id);
     const lengthIds = d.lengthPresets.map((p) => p.id);
     if (new Set(timerIds).size !== timerIds.length) {
-      ctx.addIssue({ code: "custom", message: "Timer preset ids must be unique." });
+      ctx.addIssue({
+        code: "custom",
+        message: "Timer preset ids must be unique.",
+      });
     }
     if (new Set(lengthIds).size !== lengthIds.length) {
-      ctx.addIssue({ code: "custom", message: "Length preset ids must be unique." });
+      ctx.addIssue({
+        code: "custom",
+        message: "Length preset ids must be unique.",
+      });
     }
     if (!timerIds.includes(d.defaultTimerPresetId)) {
-      ctx.addIssue({ code: "custom", message: "Default timer preset must be one of the presets." });
+      ctx.addIssue({
+        code: "custom",
+        message: "Default timer preset must be one of the presets.",
+      });
     }
     if (!lengthIds.includes(d.defaultLengthPresetId)) {
-      ctx.addIssue({ code: "custom", message: "Default length preset must be one of the presets." });
+      ctx.addIssue({
+        code: "custom",
+        message: "Default length preset must be one of the presets.",
+      });
     }
   });
 
@@ -69,7 +82,9 @@ export async function updateSettings(input: unknown): Promise<AdminResult> {
   )
     .sort((a, b) => a - b)
     .slice(0, 10);
-  const defaultTimerPreset = timerPresets.find((t) => t.id === defaultTimerPresetId);
+  const defaultTimerPreset = timerPresets.find(
+    (t) => t.id === defaultTimerPresetId,
+  );
   const defaultTimerSeconds = Math.min(
     3600,
     Math.max(10, defaultTimerPreset?.seconds ?? 120),
@@ -109,6 +124,44 @@ export async function updateSettings(input: unknown): Promise<AdminResult> {
   return { ok: true };
 }
 
+/**
+ * Toggle demo mode. When ON, the shared demo account (DEMO_USER_EMAIL) has AI +
+ * destructive deletes locked; OFF lifts the locks (so it behaves like a normal
+ * account). Upserts only the `demo_mode` column so it never clobbers presets.
+ */
+export async function setDemoMode(input: unknown): Promise<AdminResult> {
+  await requireAdmin();
+  const p = z.object({ enabled: z.boolean() }).safeParse(input);
+  if (!p.success) return { ok: false, error: zodError(p) };
+
+  try {
+    await db
+      .insert(appSettings)
+      .values({ id: "global", demoMode: p.data.enabled })
+      .onConflictDoUpdate({
+        target: appSettings.id,
+        set: { demoMode: p.data.enabled, updatedAt: new Date() },
+      });
+  } catch (error) {
+    console.error("[setDemoMode]", error);
+    return { ok: false, error: "Could not update demo mode." };
+  }
+  revalidatePath("/admin/settings");
+  return { ok: true };
+}
+
+/**
+ * Reset the shared demo account back to its pristine seeded data — wipes any
+ * edits strangers made and re-creates the curated profile/interviews/notes/Dojo.
+ */
+export async function resetDemoAccountAction(): Promise<AdminResult> {
+  await requireAdmin();
+  const res = await resetDemoAccount();
+  if (!res.ok) return { ok: false, error: res.error };
+  revalidatePath("/admin/settings");
+  return { ok: true };
+}
+
 /* -------------------------------------------------------------------------- */
 /* Per-feature AI model overrides (/admin/ai-models)                          */
 /* -------------------------------------------------------------------------- */
@@ -138,7 +191,9 @@ const featureModelsSchema = z
  * restores default behaviour. Upserts only the `feature_models` column, so it
  * never clobbers the timer/length/provider settings written by updateSettings.
  */
-export async function updateFeatureModels(input: unknown): Promise<AdminResult> {
+export async function updateFeatureModels(
+  input: unknown,
+): Promise<AdminResult> {
   await requireAdmin();
   const p = featureModelsSchema.safeParse(input);
   if (!p.success) return { ok: false, error: zodError(p) };

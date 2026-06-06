@@ -74,6 +74,13 @@ export async function getVisibleQuestionMeta(
 }
 
 /** Every visible question with its topics and this user's solved/attempted state. */
+/**
+ * Upper bound on the problems loaded into the (client-filtered) Dojo list. The
+ * curated bank + a user's own problems sit well under this; the cap is a guard
+ * so the page can never load an unbounded set as the library grows.
+ */
+const DOJO_LIST_LIMIT = 500;
+
 export async function listQuestions(userId: string): Promise<DojoListItem[]> {
   const questions = await db
     .select({
@@ -85,7 +92,8 @@ export async function listQuestions(userId: string): Promise<DojoListItem[]> {
     })
     .from(dojoQuestions)
     .where(visibleTo(userId))
-    .orderBy(dojoQuestions.sortOrder, dojoQuestions.title);
+    .orderBy(dojoQuestions.sortOrder, dojoQuestions.title)
+    .limit(DOJO_LIST_LIMIT);
 
   if (questions.length === 0) return [];
   const ids = questions.map((q) => q.id);

@@ -398,7 +398,26 @@ export const appSettings = pgTable("app_settings", {
     .$type<Record<string, { provider: "groq" | "deepseek"; model: string }>>()
     .notNull()
     .default(sql`'{}'::jsonb`),
+  // Demo-mode kill-switch. When true, the shared demo account (DEMO_USER_EMAIL)
+  // has AI + destructive deletes locked. Admins can flip this without a redeploy.
+  demoMode: boolean("demo_mode").notNull().default(true),
   updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+/* -------------------------------------------------------------------------- */
+/* demo_requests — who asked for demo access (simple admin analytics)          */
+/* One row per email (upsert), so it stays compact while tracking unique       */
+/* requesters and how many times each tried.                                   */
+/* -------------------------------------------------------------------------- */
+export const demoRequests = pgTable("demo_requests", {
+  email: text("email").primaryKey(),
+  requestCount: integer("request_count").notNull().default(1),
+  firstRequestedAt: timestamp("first_requested_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  lastRequestedAt: timestamp("last_requested_at", { withTimezone: true })
     .notNull()
     .defaultNow(),
 });

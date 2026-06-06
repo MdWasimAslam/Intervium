@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Markdown } from "@/components/ui/markdown";
 import { Textarea } from "@/components/ui/textarea";
+import { ReadAloud } from "@/components/study/ReadAloud";
 import { updateNote } from "@/lib/actions/study";
 import type { StudyNoteRow } from "@/lib/study/types";
 
@@ -52,22 +53,30 @@ export function NoteContent({ note }: { note: StudyNoteRow }) {
             Answer
           </span>
         )}
-        <div className="ml-auto inline-flex rounded-md border border-[var(--border)] p-0.5 text-xs">
-          <ToggleButton
-            active={mode === "preview"}
-            onClick={() => setMode("preview")}
-          >
-            <Eye className="h-3.5 w-3.5" /> Preview
-          </ToggleButton>
-          <ToggleButton active={mode === "raw"} onClick={() => setMode("raw")}>
-            <Pencil className="h-3.5 w-3.5" /> Raw
-          </ToggleButton>
+        <div className="ml-auto flex items-center gap-1">
+          {mode === "preview" && note.content && (
+            <ReadAloud text={`${note.title}. ${note.content}`} />
+          )}
+          <div className="inline-flex rounded-md border border-[var(--border)] p-0.5 text-xs">
+            <ToggleButton
+              active={mode === "preview"}
+              onClick={() => setMode("preview")}
+            >
+              <Eye className="h-3.5 w-3.5" /> Preview
+            </ToggleButton>
+            <ToggleButton
+              active={mode === "raw"}
+              onClick={() => setMode("raw")}
+            >
+              <Pencil className="h-3.5 w-3.5" /> Raw
+            </ToggleButton>
+          </div>
         </div>
       </div>
 
       {mode === "preview" ? (
         note.content ? (
-          <Markdown>{note.content}</Markdown>
+          <Markdown variant="colorful">{note.content}</Markdown>
         ) : (
           <p className="text-sm text-[var(--muted-foreground)]">
             (No content.)

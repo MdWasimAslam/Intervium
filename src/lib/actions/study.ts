@@ -1,13 +1,26 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { z } from "zod";
-import { db, studyFolders, studyNotes } from "@db";
+import {
+  db,
+  interviewSessions,
+  jobRoles,
+  sessionQuestions,
+  studyFolders,
+  studyNotes,
+  techStacks,
+} from "@db";
 import { withTransaction } from "@db/tx";
 import { getCurrentUser } from "@/lib/session";
+import { requireNonDemo } from "@/lib/demo";
 import { schedule } from "@/lib/spaced-repetition";
-import { listFolders } from "@/lib/study/queries";
+import {
+  listFolders,
+  listNotes,
+  type ListNotesOpts,
+} from "@/lib/study/queries";
 import { wouldCreateCycle } from "@/lib/study/tree";
 import type { Result } from "@/lib/actions/result";
 
@@ -33,6 +46,173 @@ async function ownsFolder(userId: string, folderId: string): Promise<boolean> {
     .from(studyFolders)
     .where(and(eq(studyFolders.id, folderId), eq(studyFolders.userId, userId)));
   return Boolean(row);
+}
+
+/**
+ * Id of an existing non-archived note that is an exact match for this saved
+ * question — same title AND body. Title alone is too coarse: two distinct
+ * questions can share the first 200 chars (the title slice) yet have different
+ * ideal answers, and matching on title only would silently drop the second
+ * save. Matching the body too means only a genuine re-save of the same question
+ * dedupes; a different question (different answer) is saved as its own note.
+ */
+async function existingSavedNoteId(
+  userId: string,
+  title: string,
+  content: string | null,
+): Promise<string | null> {
+  const [row] = await db
+    .select({ id: studyNotes.id })
+    .from(studyNotes)
+    .where(
+      and(
+        eq(studyNotes.userId, userId),
+        eq(studyNotes.title, title),
+        content === null
+          ? isNull(studyNotes.content)
+          : eq(studyNotes.content, content),
+        eq(studyNotes.isArchived, false),
+      ),
+    )
+    .limit(1);
+  return row?.id ?? null;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Export                                                                     */
+/* -------------------------------------------------------------------------- */
+
+/** A note serialized for export — no DB ids or spaced-repetition state. */
+export interface ExportNote {
+  title: string;
+  content: string;
+  isFlashcard: boolean;
+  tags: string[];
+}
+
+const exportFilterSchema = z.object({
+  // undefined → all folders, null → unfiled, uuid → that folder.
+  folderId: z.string().uuid().nullable().optional(),
+  includeSubfolders: z.boolean().optional(),
+  tag: z.string().trim().min(1).optional(),
+  q: z.string().trim().min(1).optional(),
+});
+
+/**
+ * Every note matching the given filters (folder/subtree, tag, search) — NOT
+ * paginated, so Export captures the whole filtered set, not just the page in
+ * view. Scoped to the signed-in user; `listNotes` already restricts by userId.
+ */
+export async function exportNotesAction(
+  input: z.infer<typeof exportFilterSchema>,
+): Promise<Result<ExportNote[]>> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "You must be signed in." };
+
+  const parsed = exportFilterSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid export filters." };
+
+  const opts: ListNotesOpts = {
+    folderId: parsed.data.folderId,
+    includeSubfolders: parsed.data.includeSubfolders,
+    tag: parsed.data.tag,
+    q: parsed.data.q,
+  };
+  const rows = await listNotes(user.id, opts); // no limit/offset → all matches
+
+  return {
+    ok: true,
+    data: rows.map((n) => ({
+      title: n.title,
+      content: n.content ?? "",
+      isFlashcard: n.isFlashcard,
+      tags: n.tags,
+    })),
+  };
+}
+
+/* -------------------------------------------------------------------------- */
+/* Save-as-note (from interview results)                                      */
+/* -------------------------------------------------------------------------- */
+
+const saveQuestionSchema = z.object({
+  sessionId: z.string().uuid(),
+  position: z.number().int().min(0),
+});
+
+/**
+ * Save one interview question as a study note: title = the question, body =
+ * the ideal answer (fenced as code for coding questions), tagged by role + tech.
+ * Closes the loop from a weak answer to revisable notes.
+ *
+ * Re-reads the question server-side and verifies the session belongs to the
+ * caller (per-request authorization) — the client only sends sessionId+position,
+ * never the note content, so it can't inject arbitrary text under another user.
+ */
+export async function saveQuestionAsNoteAction(
+  input: z.infer<typeof saveQuestionSchema>,
+): Promise<Result<{ id: string; duplicate: boolean }>> {
+  const user = await getCurrentUser();
+  if (!user) return { ok: false, error: "You must be signed in." };
+
+  const parsed = saveQuestionSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid request." };
+
+  const [row] = await db
+    .select({
+      questionText: sessionQuestions.questionText,
+      idealAnswer: sessionQuestions.idealAnswer,
+      modality: sessionQuestions.modality,
+      role: jobRoles.name,
+      tech: techStacks.name,
+    })
+    .from(sessionQuestions)
+    .innerJoin(
+      interviewSessions,
+      eq(interviewSessions.id, sessionQuestions.sessionId),
+    )
+    .innerJoin(jobRoles, eq(jobRoles.id, interviewSessions.jobRoleId))
+    .innerJoin(techStacks, eq(techStacks.id, interviewSessions.techStackId))
+    .where(
+      and(
+        eq(sessionQuestions.sessionId, parsed.data.sessionId),
+        eq(sessionQuestions.position, parsed.data.position),
+        eq(interviewSessions.userId, user.id),
+      ),
+    );
+  if (!row) return { ok: false, error: "Question not found." };
+
+  const title = row.questionText.trim().slice(0, 200);
+
+  const ideal = row.idealAnswer.trim();
+  // Coding solutions render best fenced; prose answers go in as-is.
+  const body = row.modality === "coding" ? "```\n" + ideal + "\n```" : ideal;
+  const content = body || null;
+
+  // Don't re-save the same question (e.g. reopening the results page later) —
+  // matched on title AND body so a different question that merely shares the
+  // title slice still saves as its own note.
+  const existing = await existingSavedNoteId(user.id, title, content);
+  if (existing) return { ok: true, data: { id: existing, duplicate: true } };
+
+  try {
+    const [note] = await db
+      .insert(studyNotes)
+      .values({
+        userId: user.id,
+        folderId: null,
+        title,
+        content,
+        isFlashcard: false,
+        tags: normalizeTags([row.role, row.tech]),
+      })
+      .returning({ id: studyNotes.id });
+    revalidatePath("/study");
+    return { ok: true, data: { id: note.id, duplicate: false } };
+  } catch (error) {
+    console.error("[saveQuestionAsNoteAction]", error);
+    return { ok: false, error: "Could not save the note." };
+  }
 }
 
 /* -------------------------------------------------------------------------- */
@@ -153,6 +333,8 @@ export async function updateNote(
 export async function deleteNote(input: { id: string }): Promise<Result<true>> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Not authenticated." };
+  const blocked = requireNonDemo(user.email);
+  if (blocked) return { ok: false, error: blocked };
   const p = z.object({ id: z.string().uuid() }).safeParse(input);
   if (!p.success) return { ok: false, error: "Invalid note." };
 
@@ -176,6 +358,10 @@ export async function archiveNote(input: {
 }): Promise<Result<true>> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Not authenticated." };
+  // Archiving hides a note from the showcase (a soft-delete); block it for the
+  // shared demo account just like the hard deletes, so the showcase stays intact.
+  const blocked = requireNonDemo(user.email);
+  if (blocked) return { ok: false, error: blocked };
   const p = z
     .object({ id: z.string().uuid(), archived: z.boolean() })
     .safeParse(input);
@@ -429,6 +615,8 @@ export async function deleteFolder(input: {
 }): Promise<Result<true>> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Not authenticated." };
+  const blocked = requireNonDemo(user.email);
+  if (blocked) return { ok: false, error: blocked };
   const p = z.object({ id: z.string().uuid() }).safeParse(input);
   if (!p.success) return { ok: false, error: "Invalid folder." };
   const { id } = p.data;

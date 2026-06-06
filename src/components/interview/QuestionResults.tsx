@@ -14,6 +14,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { QuestionPrompt } from "@/components/interview/QuestionPrompt";
+import { SaveAsNoteButton } from "@/components/interview/SaveAsNoteButton";
 import { cn } from "@/lib/utils";
 
 export interface TextRubric {
@@ -193,9 +194,12 @@ function RubricBreakdown({
 export function QuestionResults({
   results,
   isTechnical = true,
+  sessionId,
 }: {
   results: QuestionResult[];
   isTechnical?: boolean;
+  /** When set, each question can be saved as a study note. */
+  sessionId?: string;
 }) {
   const reduced = useReducedMotion() ?? false;
   return (
@@ -312,7 +316,9 @@ export function QuestionResults({
                 )}
                 {r.isCoding && r.betterApproach?.trim() && (
                   <div>
-                    <SectionLabel icon={Lightbulb}>Better approach</SectionLabel>
+                    <SectionLabel icon={Lightbulb}>
+                      Better approach
+                    </SectionLabel>
                     <div className="rounded-xl border border-[var(--border)] bg-[var(--card)] p-3 text-sm leading-relaxed whitespace-pre-wrap text-[var(--muted-foreground)]">
                       {r.betterApproach.trim()}
                     </div>
@@ -361,6 +367,15 @@ export function QuestionResults({
                         </ul>
                       </div>
                     )}
+                  </div>
+                )}
+
+                {sessionId && (
+                  <div className="flex justify-end border-t border-[var(--border)] pt-3">
+                    <SaveAsNoteButton
+                      sessionId={sessionId}
+                      position={r.position}
+                    />
                   </div>
                 )}
               </CardContent>

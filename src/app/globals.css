@@ -11,7 +11,7 @@
 /* Design tokens (CSS variables)                                       */
 /* ------------------------------------------------------------------ */
 :root {
-  /* Surfaces & text — light theme: white bg, near-black text */
+  /* Surfaces & text â€” light theme: white bg, near-black text */
   --background: #ffffff;
   --foreground: #0a0f0d;
 
@@ -49,7 +49,7 @@
   --surface-1: #f6f8f7;
   --surface-2: #f1f4f3;
   --surface-3: #ffffff;
-  /* Hover overlay — adapts to whatever surface it sits on (replaces opacity hovers) */
+  /* Hover overlay â€” adapts to whatever surface it sits on (replaces opacity hovers) */
   --surface-hover: color-mix(in srgb, var(--foreground) 4%, transparent);
 
   /* Semantic status colours (token-driven; replaces hardcoded hex) */
@@ -74,7 +74,7 @@
   /* Motion easing (already used by .animate-fade-up) */
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  /* Radius scale — base maps to rounded cards (2xl) */
+  /* Radius scale â€” base maps to rounded cards (2xl) */
   --radius: 1rem;
 }
 
@@ -109,7 +109,7 @@
   --ring: #2bdc97;
   --border-strong: #313735;
 
-  /* Surface elevation reads by lightness: bg #0b0f0e → 1 → 2 → 3 */
+  /* Surface elevation reads by lightness: bg #0b0f0e â†’ 1 â†’ 2 â†’ 3 */
   --surface-1: #15191a;
   --surface-2: #1b201f;
   --surface-3: #21282a;
@@ -300,8 +300,8 @@
   animation: intervium-fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Indeterminate progress bar — a 1/3-width fill sweeping across its track. */
-/* Used by the "Generating your questions…" loading state.                  */
+/* Indeterminate progress bar â€” a 1/3-width fill sweeping across its track. */
+/* Used by the "Generating your questionsâ€¦" loading state.                  */
 @keyframes loadingbar {
   0% {
     transform: translateX(-120%);
@@ -313,7 +313,7 @@
 
 /* Overlay/dialog entrance. The content keyframe keeps the centring translate so
    the scale-in doesn't fight the -translate-x/y-1/2 positioning. Driven via
-   `animate-[dialog-*-in_…]` on the Radix data-[state=open] element; honoured by
+   `animate-[dialog-*-in_â€¦]` on the Radix data-[state=open] element; honoured by
    the prefers-reduced-motion block above (which zeroes animation duration). */
 @keyframes dialog-overlay-in {
   from {
@@ -331,6 +331,65 @@
   to {
     opacity: 1;
     transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/* Progress Shield (dashboard card)                                    */
+/* A diagonal sheen band sweeps across the shield on a tier-up, paired */
+/* with a pop; a prestige (full-cycle) rollover gets a larger wobble.  */
+/* The sheen rect sits idle (opacity 0) until the parent shield gets   */
+/* the celebrate class. All collapse under prefers-reduced-motion via  */
+/* the global block above.                                             */
+/* ------------------------------------------------------------------ */
+.progress-shield-sheen {
+  opacity: 0;
+}
+.progress-shield-celebrate .progress-shield-sheen {
+  animation: shield-sheen 1100ms var(--ease-out);
+}
+@keyframes shield-sheen {
+  0% {
+    transform: translateX(0);
+    opacity: 0;
+  }
+  20% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateX(150px);
+    opacity: 0;
+  }
+}
+.progress-shield-celebrate {
+  animation: shield-pop 600ms var(--ease-out);
+}
+@keyframes shield-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.progress-shield-prestige {
+  animation: shield-pop-prestige 900ms var(--ease-out);
+}
+@keyframes shield-pop-prestige {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  30% {
+    transform: scale(1.12) rotate(-3deg);
+  }
+  60% {
+    transform: scale(1.12) rotate(3deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
   }
 }
 
@@ -353,13 +412,14 @@
 /* identical metrics in preview and print without re-skinning the app.  */
 /* ------------------------------------------------------------------ */
 .cv-doc.font-serif {
-  font-family: var(--font-cv-serif), ui-serif, Georgia, "Times New Roman", serif;
+  font-family:
+    var(--font-cv-serif), ui-serif, Georgia, "Times New Roman", serif;
 }
 .cv-doc.font-sans {
   font-family: var(--font-cv-sans), ui-sans-serif, system-ui, sans-serif;
 }
 
-/* CV paper is always a light "sheet" — it must match the printed PDF — even
+/* CV paper is always a light "sheet" â€” it must match the printed PDF â€” even
    when the app is in dark mode. The document itself uses literal slate/white
    colours, but inherited borders (uncoloured border-b/border-l) and the
    page-break guides read the app tokens, which would flip to dark values under
@@ -399,7 +459,8 @@
     to bottom,
     transparent 0,
     transparent calc(var(--cv-page-h) - 1px),
-    color-mix(in srgb, var(--foreground) 18%, transparent) calc(var(--cv-page-h) - 1px),
+    color-mix(in srgb, var(--foreground) 18%, transparent)
+      calc(var(--cv-page-h) - 1px),
     color-mix(in srgb, var(--foreground) 18%, transparent) var(--cv-page-h)
   );
 }
@@ -450,9 +511,9 @@
 /* Pointer cursor for interactive controls                            */
 /* Tailwind v4's Preflight no longer sets `cursor: pointer` on buttons */
 /* and similar controls (they inherit the browser default arrow), so   */
-/* restore it for genuinely-clickable elements — native buttons, form  */
+/* restore it for genuinely-clickable elements â€” native buttons, form  */
 /* controls, and the ARIA roles our Radix primitives render (slider,   */
-/* switch, tab, option, menuitem…). Scoped to the enabled state, and    */
+/* switch, tab, option, menuitemâ€¦). Scoped to the enabled state, and    */
 /* kept in @layer base so explicit cursor-* utilities (e.g.            */
 /* `disabled:cursor-not-allowed`) always win.                          */
 /* ------------------------------------------------------------------ */
@@ -478,15 +539,76 @@
 }
 
 /* ------------------------------------------------------------------ */
+/* Colorful Markdown â€” syntax highlighting for study notes            */
+/* Scoped to `.md-colorful` (the Markdown variant="colorful" wrapper) */
+/* so Dojo's default renderer is untouched. rehype-highlight emits     */
+/* highlight.js token classes; we paint them with the chart tokens so  */
+/* both themes get sensible colors with no third-party theme import.   */
+/* ------------------------------------------------------------------ */
+/* (Body prose color is set inline on the wrapper in markdown.tsx so it's immune
+   to stylesheet layering/caching; see the `style` prop there.) */
+.md-colorful .hljs-comment,
+.md-colorful .hljs-quote {
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+.md-colorful .hljs-keyword,
+.md-colorful .hljs-selector-tag,
+.md-colorful .hljs-literal {
+  color: var(--chart-5);
+}
+.md-colorful .hljs-string,
+.md-colorful .hljs-regexp,
+.md-colorful .hljs-addition {
+  color: var(--chart-1);
+}
+.md-colorful .hljs-number,
+.md-colorful .hljs-symbol,
+.md-colorful .hljs-bullet {
+  color: var(--chart-4);
+}
+.md-colorful .hljs-title,
+.md-colorful .hljs-title.function_,
+.md-colorful .hljs-section,
+.md-colorful .hljs-name {
+  color: var(--chart-3);
+}
+.md-colorful .hljs-built_in,
+.md-colorful .hljs-type,
+.md-colorful .hljs-class .hljs-title,
+.md-colorful .hljs-attr,
+.md-colorful .hljs-attribute {
+  color: var(--chart-2);
+}
+.md-colorful .hljs-variable,
+.md-colorful .hljs-template-variable,
+.md-colorful .hljs-meta {
+  color: var(--muted-foreground);
+}
+.md-colorful .hljs-deletion {
+  color: var(--destructive);
+}
+.md-colorful .hljs-emphasis {
+  font-style: italic;
+}
+.md-colorful .hljs-strong {
+  font-weight: 700;
+}
+/* GFM task-list checkboxes â€” tint with the brand green. */
+.md-colorful input[type="checkbox"] {
+  accent-color: var(--primary);
+}
+
+/* ------------------------------------------------------------------ */
 /* Print-to-PDF for the /cv preview.                                  */
 /*                                                                    */
 /* The printable CV is rendered into a portal at the end of <body>    */
 /* (`.cv-print-root`). On screen it's hidden; when printing we hide   */
-/* every other top-level node and show only the CV — so there are no  */
+/* every other top-level node and show only the CV â€” so there are no  */
 /* blank pages from invisible-but-laid-out app chrome.                */
 /*                                                                    */
 /* Margins: `@page { margin: 0 }` removes the browser's injected         */
-/* header/footer (date, document title, URL) entirely — there's no margin */
+/* header/footer (date, document title, URL) entirely â€” there's no margin */
 /* box for them to print into. The per-page top/bottom gap is recreated   */
 /* by repeating <thead>/<tfoot> spacer rows in the print table (they      */
 /* repeat at the top and bottom of EVERY printed page), and the left/right */
@@ -506,7 +628,7 @@
   }
 
   /* Pin A4 so pagination doesn't depend on the print dialog's page-size
-     default, and zero margin → no browser header/footer (the spacer rows below
+     default, and zero margin â†’ no browser header/footer (the spacer rows below
      are the real margins). */
   @page {
     size: A4;
@@ -523,7 +645,7 @@
     print-color-adjust: exact;
   }
   /* thead/tfoot repeat on every page, so these become the per-page top and
-     bottom gaps — including the top of page 2 and beyond. */
+     bottom gaps â€” including the top of page 2 and beyond. */
   .cv-print-pad {
     height: 18mm;
   }
@@ -552,7 +674,7 @@
   }
 }
 
-/* QA Center "Export PDF" — print only the report, hide the rest of the page so
+/* QA Center "Export PDF" â€” print only the report, hide the rest of the page so
    the browser's "Save as PDF" produces a clean document. */
 @media print {
   body:has(#qa-report) * {

@@ -1,6 +1,7 @@
 import "server-only";
 import { eq, sql } from "drizzle-orm";
 import { db, aiUsage } from "@db";
+import { isDemoSession } from "@/lib/demo";
 
 /**
  * Thrown when an AI operation can't run because today's budget is spent.
@@ -53,6 +54,10 @@ function today(): string {
  * so rejecting the AI call is the safe choice.
  */
 export async function reserveAiCalls(n = 1): Promise<boolean> {
+  // The demo account never spends real AI budget — deny up front so callers
+  // degrade gracefully and no Groq call is ever attempted on its behalf.
+  if (await isDemoSession()) return false;
+
   const day = today();
   try {
     // Upsert-and-increment in one round trip; returns the new running total.

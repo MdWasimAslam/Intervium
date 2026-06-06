@@ -52,17 +52,28 @@ export interface ListNotesOpts {
   q?: string;
   kind?: "note" | "flashcard";
   includeArchived?: boolean;
+  /** Page size — when set, only this many rows are returned. */
+  limit?: number;
+  /** Row offset for the current page (used with `limit`). */
+  offset?: number;
+  /**
+   * Pre-fetched folder list, used to resolve `includeSubfolders` descendants
+   * without re-querying. Pass this when the caller already has the folders
+   * (e.g. the page that also renders the tree) so a single render doesn't read
+   * the folder table once per `listNotes`/`countNotes` call.
+   */
+  folders?: FolderInput[];
 }
 
 /**
- * The user's notes for the list view: pinned first, then most-recently-updated.
- * Folder filtering optionally spans the whole subtree; tag/text filters and the
- * note/flashcard split are all applied server-side.
+ * The filter clauses shared by {@link listNotes} and {@link countNotes}, so the
+ * paginated page query and its total count always agree on what's included.
+ * Async because the subfolder option needs the folder tree to resolve descendants.
  */
-export async function listNotes(
+async function noteClauses(
   userId: string,
-  opts: ListNotesOpts = {},
-): Promise<StudyNoteRow[]> {
+  opts: ListNotesOpts,
+): Promise<(SQL | undefined)[]> {
   const clauses: (SQL | undefined)[] = [eq(studyNotes.userId, userId)];
 
   if (!opts.includeArchived) clauses.push(eq(studyNotes.isArchived, false));
@@ -71,7 +82,7 @@ export async function listNotes(
     clauses.push(isNull(studyNotes.folderId));
   } else if (typeof opts.folderId === "string") {
     if (opts.includeSubfolders) {
-      const folders = await listFolders(userId);
+      const folders = opts.folders ?? (await listFolders(userId));
       const ids = descendantIds(folders, opts.folderId);
       clauses.push(inArray(studyNotes.folderId, ids));
     } else {
@@ -92,15 +103,43 @@ export async function listNotes(
     );
   }
 
-  return (
-    db
-      .select()
-      .from(studyNotes)
-      .where(and(...clauses))
-      // Pinned first, then newest first (by creation) so freshly added/imported
-      // notes surface at the top and stay put when older notes are edited.
-      .orderBy(desc(studyNotes.isPinned), desc(studyNotes.createdAt))
-  );
+  return clauses;
+}
+
+/**
+ * The user's notes for the list view: pinned first, then most-recently-created.
+ * Folder filtering optionally spans the whole subtree; tag/text filters and the
+ * note/flashcard split are all applied server-side. Pass `limit`/`offset` to
+ * page the result (the list view always does, to stay bounded as notes grow).
+ */
+export async function listNotes(
+  userId: string,
+  opts: ListNotesOpts = {},
+): Promise<StudyNoteRow[]> {
+  const clauses = await noteClauses(userId, opts);
+
+  let query = db
+    .select()
+    .from(studyNotes)
+    .where(and(...clauses))
+    // Pinned first, then newest first (by creation) so freshly added/imported
+    // notes surface at the top and stay put when older notes are edited.
+    .orderBy(desc(studyNotes.isPinned), desc(studyNotes.createdAt))
+    .$dynamic();
+
+  if (opts.limit != null) query = query.limit(opts.limit);
+  if (opts.offset != null) query = query.offset(opts.offset);
+
+  return query;
+}
+
+/** Total notes matching the same filters as {@link listNotes} (for paging). */
+export async function countNotes(
+  userId: string,
+  opts: ListNotesOpts = {},
+): Promise<number> {
+  const clauses = await noteClauses(userId, opts);
+  return db.$count(studyNotes, and(...clauses));
 }
 
 /** Distinct tags across the user's non-archived notes (for filter/autocomplete). */
@@ -128,12 +167,16 @@ function dueClause(userId: string): SQL {
 
 /** How many flashcards are currently due for review. */
 export async function countDueFlashcards(userId: string): Promise<number> {
-  const rows = await db
-    .select({ id: studyNotes.id })
-    .from(studyNotes)
-    .where(dueClause(userId));
-  return rows.length;
+  // Aggregate in SQL — sizing a badge shouldn't ship every due-card id over the
+  // wire just to take `.length` (matches the `db.$count` used by countNotes).
+  return db.$count(studyNotes, dueClause(userId));
 }
+
+/**
+ * Cap on cards pulled into a single review session — far beyond a realistic
+ * sitting, so the batch query stays bounded however large the due queue grows.
+ */
+const REVIEW_BATCH_LIMIT = 200;
 
 /**
  * Flashcards due for review — brand-new cards (dueAt NULL) first, then the
@@ -151,6 +194,7 @@ export async function listDueCards(userId: string): Promise<StudyReviewCard[]> {
       .where(dueClause(userId))
       // New cards (NULL dueAt) surface first, then oldest due date onward.
       .orderBy(sql`${studyNotes.dueAt} asc nulls first`)
+      .limit(REVIEW_BATCH_LIMIT)
   );
 }
 

@@ -2,7 +2,14 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Plus } from "lucide-react";
+import {
+  Check,
+  ChevronLeft,
+  ChevronRight,
+  Copy,
+  Mail,
+  Plus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +32,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ConfirmDelete } from "@/components/admin/ConfirmDelete";
-import { deleteCode, generateCodes } from "@/lib/actions/admin/codes";
+import {
+  deleteCode,
+  generateCodes,
+  sendDemoInviteAction,
+} from "@/lib/actions/admin/codes";
 
 export interface CodeRow {
   id: string;
@@ -35,17 +46,39 @@ export interface CodeRow {
   expiresAt: string | null;
 }
 
-export function CodesAdmin({ codes }: { codes: CodeRow[] }) {
+export function CodesAdmin({
+  codes,
+  page,
+  totalPages,
+  total,
+}: {
+  codes: CodeRow[];
+  page: number;
+  totalPages: number;
+  total: number;
+}) {
+  const router = useRouter();
+
+  function goToPage(p: number) {
+    const params = new URLSearchParams(window.location.search);
+    params.set("page", String(p));
+    router.push(`?${params.toString()}`);
+  }
+
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Access Codes</h1>
           <p className="text-sm text-[var(--muted-foreground)]">
-            Registration requires a valid, unused code.
+            {total} code{total === 1 ? "" : "s"}. Registration requires a valid,
+            unused code.
           </p>
         </div>
-        <GenerateDialog />
+        <div className="flex gap-2">
+          <InviteDialog />
+          <GenerateDialog />
+        </div>
       </div>
 
       <Table>
@@ -100,6 +133,33 @@ export function CodesAdmin({ codes }: { codes: CodeRow[] }) {
           )}
         </TableBody>
       </Table>
+
+      {/* Pagination ------------------------------------------------------- */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-sm text-[var(--muted-foreground)]">
+            Page {page} of {totalPages}
+          </span>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => goToPage(page - 1)}
+            >
+              <ChevronLeft className="h-4 w-4" /> Prev
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= totalPages}
+              onClick={() => goToPage(page + 1)}
+            >
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -123,6 +183,76 @@ function CopyButton({ code }: { code: string }) {
         <Copy className="h-4 w-4" />
       )}
     </Button>
+  );
+}
+
+function InviteDialog() {
+  const [open, setOpen] = useState(false);
+  const [email, setEmail] = useState("");
+  const [error, setError] = useState<string>();
+  const [sent, setSent] = useState(false);
+  const [pending, start] = useTransition();
+
+  function submit() {
+    setError(undefined);
+    start(async () => {
+      const res = await sendDemoInviteAction({ email });
+      if (res.ok) {
+        setSent(true);
+        setEmail("");
+      } else setError(res.error);
+    });
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (o) {
+          setSent(false);
+          setError(undefined);
+        }
+      }}
+    >
+      <DialogTrigger asChild>
+        <Button variant="outline">
+          <Mail className="h-4 w-4" /> Email demo invite
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Email demo access</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-[var(--muted-foreground)]">
+            Sends the shared demo account&apos;s email, password, and sign-in
+            link to this address.
+          </p>
+          <div className="space-y-1.5">
+            <Label htmlFor="invite-email">Recipient email</Label>
+            <Input
+              id="invite-email"
+              type="email"
+              value={email}
+              placeholder="someone@example.com"
+              onChange={(e) => setEmail(e.target.value)}
+            />
+          </div>
+          {error && <FormError message={error} />}
+          {sent && (
+            <p className="text-sm font-medium text-[var(--primary)]">
+              Invite sent ✓
+            </p>
+          )}
+        </div>
+        <DialogFooter>
+          <Button onClick={submit} disabled={pending || !email.trim()}>
+            Send invite
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

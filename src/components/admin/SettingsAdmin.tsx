@@ -6,10 +6,17 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { FormError } from "@/components/auth/FormError";
-import { updateSettings } from "@/lib/actions/admin/settings";
+import { ConfirmDelete } from "@/components/admin/ConfirmDelete";
+import {
+  resetDemoAccountAction,
+  setDemoMode,
+  updateSettings,
+} from "@/lib/actions/admin/settings";
 import type { ScoringProvider } from "@/lib/settings";
+import type { DemoRequestStats } from "@/lib/demo-analytics";
 import type { LengthPreset, TimerPreset } from "@db";
 
 interface Props {
@@ -18,6 +25,8 @@ interface Props {
   lengthPresets: LengthPreset[];
   defaultLengthPresetId: string;
   scoringProvider: ScoringProvider;
+  demoMode: boolean;
+  demoStats: DemoRequestStats;
 }
 
 const SCORING_PROVIDERS: {
@@ -51,7 +60,9 @@ function newId(prefix: string): string {
 export function SettingsAdmin(initial: Props) {
   const router = useRouter();
   const [timers, setTimers] = useState<TimerPreset[]>(initial.timerPresets);
-  const [defaultTimer, setDefaultTimer] = useState(initial.defaultTimerPresetId);
+  const [defaultTimer, setDefaultTimer] = useState(
+    initial.defaultTimerPresetId,
+  );
   const [lengths, setLengths] = useState<LengthPreset[]>(initial.lengthPresets);
   const [defaultLength, setDefaultLength] = useState(
     initial.defaultLengthPresetId,
@@ -63,15 +74,40 @@ export function SettingsAdmin(initial: Props) {
   const [saved, setSaved] = useState(false);
   const [pending, start] = useTransition();
 
+  const [demoMode, setDemoModeState] = useState(initial.demoMode);
+  const [demoPending, startDemo] = useTransition();
+  const toggleDemo = (next: boolean) => {
+    setDemoModeState(next);
+    startDemo(async () => {
+      const res = await setDemoMode({ enabled: next });
+      if (res.ok) router.refresh();
+      else {
+        setDemoModeState(!next); // revert on failure
+        setError(res.error);
+      }
+    });
+  };
+
+  // Reset uses the shared ConfirmDelete dialog (which manages its own pending/
+  // error/refresh); we only track the post-success confirmation line here.
+  const [resetDone, setResetDone] = useState(false);
+
   const updateTimer = (id: string, patch: Partial<TimerPreset>) =>
-    setTimers((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    setTimers((rows) =>
+      rows.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+    );
   const removeTimer = (id: string) =>
     setTimers((rows) => rows.filter((r) => r.id !== id));
   const addTimer = () =>
-    setTimers((rows) => [...rows, { id: newId("timer"), label: "", seconds: 60 }]);
+    setTimers((rows) => [
+      ...rows,
+      { id: newId("timer"), label: "", seconds: 60 },
+    ]);
 
   const updateLength = (id: string, patch: Partial<LengthPreset>) =>
-    setLengths((rows) => rows.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+    setLengths((rows) =>
+      rows.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+    );
   const removeLength = (id: string) =>
     setLengths((rows) => rows.filter((r) => r.id !== id));
   const addLength = () =>
@@ -125,8 +161,8 @@ export function SettingsAdmin(initial: Props) {
     <div className="max-w-2xl">
       <h1 className="mb-1 text-2xl font-bold">Settings</h1>
       <p className="mb-6 text-sm text-[var(--muted-foreground)]">
-        Configure the timer and interview-length options users pick from. Changes
-        apply immediately to new interviews.
+        Configure the timer and interview-length options users pick from.
+        Changes apply immediately to new interviews.
       </p>
 
       <div className="space-y-6">
@@ -172,7 +208,8 @@ export function SettingsAdmin(initial: Props) {
                   placeholder="No timer"
                   onChange={(e) =>
                     updateTimer(t.id, {
-                      seconds: e.target.value === "" ? null : Number(e.target.value),
+                      seconds:
+                        e.target.value === "" ? null : Number(e.target.value),
                     })
                   }
                 />
@@ -189,7 +226,12 @@ export function SettingsAdmin(initial: Props) {
                 </Button>
               </div>
             ))}
-            <Button type="button" variant="outline" size="sm" onClick={addTimer}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addTimer}
+            >
               <Plus className="h-4 w-4" />
               Add timer preset
             </Button>
@@ -199,9 +241,12 @@ export function SettingsAdmin(initial: Props) {
         {/* Length presets */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Interview length presets</CardTitle>
+            <CardTitle className="text-base">
+              Interview length presets
+            </CardTitle>
             <p className="text-sm text-[var(--muted-foreground)]">
-              Named lengths (Quick / Standard / Full) mapped to a question count.
+              Named lengths (Quick / Standard / Full) mapped to a question
+              count.
             </p>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -227,7 +272,9 @@ export function SettingsAdmin(initial: Props) {
                 <Input
                   value={l.label}
                   placeholder="e.g. Standard"
-                  onChange={(e) => updateLength(l.id, { label: e.target.value })}
+                  onChange={(e) =>
+                    updateLength(l.id, { label: e.target.value })
+                  }
                 />
                 <Input
                   type="number"
@@ -253,7 +300,12 @@ export function SettingsAdmin(initial: Props) {
                 </Button>
               </div>
             ))}
-            <Button type="button" variant="outline" size="sm" onClick={addLength}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={addLength}
+            >
               <Plus className="h-4 w-4" />
               Add length preset
             </Button>
@@ -292,6 +344,87 @@ export function SettingsAdmin(initial: Props) {
                 </span>
               </label>
             ))}
+          </CardContent>
+        </Card>
+
+        {/* Demo mode */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Demo access</CardTitle>
+            <p className="text-sm text-[var(--muted-foreground)]">
+              When on, visitors can request demo credentials from the landing
+              page — we email them the shared demo login (set via{" "}
+              <code className="rounded bg-[var(--muted)] px-1 py-0.5 text-xs">
+                DEMO_USER_EMAIL
+              </code>
+              ). Turn off to hide that offer. The demo account&apos;s AI and
+              deletes stay locked either way. Saves immediately.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <label className="flex items-center gap-3">
+              <Switch
+                checked={demoMode}
+                disabled={demoPending}
+                onCheckedChange={toggleDemo}
+                aria-label="Toggle demo mode"
+              />
+              <span className="text-sm font-medium">
+                {demoMode
+                  ? "On — visitors can request demo access"
+                  : "Off — demo access offer is hidden"}
+              </span>
+            </label>
+
+            <div className="mt-4 border-t border-[var(--border)] pt-4">
+              <p className="mb-2 text-sm text-[var(--muted-foreground)]">
+                Reset the demo account&apos;s data to its pristine seeded state
+                — clears any edits visitors made (keeps the login).
+              </p>
+              <ConfirmDelete
+                action={resetDemoAccountAction}
+                title="Reset demo account?"
+                description="This clears any edits visitors made and re-seeds the shared demo account to its pristine showcase state. The login is preserved."
+                confirmLabel="Reset"
+                confirmingLabel="Resetting…"
+                onSuccess={() => setResetDone(true)}
+                trigger={
+                  <Button type="button" variant="outline" size="sm">
+                    Reset demo account
+                  </Button>
+                }
+              />
+              {resetDone && (
+                <p className="mt-2 text-sm text-[var(--primary)]">
+                  Demo account reset ✓
+                </p>
+              )}
+            </div>
+
+            <div className="mt-4 border-t border-[var(--border)] pt-4">
+              <p className="text-sm font-medium">Access requests</p>
+              <p className="mt-0.5 text-xs text-[var(--muted-foreground)]">
+                {initial.demoStats.people}{" "}
+                {initial.demoStats.people === 1 ? "person has" : "people have"}{" "}
+                asked for demo access · {initial.demoStats.requests} total
+                request{initial.demoStats.requests === 1 ? "" : "s"}
+              </p>
+              {initial.demoStats.recent.length > 0 && (
+                <ul className="mt-2 max-h-44 divide-y divide-[var(--border)] overflow-auto rounded-lg border border-[var(--border)] text-xs">
+                  {initial.demoStats.recent.map((r) => (
+                    <li
+                      key={r.email}
+                      className="flex items-center justify-between gap-2 px-3 py-1.5"
+                    >
+                      <span className="truncate">{r.email}</span>
+                      <span className="shrink-0 text-[var(--muted-foreground)]">
+                        {r.count}× · {r.lastRequestedAt.slice(0, 10)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </CardContent>
         </Card>
 

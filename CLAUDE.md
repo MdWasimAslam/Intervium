@@ -21,7 +21,7 @@ src/app/**            Pages (server components) + 3 api/ route handlers
 src/lib/actions/**    Server actions ('use server'): validate (zod) → authorize → orchestrate
 src/lib/**            Services / domain logic (scoring, question-engine, gap-analysis, dashboard…)
 src/lib/ai/**         AI client (Groq/DeepSeek): HTTP, retry/timeout, prompt building, capability fns
-db/ + @db             Drizzle ORM over Neon Postgres (HTTP driver for queries, WS pool for tx)
+db/ + @db             Drizzle ORM over Supabase Postgres (single node-postgres `pg` pool, used for both queries and transactions)
 ```
 
 - **Auth:** Auth.js v5 (Credentials + JWT). `src/auth.ts` (full), `src/auth.config.ts`
@@ -85,7 +85,7 @@ scoring, question-engine signature logic, CV parse/ATS, auth/session, admin CRUD
 
 ## Deployment Notes
 
-Vercel + Neon. `DATABASE_URL`/`POSTGRES_*` come from the Neon integration; set `AUTH_SECRET`,
+Vercel + Supabase Postgres. Set `DATABASE_URL` (the Supabase connection string), `AUTH_SECRET`,
 `GROQ_API_KEY`, `NEXT_PUBLIC_SITE_URL`. Run `db:migrate` + `db:seed` against prod once. Migrations
 are not auto-applied on deploy.
 

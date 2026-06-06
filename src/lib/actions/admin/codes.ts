@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { accessCodes, db } from "@db";
 import { requireAdmin } from "@/lib/session";
+import { sendDemoInvite } from "@/lib/email";
 import { zodError, type AdminResult } from "./util";
 
 const genSchema = z.object({
@@ -43,6 +44,18 @@ export async function generateCodes(input: unknown): Promise<AdminResult> {
   }
   revalidatePath("/admin/access-codes");
   return { ok: true };
+}
+
+/** Email the shared demo account's credentials + sign-in link to an address. */
+export async function sendDemoInviteAction(
+  input: unknown,
+): Promise<AdminResult> {
+  await requireAdmin();
+  const p = z.object({ email: z.string().email() }).safeParse(input);
+  if (!p.success) return { ok: false, error: "Enter a valid email address." };
+
+  const error = await sendDemoInvite(p.data.email);
+  return error ? { ok: false, error } : { ok: true };
 }
 
 /** Delete an unused code. Used codes are preserved for audit. */

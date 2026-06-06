@@ -4,8 +4,7 @@ import { db } from "./index";
  * Transaction helper.
  *
  * The node-postgres pool backing `db` supports interactive transactions, so we
- * simply reuse the shared client — no separate driver/connection needed (the
- * old Neon HTTP driver couldn't, which is why this used its own WebSocket pool).
+ * simply reuse the shared client — no separate driver or connection pool needed.
  */
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 

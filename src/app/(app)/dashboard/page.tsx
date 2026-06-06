@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import {
@@ -24,7 +25,10 @@ import { ProfileSummary } from "@/components/dashboard/ProfileSummary";
 import { RecentActivity } from "@/components/dashboard/RecentActivity";
 import { QuickLinks } from "@/components/dashboard/QuickLinks";
 import { MilestoneBanner } from "@/components/dashboard/MilestoneBanner";
-import { LatestResult } from "@/components/interview/LatestResult";
+import {
+  ProgressShieldSection,
+  ProgressShieldSkeleton,
+} from "@/components/dashboard/ProgressShieldSection";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
@@ -40,7 +44,6 @@ export default async function DashboardPage() {
     profile,
     stats,
     recent,
-    latest,
     trend,
     scoredCount,
     resumeId,
@@ -51,7 +54,11 @@ export default async function DashboardPage() {
   const isAdmin = user.role === "admin";
 
   const level = `${profile.yearsExperience} yr${profile.yearsExperience === 1 ? "" : "s"} experience`;
-  const sep = <span aria-hidden className="text-[var(--border)]">·</span>;
+  const sep = (
+    <span aria-hidden className="text-[var(--border)]">
+      ·
+    </span>
+  );
 
   return (
     <Container className="py-10 sm:py-12">
@@ -85,32 +92,21 @@ export default async function DashboardPage() {
           </div>
         </header>
 
-        {/* Hero + latest result */}
+        {/* Hero + progress shield (replaces the old latest-result card). The
+            shield always renders — new users get a starter shield + empty
+            state, so this slot is never blank. */}
         <section
           className="animate-fade-up grid gap-5 lg:grid-cols-3"
           style={{ animationDelay: "60ms" }}
         >
-          <div
-            className={hasResults && latest ? "lg:col-span-2" : "lg:col-span-3"}
-          >
+          <div className="lg:col-span-2">
             <PrimaryAction isFirst={!hasResults} resumeId={resumeId} />
           </div>
-          {hasResults && latest && (
-            <div className="lg:col-span-1">
-              <LatestResult
-                variant="highlight"
-                latest={{
-                  totalScore: latest.totalScore,
-                  maxScore: latest.maxScore,
-                  mode: latest.mode,
-                  techStack: latest.tech,
-                }}
-                role={latest.role}
-                date={latest.date}
-                href={`/interview/${latest.id}/results`}
-              />
-            </div>
-          )}
+          <div className="lg:col-span-1">
+            <Suspense fallback={<ProgressShieldSkeleton />}>
+              <ProgressShieldSection userId={user.id} />
+            </Suspense>
+          </div>
         </section>
 
         {/* Stats */}

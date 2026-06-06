@@ -3,9 +3,12 @@ import { Fraunces } from "next/font/google";
 import {
   ArrowRight,
   ClipboardCheck,
+  Code2,
+  FileText,
   Gauge,
   Globe,
   MessagesSquare,
+  NotebookPen,
   SlidersHorizontal,
   Sparkles,
   Target,
@@ -14,6 +17,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Chip } from "@/components/ui/chip";
 import { LogoMark } from "@/components/brand/Logo";
+import { DemoAccessForm } from "./DemoAccessForm";
 import { cn } from "@/lib/utils";
 
 /**
@@ -53,17 +57,32 @@ const FEATURES = [
   {
     Icon: MessagesSquare,
     title: "Realistic mock interviews",
-    body: "Practice the way you’ll really interview. Questions tailored to your role, seniority, and focus — answered in your own words.",
+    body: "Behavioral, system-design, and coding tracks — tailored to your role and seniority. Answer in your own words, like the real thing.",
   },
   {
     Icon: Gauge,
-    title: "Instant AI scoring",
-    body: "Every answer is graded the moment you finish, with specifics on content, structure, and how you delivered it.",
+    title: "Instant AI feedback",
+    body: "Every answer is scored the moment you finish, with a model answer, a rubric breakdown, and the exact concepts you missed.",
+  },
+  {
+    Icon: Code2,
+    title: "Code Dojo",
+    body: "A coding gym with real problems. Run your solution against test cases, and spaced repetition resurfaces the ones you fumble.",
+  },
+  {
+    Icon: FileText,
+    title: "CV & ATS tools",
+    body: "Score your résumé against applicant-tracking systems, get AI rewrite suggestions, and generate tailored cover letters in seconds.",
   },
   {
     Icon: Target,
-    title: "Weak-area tracking",
-    body: "Intervium remembers where you slip and resurfaces those topics, so each session aims straight at your gaps.",
+    title: "Skill-gap analysis",
+    body: "See which topics drag your scores down across sessions, with a focused learning path to close the gaps before they cost you.",
+  },
+  {
+    Icon: NotebookPen,
+    title: "Study notes & flashcards",
+    body: "Capture what you learn, save weak answers as notes in one click, and revise with spaced-repetition flashcards — even read aloud.",
   },
 ] as const;
 
@@ -71,7 +90,12 @@ const FEATURES = [
  * Marketing landing page, shown to logged-out visitors only.
  * (Logged-in users are routed to the dashboard from `/`.)
  */
-export function Landing() {
+export function Landing({
+  demoAccessEnabled = false,
+}: {
+  /** When true, show the "request demo access" form (admin-controlled). */
+  demoAccessEnabled?: boolean;
+}) {
   return (
     <div className={cn(display.variable, "relative overflow-hidden")}>
       {/* Ambient: faint grid + a soft brand glow give the hero depth */}
@@ -84,7 +108,7 @@ export function Landing() {
       </div>
 
       {/* HERO — sized to fill the first screen below the sticky header */}
-      <section className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-7xl items-center px-4 sm:px-6 py-20 lg:py-24">
+      <section className="relative mx-auto flex min-h-[calc(100svh-4rem)] max-w-[90rem] items-center px-4 sm:px-6 py-20 lg:py-24">
         <div className="grid w-full items-center gap-10 lg:gap-12 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="animate-fade-up">
             <Chip>
@@ -98,25 +122,37 @@ export function Landing() {
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-[var(--muted-foreground)]">
               Realistic mock interviews with instant AI scoring on every answer,
-              and a clear path to fixing your weak spots — long before it counts.
+              and a clear path to fixing your weak spots — long before it
+              counts.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/register"
-                className={cn(buttonVariants({ size: "lg" }))}
-              >
-                Get started <ArrowRight />
-              </Link>
-              <Link
-                href="/login"
-                className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
-              >
-                Sign in
-              </Link>
-            </div>
+            {demoAccessEnabled ? (
+              <div className="mt-8">
+                <p className="mb-3 text-base text-[var(--muted-foreground)]">
+                  Just exploring? Get instant demo access — no signup needed.
+                </p>
+                <DemoAccessForm />
+              </div>
+            ) : (
+              <div className="mt-8 flex flex-wrap gap-3">
+                <Link
+                  href="/register"
+                  className={cn(buttonVariants({ size: "lg" }))}
+                >
+                  Get started <ArrowRight />
+                </Link>
+                <Link
+                  href="/login"
+                  className={cn(
+                    buttonVariants({ variant: "outline", size: "lg" }),
+                  )}
+                >
+                  Sign in
+                </Link>
+              </div>
+            )}
             <p className="mt-5 text-sm text-[var(--muted-foreground)]">
-              Free to start · No credit card · Behavioral, system design &amp;
-              coding tracks
+              100% free · Open source · Self-hostable · no limits · Behavioral,
+              system design &amp; coding tracks
             </p>
           </div>
 
@@ -127,7 +163,10 @@ export function Landing() {
       </section>
 
       {/* HOW IT WORKS */}
-      <section id="how-it-works" className="relative mx-auto max-w-7xl px-6 py-20">
+      <section
+        id="how-it-works"
+        className="relative mx-auto max-w-[90rem] px-6 py-20"
+      >
         <div className="max-w-2xl">
           <span className="text-sm font-semibold text-[var(--primary)]">
             How it works
@@ -159,11 +198,29 @@ export function Landing() {
       </section>
 
       {/* FEATURE HIGHLIGHTS */}
-      <section className="relative border-y border-[var(--border)] bg-[var(--card)]">
-        <div className="mx-auto max-w-7xl px-6 py-16">
-          <div className="grid gap-10 md:grid-cols-3">
+      <section
+        id="features"
+        className="relative border-y border-[var(--border)] bg-[var(--card)]"
+      >
+        <div className="mx-auto max-w-[90rem] px-6 py-20">
+          <div className="max-w-2xl">
+            <span className="text-sm font-semibold text-[var(--primary)]">
+              Everything in one place
+            </span>
+            <h2 className="font-display mt-2 text-3xl font-semibold tracking-tight sm:text-4xl">
+              Your whole interview prep, end to end.
+            </h2>
+            <p className="mt-3 text-[var(--muted-foreground)]">
+              From the first mock to a polished CV — practice, get scored, fix
+              the gaps, and actually remember it.
+            </p>
+          </div>
+          <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(({ Icon, title, body }) => (
-              <div key={title}>
+              <Card
+                key={title}
+                className="h-full p-6 transition-colors hover:border-[var(--border-strong)]"
+              >
                 <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-[var(--accent)] text-[var(--primary)]">
                   <Icon className="h-5 w-5" />
                 </span>
@@ -171,14 +228,14 @@ export function Landing() {
                 <p className="mt-2 text-sm leading-relaxed text-[var(--muted-foreground)]">
                   {body}
                 </p>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
       {/* CLOSING CTA */}
-      <section className="relative mx-auto max-w-7xl px-6 py-24 text-center">
+      <section className="relative mx-auto max-w-[90rem] px-6 py-24 text-center">
         <div
           className="landing-glow absolute left-1/2 top-1/2 -z-10 h-72 w-[680px] -translate-x-1/2 -translate-y-1/2 rounded-full opacity-70"
           aria-hidden
@@ -190,31 +247,49 @@ export function Landing() {
           Run your first mock in minutes. No setup, no cost to start.
         </p>
         <div className="mt-8 flex justify-center">
-          <Link href="/register" className={cn(buttonVariants({ size: "lg" }))}>
-            Get started <ArrowRight />
-          </Link>
+          {demoAccessEnabled ? (
+            <DemoAccessForm />
+          ) : (
+            <Link
+              href="/register"
+              className={cn(buttonVariants({ size: "lg" }))}
+            >
+              Get started <ArrowRight />
+            </Link>
+          )}
         </div>
       </section>
 
       {/* QUIET FOOTER */}
       <footer className="border-t border-[var(--border)]">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
+        <div className="mx-auto flex max-w-[90rem] flex-col items-center justify-between gap-4 px-6 py-8 sm:flex-row">
           <span className="inline-flex items-center gap-2">
             <LogoMark className="h-7 w-7" />
-            <span className="text-base font-bold tracking-tight">Intervium</span>
+            <span className="text-base font-bold tracking-tight">
+              Intervium
+            </span>
           </span>
           <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-[var(--muted-foreground)]">
-            <Link href="#how-it-works" className="transition-colors hover:text-[var(--foreground)]">
+            <Link
+              href="#features"
+              className="transition-colors hover:text-[var(--foreground)]"
+            >
+              Features
+            </Link>
+            <Link
+              href="#how-it-works"
+              className="transition-colors hover:text-[var(--foreground)]"
+            >
               How it works
             </Link>
-            <Link href="/login" className="transition-colors hover:text-[var(--foreground)]">
+            <Link
+              href="/login"
+              className="transition-colors hover:text-[var(--foreground)]"
+            >
               Sign in
             </Link>
-            <Link href="/register" className="transition-colors hover:text-[var(--foreground)]">
-              Get started
-            </Link>
             <a
-              href="https://github.com/MdWasimAslam"
+              href="https://github.com/MdWasimAslam/Intervium"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 transition-colors hover:text-[var(--foreground)]"

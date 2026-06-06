@@ -12,6 +12,7 @@ import {
 } from "@db";
 import { withTransaction } from "@db/tx";
 import { getCurrentUser } from "@/lib/session";
+import { requireNonDemo } from "@/lib/demo";
 import { allowAction } from "@/lib/rate-limit";
 import { reserveAiCalls } from "@/lib/ai-budget";
 import {
@@ -522,6 +523,8 @@ export async function deletePersonalDojoQuestion(
 ): Promise<Result<true>> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Not authenticated." };
+  const blocked = requireNonDemo(user.email);
+  if (blocked) return { ok: false, error: blocked };
   const p = z.object({ id: z.string().uuid() }).safeParse(input);
   if (!p.success) return { ok: false, error: "Invalid problem." };
   const { id } = p.data;

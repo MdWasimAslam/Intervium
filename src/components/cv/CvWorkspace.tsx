@@ -100,9 +100,14 @@ export function CvWorkspace({
             </LoadingButton>
           </div>
           <CvAiReview cv={cv} initial={initialAts} />
-          <div className="grid items-start gap-6 lg:grid-cols-2">
-            <CvEditor cv={cv} onChange={setCv} />
-            <div className="lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
+          {/* Editor takes the remaining space; the preview gets a fixed track
+              wide enough for the 688px A4 document plus the card's sm:p-8
+              padding, so the CV renders at full size without h-scrolling. */}
+          <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_768px]">
+            <div className="min-w-0">
+              <CvEditor cv={cv} onChange={setCv} />
+            </div>
+            <div className="min-w-0 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:self-start lg:overflow-y-auto lg:pr-1">
               <CvPreview cv={cv} />
             </div>
           </div>

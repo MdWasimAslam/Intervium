@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
   CalendarClock,
+  ChevronLeft,
   ChevronRight,
   Clock,
   Download,
@@ -36,7 +37,13 @@ export interface StudyHomeProps {
   activeTag: string | null;
   query: string;
   includeSubfolders: boolean;
+  page: number;
+  totalPages: number;
+  /** True on a bare /study (no folder param) — restore the last-open folder. */
+  autoRestore: boolean;
 }
+
+const LAST_FOLDER_KEY = "study:lastFolder";
 
 export function StudyHome({
   folders,
@@ -48,9 +55,45 @@ export function StudyHome({
   activeTag,
   query,
   includeSubfolders,
+  page,
+  totalPages,
+  autoRestore,
 }: StudyHomeProps) {
   const router = useRouter();
   const [search, setSearch] = useState(query);
+
+  // Remember the last explicit folder view so a bare /study can return to it.
+  useEffect(() => {
+    if (autoRestore) return; // don't overwrite the memory while restoring
+    try {
+      window.localStorage.setItem(
+        LAST_FOLDER_KEY,
+        JSON.stringify({ folder: selection, sub: includeSubfolders }),
+      );
+    } catch {
+      /* localStorage unavailable (private mode etc.) — non-fatal */
+    }
+  }, [autoRestore, selection, includeSubfolders]);
+
+  // Landed on a bare /study → jump back to the remembered folder, if still valid.
+  useEffect(() => {
+    if (!autoRestore) return;
+    let stored: { folder?: string; sub?: boolean } | null = null;
+    try {
+      stored = JSON.parse(
+        window.localStorage.getItem(LAST_FOLDER_KEY) ?? "null",
+      );
+    } catch {
+      /* ignore malformed/unavailable storage */
+    }
+    const folder = stored?.folder;
+    if (!folder || folder === "all") return; // nothing to restore (already All)
+    // Only restore real targets: "unfiled", or a folder that still exists.
+    if (folder !== "unfiled" && !folders.some((f) => f.id === folder)) return;
+    const params = new URLSearchParams({ folder });
+    if (stored?.sub && folder !== "unfiled") params.set("sub", "1");
+    router.replace(`/study?${params.toString()}`);
+  }, [autoRestore, folders, router]);
 
   const isFolder = selection !== "all" && selection !== "unfiled";
   const crumbs = isFolder ? folderPath(folders, selection) : [];
@@ -58,16 +101,23 @@ export function StudyHome({
   const showRecent =
     selection === "all" && !hasFilters && recentlyViewed.length > 0;
 
-  /** Build a `/study` URL, merging the current filters with `patch`. */
+  /**
+   * Build a `/study` URL, merging the current filters with `patch`. `page` is
+   * only carried when explicitly patched (Prev/Next), so any filter change
+   * naturally resets to page 1.
+   */
   function hrefWith(patch: {
     folder?: FolderSelection | null;
     tag?: string | null;
     q?: string | null;
     sub?: boolean | null;
+    page?: number;
   }): string {
     const params = new URLSearchParams();
     const folder = patch.folder !== undefined ? patch.folder : selection;
-    if (folder && folder !== "all") params.set("folder", folder);
+    // Always emit the folder (including "all") so in-app URLs are never bare —
+    // a bare /study is reserved for the last-folder restore.
+    if (folder) params.set("folder", folder);
 
     const tag = patch.tag !== undefined ? patch.tag : activeTag;
     if (tag) params.set("tag", tag);
@@ -79,12 +129,18 @@ export function StudyHome({
     const sub = patch.sub !== undefined ? patch.sub : includeSubfolders;
     if (isFolder && sub === true) params.set("sub", "1");
 
+    if (patch.page && patch.page > 1) params.set("page", String(patch.page));
+
     const qs = params.toString();
     return qs ? `/study?${qs}` : "/study";
   }
 
   function runSearch() {
     router.push(hrefWith({ q: search.trim() || null }));
+  }
+
+  function goToPage(p: number) {
+    router.push(hrefWith({ page: p }));
   }
 
   const defaultFolderId = isFolder ? selection : null;
@@ -100,7 +156,10 @@ export function StudyHome({
       <div className="min-w-0 space-y-5">
         {/* Breadcrumb */}
         <div className="flex flex-wrap items-center gap-1 text-sm text-[var(--muted-foreground)]">
-          <Link href="/study" className="hover:text-[var(--foreground)]">
+          <Link
+            href="/study?folder=all"
+            className="hover:text-[var(--foreground)]"
+          >
             All notes
           </Link>
           {selection === "unfiled" && (
@@ -142,7 +201,17 @@ export function StudyHome({
             Search
           </Button>
           <ExportDialog
-            notes={notes}
+            filter={{
+              folderId:
+                selection === "all"
+                  ? undefined
+                  : selection === "unfiled"
+                    ? null
+                    : selection,
+              includeSubfolders: isFolder ? includeSubfolders : undefined,
+              tag: activeTag ?? undefined,
+              q: query || undefined,
+            }}
             trigger={
               <Button variant="outline" disabled={notes.length === 0}>
                 <Download className="h-4 w-4" /> Export
@@ -276,6 +345,33 @@ export function StudyHome({
           />
         ) : (
           <NotesList notes={notes} folders={folders} allTags={allTags} />
+        )}
+
+        {/* Pagination ----------------------------------------------------- */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-[var(--muted-foreground)]">
+              Page {page} of {totalPages}
+            </span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page <= 1}
+                onClick={() => goToPage(page - 1)}
+              >
+                <ChevronLeft className="h-4 w-4" /> Prev
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={page >= totalPages}
+                onClick={() => goToPage(page + 1)}
+              >
+                Next <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         )}
       </div>
     </div>

@@ -191,7 +191,9 @@ function NoteCard({
       </div>
 
       {open && (
-        <div className="border-t border-[var(--border)] px-4 py-3">
+        // Answer sits on a neutral surface a step off the card, so it reads as
+        // its own zone set apart from the title row above it while studying.
+        <div className="border-t border-[var(--border)] bg-[var(--muted)] px-4 py-4">
           <NoteContent note={note} />
         </div>
       )}

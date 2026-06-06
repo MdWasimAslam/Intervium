@@ -1,10 +1,5 @@
 import { eq } from "drizzle-orm";
-import {
-  appSettings,
-  db,
-  type LengthPreset,
-  type TimerPreset,
-} from "@db";
+import { appSettings, db, type LengthPreset, type TimerPreset } from "@db";
 import {
   type AiProvider,
   type FeatureModels,
@@ -27,6 +22,8 @@ export interface AppSettings {
   scoringProvider: ScoringProvider;
   /** Per-feature model overrides; empty = every feature uses the default. */
   featureModels: FeatureModels;
+  /** Demo-mode kill-switch: when true, the demo account's AI + deletes are locked. */
+  demoMode: boolean;
 }
 
 /** The sentinel preset id for a user-entered custom timer duration. */
@@ -56,6 +53,7 @@ const DEFAULTS: AppSettings = {
   defaultLengthPresetId: "standard",
   scoringProvider: "groq",
   featureModels: {},
+  demoMode: true,
 };
 
 /**
@@ -94,7 +92,8 @@ export async function getSettings(): Promise<AppSettings> {
           ? row.questionCounts
           : DEFAULTS.questionCounts,
       timerPresets,
-      defaultTimerPresetId: row.defaultTimerPresetId || DEFAULTS.defaultTimerPresetId,
+      defaultTimerPresetId:
+        row.defaultTimerPresetId || DEFAULTS.defaultTimerPresetId,
       lengthPresets,
       defaultLengthPresetId:
         row.defaultLengthPresetId || DEFAULTS.defaultLengthPresetId,
@@ -103,6 +102,8 @@ export async function getSettings(): Promise<AppSettings> {
       scoringProvider: row.scoringProvider === "deepseek" ? "deepseek" : "groq",
       // Drop any malformed/unknown entries so a bad row can never reach the AI layer.
       featureModels: sanitizeFeatureModels(row.featureModels),
+      // Default ON so a half-migrated row keeps the demo locked (fail-safe).
+      demoMode: row.demoMode ?? true,
     };
   } catch (error) {
     console.error("[getSettings]", error);

@@ -4,6 +4,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { coverLetters, db, profiles } from "@db";
 import { getCurrentUser } from "@/lib/session";
+import { requireNonDemo } from "@/lib/demo";
 import { allowAction } from "@/lib/rate-limit";
 import type { Result } from "@/lib/actions/result";
 import {
@@ -12,7 +13,11 @@ import {
   parseStoredCv,
   serializeCv,
 } from "@/lib/cv/parse";
-import { analyzeMatch, atsReadinessScore, atsLevelFromScore } from "@/lib/cv/ats";
+import {
+  analyzeMatch,
+  atsReadinessScore,
+  atsLevelFromScore,
+} from "@/lib/cv/ats";
 import { ARR_MAX, STR_MAX } from "@/lib/cv/limits";
 import { normalizeCv } from "@/lib/cv/normalize";
 import { mergeOptimizedCv } from "@/lib/cv/merge";
@@ -568,6 +573,8 @@ export async function listCoverLetters(): Promise<CoverLetterRecord[]> {
 export async function deleteCoverLetter(id: string): Promise<Result<true>> {
   const user = await getCurrentUser();
   if (!user) return { ok: false, error: "Not authenticated." };
+  const blocked = requireNonDemo(user.email);
+  if (blocked) return { ok: false, error: blocked };
   const idp = z.string().uuid().safeParse(id);
   if (!idp.success) return { ok: false, error: "Invalid letter." };
   try {

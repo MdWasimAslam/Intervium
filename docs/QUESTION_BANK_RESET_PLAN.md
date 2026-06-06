@@ -118,7 +118,7 @@ No row migration for questions — **the bank starts empty** (you repopulate via
 ## 5. Backup (runs before the migration)
 
 1. `pg_dump "$DATABASE_URL" > backups/pre-reset-<date>.sql` (full logical backup).
-2. Recommend also creating a **Neon branch** from the current DB as an instant restore point.
+2. Recommend also taking a **Supabase backup / branch** of the current DB as an instant restore point.
 3. The migration is gated behind explicit approval; I will not run it otherwise.
 
 ---
@@ -175,7 +175,7 @@ Users, roles, tech-stacks (tables + admin), access codes, settings, auth, CV, pr
 
 ## 8. Risks
 
-- **Irreversible once `questions_cache`/`focus_areas`/`difficulty_bands` drop.** Mitigated by the pre-migration backup + Neon branch.
+- **Irreversible once `questions_cache`/`focus_areas`/`difficulty_bands` drop.** Mitigated by the pre-migration backup + Supabase backup/branch.
 - **AI mode has no fallback** when the daily Groq budget is spent (no cache). Mitigated by a clear message + keeping the rate-limit/budget guards.
 - **Large surface (~40 files).** Mitigated by staged commits, each independently green.
 - **Skill-level mis-self-assessment** affects AI difficulty — acceptable; default prefilled from profile years.
@@ -183,5 +183,5 @@ Users, roles, tech-stacks (tables + admin), access codes, settings, auth, CV, pr
 ## 9. Rollback
 
 - **Before migration:** nothing to roll back.
-- **After migration, before deploy:** restore the `pg_dump` / promote the Neon branch; revert the app commits.
+- **After migration, before deploy:** restore the `pg_dump` / restore the Supabase backup; revert the app commits.
 - **After deploy:** restore from backup (the dropped tables/columns cannot be reconstructed from app state — this is an accepted property of a destructive reset).

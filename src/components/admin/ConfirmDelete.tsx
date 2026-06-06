@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,33 @@ interface Props {
   action: () => Promise<{ ok: boolean; error?: string }>;
   title: string;
   description?: string;
-  /** Runs after a successful delete, before the router refresh. */
+  /** Runs after a successful action, before the router refresh. */
   onSuccess?: () => void;
+  /**
+   * Custom trigger element. Defaults to a ghost trash-icon button. Pass a
+   * labeled button to reuse this dialog for non-delete destructive actions.
+   */
+  trigger?: ReactNode;
+  /** Confirm button label (default "Delete") and its pending label. */
+  confirmLabel?: string;
+  confirmingLabel?: string;
 }
 
-/** Reusable destructive confirm dialog used across admin tables. */
-export function ConfirmDelete({ action, title, description, onSuccess }: Props) {
+/**
+ * Reusable destructive-confirm dialog. Used for admin-table deletes (default
+ * trash trigger) and any other destructive action via the `trigger`/label props
+ * — so destructive confirms share one tested modal instead of bespoke
+ * two-click/onBlur affordances.
+ */
+export function ConfirmDelete({
+  action,
+  title,
+  description,
+  onSuccess,
+  trigger,
+  confirmLabel = "Delete",
+  confirmingLabel = "Deleting…",
+}: Props) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string>();
@@ -36,19 +57,21 @@ export function ConfirmDelete({ action, title, description, onSuccess }: Props) 
     <Dialog
       open={open}
       onOpenChange={(o) => {
-        // Don't let the dialog close mid-delete (backdrop/Esc/Cancel).
+        // Don't let the dialog close mid-action (backdrop/Esc/Cancel).
         if (!pending) setOpen(o);
       }}
     >
       <DialogTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
-          aria-label="Delete"
-        >
-          <Trash2 className="h-4 w-4" />
-        </Button>
+        {trigger ?? (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
+            aria-label="Delete"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -66,7 +89,7 @@ export function ConfirmDelete({ action, title, description, onSuccess }: Props) 
             variant="outline"
             className="border-[var(--destructive)] text-[var(--destructive)] hover:bg-[var(--destructive)]/10"
             loading={pending}
-            loadingText="Deleting…"
+            loadingText={confirmingLabel}
             onClick={() =>
               start(async () => {
                 const res = await action();
@@ -75,12 +98,12 @@ export function ConfirmDelete({ action, title, description, onSuccess }: Props) 
                   onSuccess?.();
                   router.refresh();
                 } else {
-                  setError(res.error ?? "Delete failed.");
+                  setError(res.error ?? "Action failed.");
                 }
               })
             }
           >
-            Delete
+            {confirmLabel}
           </LoadingButton>
         </DialogFooter>
       </DialogContent>

@@ -3,6 +3,7 @@ import { Container } from "@/components/layout/Container";
 import { requireAuth } from "@/lib/session";
 import {
   countDueFlashcards,
+  countNotes,
   listAllTags,
   listFolders,
   listNotes,
@@ -13,6 +14,8 @@ import { StudyHome } from "@/components/study/StudyHome";
 import type { FolderSelection } from "@/components/study/FolderTree";
 
 export const metadata: Metadata = { title: "Study Notes" };
+
+const PAGE_SIZE = 30;
 
 /**
  * /study — personal knowledge base. A folder-tree sidebar plus a notes list
@@ -34,6 +37,11 @@ export default async function StudyPage({
   const query = first(sp.q) ?? "";
   // Subfolders are excluded by default; only `sub=1` opts a folder's subtree in.
   const includeSubfolders = first(sp.sub) === "1";
+  const page = Math.max(1, Number(first(sp.page)) || 1);
+  // A bare /study (no folder param at all) means "restore my last folder":
+  // every in-app view carries an explicit folder param, so the absence of one
+  // signals an external/fresh landing where StudyHome should jump back.
+  const autoRestore = !folderParam;
 
   const selection: FolderSelection =
     !folderParam || folderParam === "all"
@@ -52,15 +60,27 @@ export default async function StudyPage({
     noteOpts.includeSubfolders = includeSubfolders;
   }
 
-  const [folders, notes, allTags, dueCount, recentlyViewed] = await Promise.all(
-    [
+  // Two DB phases. Phase 1 runs everything that doesn't depend on the page
+  // offset in parallel — including the folder tree (needed for the sidebar) and
+  // the total count (needed to clamp the page). Phase 2 fetches just the
+  // requested page, reusing the folders from phase 1 so `listNotes` never
+  // re-reads the folder table to resolve a subfolder filter.
+  const [folders, totalNotes, allTags, dueCount, recentlyViewed] =
+    await Promise.all([
       listFolders(user.id),
-      listNotes(user.id, noteOpts),
+      countNotes(user.id, noteOpts),
       listAllTags(user.id),
       countDueFlashcards(user.id),
       listRecentlyViewed(user.id),
-    ],
-  );
+    ]);
+
+  const totalPages = Math.max(1, Math.ceil(totalNotes / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  noteOpts.folders = folders;
+  noteOpts.limit = PAGE_SIZE;
+  noteOpts.offset = (safePage - 1) * PAGE_SIZE;
+
+  const notes = await listNotes(user.id, noteOpts);
 
   return (
     <Container className="py-10 sm:py-12">
@@ -85,6 +105,9 @@ export default async function StudyPage({
           activeTag={tag}
           query={query}
           includeSubfolders={includeSubfolders}
+          page={safePage}
+          totalPages={totalPages}
+          autoRestore={autoRestore}
         />
       </div>
     </Container>
