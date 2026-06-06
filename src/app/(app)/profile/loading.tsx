@@ -15,9 +15,10 @@ export default function ProfileLoading() {
         </div>
       </div>
 
+      {/* Five sections (Avatar, Identity, Role, Skills, CV) of varying height. */}
       <div className="space-y-5">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Skeleton key={i} className="h-40 rounded-2xl" />
+        {["h-56", "h-36", "h-52", "h-56", "h-44"].map((h, i) => (
+          <Skeleton key={i} className={`${h} rounded-2xl`} />
         ))}
       </div>
     </Container>
