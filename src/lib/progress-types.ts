@@ -8,17 +8,17 @@ import { z } from "zod";
  * without dragging the database driver into the browser bundle.
  *
  * Weights — also surfaced to the user as the "how to earn" legend:
- *   - scored interview answer → 10 pts
- *   - solved Dojo problem     → 15 pts
- *   - study note added        →  3 pts
+ *   - scored interview answer →  5 pts
+ *   - solved Dojo problem     →  8 pts
+ *   - study note added        →  1 pt
  */
 export const POINTS = {
   /** Per scored, answered interview question. */
-  interviews: 10,
+  interviews: 5,
   /** Per distinct solved Dojo problem. */
-  dojo: 15,
+  dojo: 8,
   /** Per study note added. */
-  notes: 3,
+  notes: 1,
 } as const;
 
 export const progressSourceSchema = z.enum(["interviews", "dojo", "notes"]);

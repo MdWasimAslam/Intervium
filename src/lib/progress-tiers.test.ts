@@ -13,10 +13,10 @@ import {
   toRoman,
 } from "./progress-tiers";
 
-test("zero points → first tier (Apprentice · cycle 1)", () => {
+test("zero points → first tier (Initiate · cycle 1)", () => {
   const t = tierFromPoints(0);
   assert.equal(t.tierIndex, 0);
-  assert.equal(t.rankName, "Apprentice");
+  assert.equal(t.rankName, "Initiate");
   assert.equal(t.cycle, 1);
   assert.equal(t.currentThreshold, 0);
   assert.equal(t.nextThreshold, thresholdForTier(1));
@@ -28,7 +28,7 @@ test("non-finite / negative totals are treated as zero", () => {
   for (const bad of [-100, -1, Number.NaN, Number.NEGATIVE_INFINITY]) {
     const t = tierFromPoints(bad);
     assert.equal(t.tierIndex, 0, `${bad} should clamp to tier 0`);
-    assert.equal(t.rankName, "Apprentice");
+    assert.equal(t.rankName, "Initiate");
   }
 });
 
@@ -57,17 +57,25 @@ test("one point below a threshold stays in the lower tier", () => {
   }
 });
 
-test("rank names cycle and cycle counter advances every 5 tiers", () => {
+test("RANKS has 8 entries and RANKS_PER_CYCLE matches", () => {
+  assert.equal(RANKS.length, 8);
+  assert.equal(RANKS_PER_CYCLE, 8);
+});
+
+test("rank names cycle and cycle counter advances every 8 tiers", () => {
   const expected: [number, string, number][] = [
-    [0, "Apprentice", 1],
-    [1, "Candidate", 1],
-    [2, "Specialist", 1],
-    [3, "Expert", 1],
-    [4, "Master", 1],
-    [5, "Apprentice", 2],
-    [9, "Master", 2],
-    [10, "Apprentice", 3],
-    [14, "Master", 3],
+    [0, "Initiate", 1],
+    [1, "Aspirant", 1],
+    [2, "Contender", 1],
+    [3, "Strategist", 1],
+    [4, "Sentinel", 1],
+    [5, "Architect", 1],
+    [6, "Virtuoso", 1],
+    [7, "Sovereign", 1],
+    [8, "Initiate", 2],
+    [15, "Sovereign", 2],
+    [16, "Initiate", 3],
+    [23, "Sovereign", 3],
   ];
   for (const [idx, rank, cycle] of expected) {
     const t = tierFromPoints(thresholdForTier(idx));
@@ -77,20 +85,20 @@ test("rank names cycle and cycle counter advances every 5 tiers", () => {
   }
 });
 
-test("prestige rollover: Master·I → Apprentice·II as points cross the boundary", () => {
-  const master1 = tierFromPoints(thresholdForTier(4));
-  assert.equal(master1.rankName, "Master");
-  assert.equal(master1.cycle, 1);
+test("prestige rollover: Sovereign·I → Initiate·II as points cross the boundary", () => {
+  const sov1 = tierFromPoints(thresholdForTier(7));
+  assert.equal(sov1.rankName, "Sovereign");
+  assert.equal(sov1.cycle, 1);
 
-  const prestige = tierFromPoints(thresholdForTier(5));
-  assert.equal(prestige.rankName, "Apprentice");
+  const prestige = tierFromPoints(thresholdForTier(8));
+  assert.equal(prestige.rankName, "Initiate");
   assert.equal(prestige.cycle, 2);
-  assert.equal(prestige.tierIndex, 5);
+  assert.equal(prestige.tierIndex, 8);
 
-  // One point shy of prestige is still Master·I.
-  const stillMaster = tierFromPoints(thresholdForTier(5) - 1);
-  assert.equal(stillMaster.rankName, "Master");
-  assert.equal(stillMaster.cycle, 1);
+  // One point shy of prestige is still Sovereign·I.
+  const stillSov = tierFromPoints(thresholdForTier(8) - 1);
+  assert.equal(stillSov.rankName, "Sovereign");
+  assert.equal(stillSov.cycle, 1);
 });
 
 test("thresholds are strictly increasing and the gap widens (super-linear)", () => {

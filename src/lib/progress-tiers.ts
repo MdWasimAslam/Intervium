@@ -7,35 +7,41 @@
  * persisted.
  *
  * The system never ends:
- *   - Five rank names cycle forever: Apprentice → Candidate → Specialist →
- *     Expert → Master, then prestige into the next cycle (Apprentice II → … →
- *     Master II → Apprentice III → …).
+ *   - Eight rank names cycle forever: Initiate → Aspirant → Contender →
+ *     Strategist → Sentinel → Architect → Virtuoso → Sovereign, then prestige
+ *     into the next cycle (Initiate II → … → Sovereign II → Initiate III → …).
  *   - `tierIndex` is the absolute, always-increasing tier number (0, 1, 2, …).
- *     `rankName = RANKS[tierIndex % 5]`, `cycle = floor(tierIndex / 5) + 1`.
+ *     `rankName = RANKS[tierIndex % 8]`, `cycle = floor(tierIndex / 8) + 1`.
  *
  * Thresholds grow on a super-linear power curve so early tiers come fast and
  * later ones are earned, with no cap:
  *
  *     threshold(t) = round(BASE * t^EXP)      (threshold(0) = 0)
  *
- * With BASE = 50 and EXP = 1.6 the ladder begins:
- *     t0 Apprentice·I    0
- *     t1 Candidate·I     50      (≈ one 5-question scored interview)
- *     t2 Specialist·I    152
- *     t3 Expert·I        290
- *     t4 Master·I        459
- *     t5 Apprentice·II   657     (first prestige)
- *     t10 Apprentice·III 1991
- *     t20 Apprentice·V   6030
+ * With BASE = 80 and EXP = 2.0 the ladder begins:
+ *     t0 Initiate·I      0
+ *     t1 Aspirant·I      80
+ *     t2 Contender·I     320
+ *     t3 Strategist·I    720
+ *     t4 Sentinel·I      1,280
+ *     t5 Architect·I     2,000
+ *     t6 Virtuoso·I      2,880
+ *     t7 Sovereign·I     3,920
+ *     t8 Initiate·II     5,120   (first prestige)
+ *     t16 Initiate·III   20,480
+ *     t24 Initiate·IV    46,080
  * and keeps widening forever.
  */
 
 export const RANKS = [
-  "Apprentice",
-  "Candidate",
-  "Specialist",
-  "Expert",
-  "Master",
+  "Initiate",
+  "Aspirant",
+  "Contender",
+  "Strategist",
+  "Sentinel",
+  "Architect",
+  "Virtuoso",
+  "Sovereign",
 ] as const;
 
 export type RankName = (typeof RANKS)[number];
@@ -44,8 +50,8 @@ export type RankName = (typeof RANKS)[number];
 export const RANKS_PER_CYCLE = RANKS.length;
 
 /** Curve constants — documented in the module comment above. */
-const BASE = 50;
-const EXP = 1.6;
+const BASE = 80;
+const EXP = 2.0;
 
 /**
  * Cumulative points required to *reach* an absolute tier. Strictly increasing
@@ -58,7 +64,7 @@ export function thresholdForTier(tierIndex: number): number {
 }
 
 export interface TierInfo {
-  /** One of the five cycling rank names. */
+  /** One of the eight cycling rank names. */
   rankName: RankName;
   /** 1-based prestige cycle (1, 2, 3, …). */
   cycle: number;

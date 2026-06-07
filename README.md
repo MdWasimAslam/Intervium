@@ -61,14 +61,19 @@ Your own knowledge base — **Markdown notes + flashcards**, folders & tags, and
 ### 🛡️ Progress Shield
 
 One gamified dashboard card that turns **everything** you do into a single,
-ever-rising score — **+10** per scored interview answer, **+15** per solved Code
-Dojo problem, **+3** per study note. Your shield levels up through five ranks
-(Apprentice → Candidate → Specialist → Expert → Master) and then **prestiges**
-into the next cycle (Cycle II, III, …) — it never ends, and later tiers cost
-progressively more. The card shows your rank, a points-to-next ring, a "+this
-week" delta, a breakdown across the three sources (nudging you toward the one
-you've neglected), and fires a one-time celebration when you tier up — all
-computed from data you already have, with no extra tracking.
+ever-rising score — **+5** per scored interview answer, **+8** per solved Code
+Dojo problem, **+1** per study note. Your shield levels up through **eight
+cycling ranks** (Initiate → Aspirant → Contender → Strategist → Sentinel →
+Architect → Virtuoso → Sovereign) and then **prestiges** into the next cycle
+(Cycle II, III, …) — it never ends, and later tiers cost progressively more
+(power curve: `threshold(t) = round(80 × t²)`). The card shows your rank with
+a unique SVG emblem per rank, a circular progress ring with tick marks, a
+"+this week" delta, a breakdown across the three sources (nudging you toward
+the one you've neglected), and fires a one-time celebration animation when you
+tier up or prestige — all computed from data you already have, with no extra
+tracking. Higher ranks progressively unlock visual upgrades: border nodes,
+filigree, laurel wings, animated sparkle particles, and a holographic
+color-shift overlay at Sovereign.
 
 ### 📊 Dashboard, history & streaks
 

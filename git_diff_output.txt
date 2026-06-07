@@ -1,0 +1,1980 @@
+﻿git : warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+At line:1 char:1
++ git diff HEAD 2>&1 | Out-File -Encoding utf8 d:\Self_Learning\Intervi ...
++ ~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (warning: in the... Git touches it:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+warning: in the working copy of 'src/components/dashboard/ProgressShield.tsx', LF will be replaced by CRLF the next 
+time Git touches it
+warning: in the working copy of 'src/lib/progress-tiers.test.ts', LF will be replaced by CRLF the next time Git touches 
+it
+warning: in the working copy of 'src/lib/progress-tiers.ts', LF will be replaced by CRLF the next time Git touches it
+diff --git a/README.md b/README.md
+index 9dafb77..b36bd4f 100644
+--- a/README.md
++++ b/README.md
+@@ -61,21 +61,26 @@ Your own knowledge base ΓÇö **Markdown notes + flashcards**, folders & tags, and
+ ### ≡ƒ¢í∩╕Å Progress Shield
+ 
+ One gamified dashboard card that turns **everything** you do into a single,
+-ever-rising score ΓÇö **+10** per scored interview answer, **+15** per solved Code
+-Dojo problem, **+3** per study note. Your shield levels up through five ranks
+-(Apprentice ΓåÆ Candidate ΓåÆ Specialist ΓåÆ Expert ΓåÆ Master) and then **prestiges**
+-into the next cycle (Cycle II, III, ΓÇª) ΓÇö it never ends, and later tiers cost
+-progressively more. The card shows your rank, a points-to-next ring, a "+this
+-week" delta, a breakdown across the three sources (nudging you toward the one
+-you've neglected), and fires a one-time celebration when you tier up ΓÇö all
+-computed from data you already have, with no extra tracking.
+-
+-### ≡ƒôè Dashboard, history & streaks
++ever-rising score ΓÇö **+5** per scored interview answer, **+8** per solved Code
++Dojo problem, **+1** per study note. Your shield levels up through **eight
++cycling ranks** (Initiate ΓåÆ Aspirant ΓåÆ Contender ΓåÆ Strategist ΓåÆ Sentinel ΓåÆ
++Architect ΓåÆ Virtuoso ΓåÆ Sovereign) and then **prestiges** into the next cycle
++(Cycle II, III, ΓÇª) ΓÇö it never ends, and later tiers cost progressively more
++(power curve: `threshold(t) = round(80 ├ù t┬▓)`). The card shows your rank with
++a unique SVG emblem per rank, a circular progress ring with tick marks, a
++"+this week" delta, a breakdown across the three sources (nudging you toward
++the one you've neglected), and fires a one-time celebration animation when you
++tier up or prestige ΓÇö all computed from data you already have, with no extra
++tracking. Higher ranks progressively unlock visual upgrades: border nodes,
++filigree, laurel wings, animated sparkle particles, and a holographic
++color-shift overlay at Sovereign.
++
++### ∩┐╜ Dashboard, history & streaks
+ 
+ Track your scores over time, revisit past interviews, and keep your daily streak
+ alive.
+ 
+-### ≡ƒ¢á∩╕Å For the owner (admin)
++### ∩┐╜≡ƒ¢á∩╕Å For the owner (admin)
+ 
+ A full **admin panel** (roles, tech stacks, questions, access codes, AI models,
+ settings, users), a **QA diagnostics** dashboard, and a built-in **shareable
+diff --git a/src/app/globals.css b/src/app/globals.css
+index 2d7adb1..f74b01a 100644
+--- a/src/app/globals.css
++++ b/src/app/globals.css
+@@ -393,6 +393,95 @@
+   }
+ }
+ 
++/* Subtle pulsing aura ring for high-tier shields (Virtuoso+). */
++.progress-shield-aura {
++  animation: shield-aura-pulse 3.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
++}
++@keyframes shield-aura-pulse {
++  0%,
++  100% {
++    opacity: 0.25;
++    stroke-width: 1;
++  }
++  50% {
++    opacity: 0.6;
++    stroke-width: 2.4;
++  }
++}
++
++/* Holographic rainbow color-shift overlay (Sovereign only). */
++.progress-shield-holo {
++  animation: shield-holo-shift 8s cubic-bezier(0.45, 0, 0.55, 1) infinite;
++}
++@keyframes shield-holo-shift {
++  0% {
++    opacity: 0.1;
++    transform: translate(0, 0);
++  }
++  20% {
++    opacity: 0.18;
++    transform: translate(3px, -2px);
++  }
++  40% {
++    opacity: 0.12;
++    transform: translate(-2px, 3px);
++  }
++  60% {
++    opacity: 0.16;
++    transform: translate(4px, 1px);
++  }
++  80% {
++    opacity: 0.1;
++    transform: translate(-3px, -1px);
++  }
++  100% {
++    opacity: 0.1;
++    transform: translate(0, 0);
++  }
++}
++
++/* Floating sparkle particles ΓÇö each dot fades in/out with a different delay. */
++.progress-sparkle {
++  animation: shield-sparkle 3s cubic-bezier(0.4, 0, 0.2, 1) infinite;
++}
++.progress-sparkle-1 {
++  animation-delay: 0s;
++}
++.progress-sparkle-2 {
++  animation-delay: 0.5s;
++}
++.progress-sparkle-3 {
++  animation-delay: 1s;
++}
++.progress-sparkle-4 {
++  animation-delay: 1.5s;
++}
++.progress-sparkle-5 {
++  animation-delay: 2s;
++}
++.progress-sparkle-6 {
++  animation-delay: 2.5s;
++}
++@keyframes shield-sparkle {
++  0%,
++  100% {
++    opacity: 0;
++    transform: scale(0.4) translateY(0);
++  }
++  12% {
++    opacity: 0.9;
++    transform: scale(1.3) translateY(-3px);
++  }
++  45% {
++    opacity: 0.5;
++    transform: scale(1) translateY(-5px);
++  }
++  80% {
++    opacity: 0;
++    transform: scale(0.4) translateY(-8px);
++  }
++}
++
+ /* ------------------------------------------------------------------ */
+ /* Landing page atmosphere                                             */
+ /* A distinctive editorial display face for headlines (wired through   */
+diff --git a/src/components/dashboard/PrimaryAction.tsx b/src/components/dashboard/PrimaryAction.tsx
+index 12c29df..bf6ad51 100644
+--- a/src/components/dashboard/PrimaryAction.tsx
++++ b/src/components/dashboard/PrimaryAction.tsx
+@@ -27,6 +27,37 @@ export function PrimaryAction({
+         className="pointer-events-none absolute -bottom-20 -left-12 h-44 w-44 rounded-full bg-[var(--primary)]/10 blur-2xl"
+       />
+ 
++      {/* Decorative abstract geometric pattern */}
++      <div
++        aria-hidden
++        className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 hidden lg:block"
++      >
++        <svg width="200" height="160" viewBox="0 0 200 160" fill="none" className="opacity-15">
++          {/* Large overlapping circles */}
++          <circle cx="100" cy="80" r="70" stroke="var(--primary)" strokeWidth="1" opacity="0.4" />
++          <circle cx="130" cy="60" r="50" stroke="var(--primary)" strokeWidth="0.8" opacity="0.3" />
++          <circle cx="70" cy="100" r="40" stroke="var(--primary)" strokeWidth="0.6" opacity="0.25" />
++          {/* Intersecting lines */}
++          <line x1="30" y1="30" x2="170" y2="130" stroke="var(--primary)" strokeWidth="0.5" opacity="0.2" />
++          <line x1="170" y1="30" x2="30" y2="130" stroke="var(--primary)" strokeWidth="0.5" opacity="0.2" />
++          <line x1="100" y1="10" x2="100" y2="150" stroke="var(--primary)" strokeWidth="0.5" opacity="0.15" />
++          <line x1="20" y1="80" x2="180" y2="80" stroke="var(--primary)" strokeWidth="0.5" opacity="0.15" />
++          {/* Dots at intersections */}
++          <circle cx="100" cy="80" r="3" fill="var(--primary)" opacity="0.4" />
++          <circle cx="130" cy="60" r="2" fill="var(--primary)" opacity="0.3" />
++          <circle cx="70" cy="100" r="2" fill="var(--primary)" opacity="0.3" />
++          <circle cx="50" cy="50" r="1.5" fill="var(--primary)" opacity="0.2" />
++          <circle cx="150" cy="110" r="1.5" fill="var(--primary)" opacity="0.2" />
++          <circle cx="60" cy="30" r="1.5" fill="var(--primary)" opacity="0.2" />
++          <circle cx="140" cy="130" r="1.5" fill="var(--primary)" opacity="0.2" />
++          {/* Small accent dots */}
++          <circle cx="30" cy="60" r="1" fill="var(--primary)" opacity="0.15" />
++          <circle cx="170" cy="100" r="1" fill="var(--primary)" opacity="0.15" />
++          <circle cx="80" cy="20" r="1" fill="var(--primary)" opacity="0.15" />
++          <circle cx="120" cy="140" r="1" fill="var(--primary)" opacity="0.15" />
++        </svg>
++      </div>
++
+       <CardContent className="relative flex h-full flex-col justify-between gap-6 p-7 sm:p-8">
+         <div>
+           <span className="inline-flex items-center gap-1.5 text-sm font-medium text-[var(--primary)]">
+@@ -36,11 +67,39 @@ export function PrimaryAction({
+           <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+             {isFirst ? "Start your first interview" : "Start a new interview"}
+           </h2>
+-          <p className="mt-2 max-w-md text-sm text-[var(--muted-foreground)]">
++          <p className="mt-2 max-w-md text-sm leading-relaxed text-[var(--muted-foreground)]">
+             {isFirst
+               ? "Pick a profession and specialization, then answer questions and get instant, scored feedback."
+-              : "Choose your profession and specialization ΓÇö get questions and a scored breakdown in minutes."}
++              : "Choose your profession and specialization to get a tailored set of questions. Each answer is scored in real time with detailed breakdowns ΓÇö so you know exactly where you stand and what to improve."}
+           </p>
++
++          {/* Feature highlights */}
++          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:gap-4">
++            <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
++              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--primary)]/15">
++                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
++                  <path d="M2 5 L4 7 L8 3" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
++                </svg>
++              </div>
++              Real-time scoring
++            </div>
++            <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
++              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--primary)]/15">
++                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
++                  <path d="M2 5 L4 7 L8 3" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
++                </svg>
++              </div>
++              Tailored questions
++            </div>
++            <div className="flex items-center gap-2 text-xs text-[var(--muted-foreground)]">
++              <div className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--primary)]/15">
++                <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
++                  <path d="M2 5 L4 7 L8 3" stroke="var(--primary)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
++                </svg>
++              </div>
++              Breakdown analysis
++            </div>
++          </div>
+         </div>
+ 
+         <div className="flex flex-wrap gap-3">
+@@ -63,4 +122,4 @@ export function PrimaryAction({
+       </CardContent>
+     </Card>
+   );
+-}
++}
+\ No newline at end of file
+diff --git a/src/components/dashboard/ProgressShield.tsx b/src/components/dashboard/ProgressShield.tsx
+index f60e1a1..e768e48 100644
+--- a/src/components/dashboard/ProgressShield.tsx
++++ b/src/components/dashboard/ProgressShield.tsx
+@@ -7,17 +7,19 @@ import {
+ } from "@/lib/progress-tiers";
+ 
+ /**
+- * Procedural inline-SVG Progress Shield.
++ * Procedural inline-SVG Progress Shield ΓÇö premium edition.
+  *
+  * Crisp at any size (single 100├ù120 viewBox, scaled by `size`). Themed entirely
+  * through design tokens + the chart-ramp, so it reads correctly in light and
+  * dark with the brand-green palette. Appearance is fully derived from the tier:
+  *
+- *   - `rankName` picks one of exactly FIVE designs (hue + center emblem) that
++ *   - `rankName` picks one of exactly EIGHT designs (hue + center emblem) that
+  *     repeat across every prestige cycle ΓÇö no infinite art.
+- *   - `cycle` is shown as a roman-numeral banner and drives a "prestige" glow
+- *     ring + gem studs that intensify with higher cycles, so a Master ┬╖ V
+- *     shield clearly outranks a Master ┬╖ I.
++ *   - `cycle` is shown as a roman-numeral ribbon banner and drives a "prestige"
++ *     glow ring + gem studs that intensify with higher cycles.
++ *   - Higher-tier shields progressively unlock: ornamental border nodes,
++ *     metallic highlights, filigree curls, laurel wings, animated sparkle
++ *     particles, holographic color-shift overlays, and layered glows.
+  *
+  * Not color-only: each rank has a distinct emblem silhouette, the cycle numeral
+  * is always rendered, and the whole thing carries an `aria-label`.
+@@ -28,16 +30,21 @@ interface RankDesign {
+   accent: string;
+   /** Deeper shade for the gradient floor. */
+   accentDeep: string;
++  /** Secondary accent for richer bi-tonal shields. */
++  accentAlt: string;
++  /** Visual tier weight 0ΓÇô7 (drives decorative layers). */
++  weight: number;
+   /** Emblem, drawn in shield coordinates (center Γëê 50,58), painted in `ink`. */
+   emblem: (ink: string) => React.ReactNode;
+ }
+ 
+-// Five fixed designs, keyed by rank name, escalating in visual weight.
++// Eight fixed designs, keyed by rank name, escalating in visual weight.
+ const RANK_DESIGN: Record<RankName, RankDesign> = {
+-  Apprentice: {
++  Initiate: {
+     accent: "var(--chart-2)",
+     accentDeep: "color-mix(in srgb, var(--chart-2) 55%, #000)",
+-    // A sprout ΓÇö growth / beginnings.
++    accentAlt: "color-mix(in srgb, var(--chart-2) 70%, var(--chart-1))",
++    weight: 0,
+     emblem: (ink) => (
+       <g
+         fill="none"
+@@ -60,10 +67,11 @@ const RANK_DESIGN: Record<RankName, RankDesign> = {
+       </g>
+     ),
+   },
+-  Candidate: {
++  Aspirant: {
+     accent: "var(--chart-3)",
+     accentDeep: "color-mix(in srgb, var(--chart-3) 55%, #000)",
+-    // Double chevron ΓÇö moving up.
++    accentAlt: "color-mix(in srgb, var(--chart-3) 70%, var(--chart-5))",
++    weight: 1,
+     emblem: (ink) => (
+       <g
+         fill="none"
+@@ -72,46 +80,257 @@ const RANK_DESIGN: Record<RankName, RankDesign> = {
+         strokeLinecap="round"
+         strokeLinejoin="round"
+       >
+-        <path d="M34 58 L50 44 L66 58" />
++        <path d="M34 62 L50 48 L66 62" />
+         <path d="M34 72 L50 58 L66 72" />
++        <circle cx="50" cy="42" r="2.5" fill={ink} stroke="none" />
+       </g>
+     ),
+   },
+-  Specialist: {
++  Contender: {
++    accent: "var(--chart-1)",
++    accentDeep: "color-mix(in srgb, var(--chart-1) 55%, #000)",
++    accentAlt: "color-mix(in srgb, var(--chart-1) 60%, var(--chart-2))",
++    weight: 2,
++    emblem: (ink) => (
++      <g
++        fill="none"
++        stroke={ink}
++        strokeWidth={4.5}
++        strokeLinecap="round"
++        strokeLinejoin="round"
++      >
++        <path d="M34 72 L66 42" />
++        <path d="M66 72 L34 42" />
++        {/* Hilts */}
++        <path d="M30 46 L38 38" strokeWidth={3} />
++        <path d="M70 46 L62 38" strokeWidth={3} />
++        <circle cx="50" cy="57" r="6" fill={ink} stroke="none" opacity={0.9} />
++        <circle
++          cx="50"
++          cy="57"
++          r="3"
++          fill="color-mix(in srgb, #000 25%, transparent)"
++          stroke="none"
++        />
++      </g>
++    ),
++  },
++  Strategist: {
+     accent: "var(--primary)",
+-    accentDeep: "color-mix(in srgb, var(--primary) 55%, #000)",
+-    // Faceted gem.
++    accentDeep: "color-mix(in srgb, var(--primary) 50%, #000)",
++    accentAlt: "color-mix(in srgb, var(--primary) 65%, var(--chart-2))",
++    weight: 3,
+     emblem: (ink) => (
+       <g fill={ink} stroke="none">
+-        <path d="M50 42 L68 58 L50 78 L32 58 Z" opacity={0.95} />
++        {/* Outer diamond */}
++        <path d="M50 40 L70 58 L50 80 L30 58 Z" opacity={0.85} />
++        {/* Facet highlights */}
++        <path
++          d="M50 40 L70 58 L50 58 Z"
++          fill="color-mix(in srgb, #fff 30%, transparent)"
++        />
++        <path
++          d="M50 40 L30 58 L50 58 Z"
++          fill="color-mix(in srgb, #fff 15%, transparent)"
++        />
++        {/* Inner gleam */}
+         <path
+-          d="M50 42 L68 58 L50 58 Z M50 42 L32 58 L50 58 Z"
+-          fill="color-mix(in srgb, #fff 35%, transparent)"
++          d="M50 48 L58 58 L50 68 L42 58 Z"
++          fill="color-mix(in srgb, #fff 40%, transparent)"
+         />
+       </g>
+     ),
+   },
+-  Expert: {
++  Sentinel: {
+     accent: "var(--chart-5)",
+-    accentDeep: "color-mix(in srgb, var(--chart-5) 55%, #000)",
+-    // Five-point star.
++    accentDeep: "color-mix(in srgb, var(--chart-5) 50%, #000)",
++    accentAlt: "color-mix(in srgb, var(--chart-5) 60%, var(--chart-3))",
++    weight: 4,
+     emblem: (ink) => (
+-      <path
+-        fill={ink}
+-        d="M50 42 L54.7 53.5 L67.1 54.4 L57.6 62.5 L60.6 74.6 L50 68 L39.4 74.6 L42.4 62.5 L32.9 54.4 L45.3 53.5 Z"
+-      />
++      <g>
++        {/* Outer eye shape */}
++        <path
++          d="M50 46 C36 46 26 57 26 57 C26 57 36 68 50 68 C64 68 74 57 74 57 C74 57 64 46 50 46 Z"
++          fill={ink}
++          opacity={0.85}
++        />
++        {/* Dark iris */}
++        <circle
++          cx="50"
++          cy="57"
++          r="8"
++          fill="color-mix(in srgb, #000 35%, transparent)"
++        />
++        {/* Bright pupil */}
++        <circle
++          cx="50"
++          cy="57"
++          r="4"
++          fill="color-mix(in srgb, #fff 92%, transparent)"
++        />
++        {/* Pupil gleam */}
++        <circle
++          cx="48"
++          cy="55"
++          r="1.5"
++          fill="color-mix(in srgb, #fff 70%, transparent)"
++        />
++        {/* Eyelash accents */}
++        <path
++          d="M30 52 L26 48 M38 48 L36 43 M50 46 L50 41 M62 48 L64 43 M70 52 L74 48"
++          stroke={ink}
++          strokeWidth={1.5}
++          strokeLinecap="round"
++          fill="none"
++          opacity={0.5}
++        />
++      </g>
+     ),
+   },
+-  Master: {
++  Architect: {
+     accent: "var(--chart-4)",
+-    accentDeep: "color-mix(in srgb, var(--chart-4) 55%, #000)",
+-    // Crown.
++    accentDeep: "color-mix(in srgb, var(--chart-4) 48%, #000)",
++    accentAlt: "color-mix(in srgb, var(--chart-4) 65%, var(--chart-3))",
++    weight: 5,
++    emblem: (ink) => (
++      <g>
++        {/* Outer triangle frame */}
++        <path
++          d="M50 38 L72 76 L28 76 Z"
++          fill="none"
++          stroke={ink}
++          strokeWidth={3.5}
++          strokeLinejoin="round"
++        />
++        {/* Inner filled triangle */}
++        <path d="M50 50 L62 76 L38 76 Z" fill={ink} opacity={0.45} />
++        {/* Top beacon */}
++        <circle cx="50" cy="38" r="4" fill={ink} />
++        <circle
++          cx="50"
++          cy="38"
++          r="2"
++          fill="color-mix(in srgb, #fff 60%, transparent)"
++        />
++        {/* Corner nodes */}
++        <circle cx="28" cy="76" r="2.5" fill={ink} opacity={0.6} />
++        <circle cx="72" cy="76" r="2.5" fill={ink} opacity={0.6} />
++        {/* Internal cross-beams */}
++        <line
++          x1="39"
++          y1="57"
++          x2="61"
++          y2="57"
++          stroke={ink}
++          strokeWidth={1.2}
++          opacity={0.3}
++        />
++        <line
++          x1="50"
++          y1="50"
++          x2="50"
++          y2="76"
++          stroke={ink}
++          strokeWidth={1.2}
++          opacity={0.3}
++        />
++      </g>
++    ),
++  },
++  Virtuoso: {
++    accent: "color-mix(in srgb, var(--chart-5) 55%, var(--chart-3))",
++    accentDeep: "color-mix(in srgb, var(--chart-5) 35%, #000)",
++    accentAlt: "var(--chart-3)",
++    weight: 6,
+     emblem: (ink) => (
+       <g fill={ink} stroke="none">
+-        <path d="M33 72 L33 52 L42 62 L50 48 L58 62 L67 52 L67 72 Z" />
+-        <circle cx="33" cy="50" r="3.5" />
+-        <circle cx="50" cy="45" r="4" />
+-        <circle cx="67" cy="50" r="3.5" />
++        {/* Outer flame */}
++        <path
++          d="M50 36 C43 48 34 54 36 66 C38 74 44 78 50 78 C56 78 62 74 64 66 C66 54 57 48 50 36 Z"
++          opacity={0.9}
++        />
++        {/* Inner bright flame */}
++        <path
++          d="M50 48 C46 56 42 60 44 68 C45 72 48 74 50 74 C52 74 55 72 56 68 C58 60 54 56 50 48 Z"
++          fill="color-mix(in srgb, #fff 55%, transparent)"
++        />
++        {/* Core */}
++        <path
++          d="M50 56 C48 60 47 63 48 67 C49 69 50 70 50 70 C50 70 51 69 52 67 C53 63 52 60 50 56 Z"
++          fill="color-mix(in srgb, #fff 80%, transparent)"
++        />
++        {/* Spark offshoots */}
++        <circle
++          cx="40"
++          cy="52"
++          r="1.5"
++          fill="color-mix(in srgb, #fff 40%, transparent)"
++        />
++        <circle
++          cx="60"
++          cy="52"
++          r="1.5"
++          fill="color-mix(in srgb, #fff 40%, transparent)"
++        />
++      </g>
++    ),
++  },
++  Sovereign: {
++    accent: "color-mix(in srgb, var(--chart-4) 65%, var(--chart-3))",
++    accentDeep: "color-mix(in srgb, var(--chart-4) 38%, #000)",
++    accentAlt: "var(--chart-4)",
++    weight: 7,
++    emblem: (ink) => (
++      <g>
++        {/* Crown body */}
++        <path
++          d="M30 74 L30 50 L40 62 L50 46 L60 62 L70 50 L70 74 Z"
++          fill={ink}
++        />
++        {/* Crown band */}
++        <rect
++          x="30"
++          y="70"
++          width="40"
++          height="5"
++          rx="1"
++          fill="color-mix(in srgb, #fff 20%, transparent)"
++        />
++        {/* Point jewels */}
++        <circle cx="30" cy="48" r="4" fill={ink} />
++        <circle
++          cx="30"
++          cy="48"
++          r="2"
++          fill="color-mix(in srgb, #fff 60%, transparent)"
++        />
++        <circle cx="50" cy="43" r="5" fill={ink} />
++        <circle
++          cx="50"
++          cy="43"
++          r="2.8"
++          fill="color-mix(in srgb, #fff 65%, transparent)"
++        />
++        <circle cx="70" cy="48" r="4" fill={ink} />
++        <circle
++          cx="70"
++          cy="48"
++          r="2"
++          fill="color-mix(in srgb, #fff 60%, transparent)"
++        />
++        {/* Mid-peak jewels */}
++        <circle
++          cx="40"
++          cy="60"
++          r="2"
++          fill="color-mix(in srgb, #fff 50%, transparent)"
++        />
++        <circle
++          cx="60"
++          cy="60"
++          r="2"
++          fill="color-mix(in srgb, #fff 50%, transparent)"
++        />
+       </g>
+     ),
+   },
+@@ -121,6 +340,22 @@ const RANK_DESIGN: Record<RankName, RankDesign> = {
+ const SHIELD_PATH =
+   "M50 6 L92 20 V60 C92 92 72 108 50 116 C28 108 8 92 8 60 V20 Z";
+ 
++// Ornamental inner crest for decorative border.
++const INNER_CREST =
++  "M50 14 L84 26 V58 C84 86 68 100 50 106 C32 100 16 86 16 58 V26 Z";
++
++// Left laurel wing path (mirrored for right).
++const LAUREL_LEFT =
++  "M8 42 C-2 38 -4 26 2 18 C4 22 6 30 8 34 C6 28 2 20 6 14 C10 18 10 26 10 30 C10 24 8 16 12 12 C14 16 14 24 12 32";
++
++const LAUREL_RIGHT =
++  "M92 42 C102 38 104 26 98 18 C96 22 94 30 92 34 C94 28 98 20 94 14 C90 18 90 26 90 30 C90 24 92 16 88 12 C86 16 86 24 88 32";
++
++// Ribbon banner path segments for the cycle numeral display.
++const RIBBON_BODY = "M26 95 L74 95 L72 103 L74 111 L26 111 L28 103 Z";
++const RIBBON_FOLD_L = "M26 95 L20 98 L26 101";
++const RIBBON_FOLD_R = "M74 95 L80 98 L74 101";
++
+ export interface ProgressShieldProps {
+   tier: Pick<TierInfo, "rankName" | "cycle" | "tierIndex">;
+   /** Total points ΓÇö used only for the accessible label. */
+@@ -138,18 +373,30 @@ export function ProgressShield({
+ }: ProgressShieldProps) {
+   const rank: RankName = RANKS.includes(tier.rankName)
+     ? tier.rankName
+-    : "Apprentice";
++    : "Initiate";
+   const design = RANK_DESIGN[rank];
+   const cycle = Math.max(1, tier.cycle);
++  const w = design.weight; // 0-7
+ 
+   // Prestige intensity 0..1 ΓÇö richer accents the further you've prestiged.
+   const prestige = Math.min((cycle - 1) / 4, 1);
+ 
+-  // Stable, instance-unique ids (one shield per dashboard, but keep it safe).
++  // Progressive visual unlocks.
++  const showBorderNodes = w >= 1;
++  const showFiligree = w >= 2;
++  const showInnerGlow = w >= 3;
++  const showEdgeHighlight = w >= 4;
++  const showLaurels = w >= 5;
++  const showSparkles = w >= 6;
++  const showHolographic = w >= 7;
++
+   const uid = `shield-${rank}-${cycle}`;
+   const fillId = `${uid}-fill`;
+   const sheenId = `${uid}-sheen`;
+   const glowId = `${uid}-glow`;
++  const innerGlowId = `${uid}-iglow`;
++  const edgeId = `${uid}-edge`;
++  const holoId = `${uid}-holo`;
+ 
+   return (
+     <div
+@@ -159,66 +406,243 @@ export function ProgressShield({
+       style={{ width: size, height: size * 1.2 }}
+     >
+       <svg
+-        viewBox="0 0 100 120"
++        viewBox="-12 -2 124 130"
+         width={size}
+         height={size * 1.2}
+         aria-hidden
+         className="overflow-visible"
+       >
+         <defs>
++          {/* Primary body gradient. */}
+           <linearGradient id={fillId} x1="0" y1="0" x2="0" y2="1">
+             <stop offset="0%" stopColor={design.accent} />
++            <stop offset="50%" stopColor={design.accentDeep} />
+             <stop offset="100%" stopColor={design.accentDeep} />
+           </linearGradient>
+-          {/* Diagonal sheen band that the shine animation sweeps across. */}
++
++          {/* Diagonal sheen band for the tier-up shine animation. */}
+           <linearGradient id={sheenId} x1="0" y1="0" x2="1" y2="1">
+             <stop offset="0%" stopColor="#fff" stopOpacity="0" />
+-            <stop offset="50%" stopColor="#fff" stopOpacity="0.55" />
++            <stop offset="40%" stopColor="#fff" stopOpacity="0.65" />
++            <stop offset="60%" stopColor="#fff" stopOpacity="0.65" />
+             <stop offset="100%" stopColor="#fff" stopOpacity="0" />
+           </linearGradient>
+-          <radialGradient id={glowId} cx="50%" cy="45%" r="60%">
+-            <stop offset="0%" stopColor={design.accent} stopOpacity="0.55" />
++
++          {/* Outer prestige aura glow. */}
++          <radialGradient id={glowId} cx="50%" cy="42%" r="62%">
++            <stop offset="0%" stopColor={design.accent} stopOpacity="0.6" />
++            <stop offset="55%" stopColor={design.accentAlt} stopOpacity="0.2" />
+             <stop offset="100%" stopColor={design.accent} stopOpacity="0" />
+           </radialGradient>
++
++          {/* Inner emblem glow (weight ΓëÑ 3). */}
++          {showInnerGlow && (
++            <radialGradient id={innerGlowId} cx="50%" cy="48%" r="40%">
++              <stop
++                offset="0%"
++                stopColor={design.accentAlt}
++                stopOpacity="0.4"
++              />
++              <stop
++                offset="100%"
++                stopColor={design.accentAlt}
++                stopOpacity="0"
++              />
++            </radialGradient>
++          )}
++
++          {/* Metallic edge highlight gradient (weight ΓëÑ 4). */}
++          {showEdgeHighlight && (
++            <linearGradient id={edgeId} x1="0" y1="0" x2="0" y2="1">
++              <stop offset="0%" stopColor="#fff" stopOpacity="0.5" />
++              <stop offset="40%" stopColor="#fff" stopOpacity="0.1" />
++              <stop offset="100%" stopColor="#fff" stopOpacity="0" />
++            </linearGradient>
++          )}
++
++          {/* Holographic rainbow gradient (weight 7 only). */}
++          {showHolographic && (
++            <linearGradient id={holoId} x1="0" y1="0" x2="1" y2="1">
++              <stop offset="0%" stopColor="#ff6b9d" stopOpacity="0.12" />
++              <stop offset="25%" stopColor="#c084fc" stopOpacity="0.12" />
++              <stop offset="50%" stopColor="#67e8f9" stopOpacity="0.12" />
++              <stop offset="75%" stopColor="#86efac" stopOpacity="0.12" />
++              <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.12" />
++            </linearGradient>
++          )}
++
+           <clipPath id={`${uid}-clip`}>
+             <path d={SHIELD_PATH} />
+           </clipPath>
+         </defs>
+ 
+-        {/* Prestige aura ΓÇö grows with cycle. */}
++        {/* ΓòÉΓòÉΓòÉ Layer 0: Laurel wings (weight ΓëÑ 5) ΓòÉΓòÉΓòÉ */}
++        {showLaurels && (
++          <g
++            stroke={design.accent}
++            strokeWidth={1.8}
++            fill="none"
++            strokeLinecap="round"
++            opacity={0.5 + prestige * 0.3}
++          >
++            <path d={LAUREL_LEFT} />
++            <path d={LAUREL_RIGHT} />
++            {/* Leaf tips */}
++            <circle
++              cx="2"
++              cy="16"
++              r="1.6"
++              fill={design.accent}
++              stroke="none"
++              opacity={0.6}
++            />
++            <circle
++              cx="98"
++              cy="16"
++              r="1.6"
++              fill={design.accent}
++              stroke="none"
++              opacity={0.6}
++            />
++          </g>
++        )}
++
++        {/* ΓòÉΓòÉΓòÉ Layer 1: Prestige aura ΓòÉΓòÉΓòÉ */}
+         {prestige > 0 && (
++          <>
++            <path
++              d={SHIELD_PATH}
++              fill={`url(#${glowId})`}
++              transform="translate(50 60) scale(1.25) translate(-50 -60)"
++              opacity={0.3 + prestige * 0.6}
++            />
++            {/* Second, softer aura ring */}
++            <path
++              d={SHIELD_PATH}
++              fill="none"
++              stroke={design.accent}
++              strokeWidth={0.8}
++              strokeOpacity={0.15 + prestige * 0.2}
++              transform="translate(50 60) scale(1.18) translate(-50 -60)"
++            />
++          </>
++        )}
++
++        {/* ΓòÉΓòÉΓòÉ Layer 1b: Pulsing aura ring (weight ΓëÑ 6) ΓòÉΓòÉΓòÉ */}
++        {showSparkles && (
+           <path
+             d={SHIELD_PATH}
+-            fill={`url(#${glowId})`}
+-            transform="translate(50 60) scale(1.18) translate(-50 -60)"
+-            opacity={0.4 + prestige * 0.5}
++            fill="none"
++            stroke={design.accentAlt}
++            strokeWidth={1.2}
++            strokeOpacity={0.3 + prestige * 0.3}
++            transform="translate(50 60) scale(1.14) translate(-50 -60)"
++            className="progress-shield-aura"
+           />
+         )}
+ 
+-        {/* Shield body. */}
++        {/* ΓòÉΓòÉΓòÉ Layer 2: Drop shadow ΓòÉΓòÉΓòÉ */}
+         <path
+           d={SHIELD_PATH}
+-          fill={`url(#${fillId})`}
+-          stroke="color-mix(in srgb, #fff 22%, transparent)"
+-          strokeWidth={2}
++          fill="color-mix(in srgb, #000 22%, transparent)"
++          transform="translate(0.5 2.5)"
+         />
+ 
+-        {/* Inner bevel ring. */}
++        {/* ΓòÉΓòÉΓòÉ Layer 3: Shield body ΓòÉΓòÉΓòÉ */}
+         <path
+           d={SHIELD_PATH}
++          fill={`url(#${fillId})`}
++          stroke="color-mix(in srgb, #fff 26%, transparent)"
++          strokeWidth={2.4}
++        />
++
++        {/* ΓòÉΓòÉΓòÉ Layer 3b: Holographic overlay (Sovereign only) ΓòÉΓòÉΓòÉ */}
++        {showHolographic && (
++          <path
++            d={SHIELD_PATH}
++            fill={`url(#${holoId})`}
++            clipPath={`url(#${uid}-clip)`}
++            className="progress-shield-holo"
++          />
++        )}
++
++        {/* ΓòÉΓòÉΓòÉ Layer 4: Metallic top highlight ΓòÉΓòÉΓòÉ */}
++        {showEdgeHighlight && (
++          <path
++            d={SHIELD_PATH}
++            fill={`url(#${edgeId})`}
++            clipPath={`url(#${uid}-clip)`}
++            opacity={0.5}
++            transform="translate(50 60) scale(1 0.38) translate(-50 -60)"
++          />
++        )}
++
++        {/* ΓòÉΓòÉΓòÉ Layer 5: Inner crest border ΓòÉΓòÉΓòÉ */}
++        <path
++          d={INNER_CREST}
+           fill="none"
+-          stroke="color-mix(in srgb, #000 18%, transparent)"
+-          strokeWidth={1.5}
+-          transform="translate(50 60) scale(0.86) translate(-50 -60)"
++          stroke="color-mix(in srgb, #fff 16%, transparent)"
++          strokeWidth={0.9}
+         />
+ 
+-        {/* Center emblem, in a near-white ink for contrast on any accent. */}
++        {/* ΓòÉΓòÉΓòÉ Layer 5b: Border node ornaments (weight ΓëÑ 1) ΓòÉΓòÉΓòÉ */}
++        {showBorderNodes && (
++          <g fill="color-mix(in srgb, #fff 22%, transparent)">
++            {/* Top center node */}
++            <circle cx="50" cy="14" r="1.8" />
++            {/* Shoulder nodes */}
++            <circle cx="22" cy="24" r="1.4" />
++            <circle cx="78" cy="24" r="1.4" />
++            {/* Mid-side nodes */}
++            <circle cx="16" cy="48" r="1.2" opacity={0.7} />
++            <circle cx="84" cy="48" r="1.2" opacity={0.7} />
++          </g>
++        )}
++
++        {/* ΓòÉΓòÉΓòÉ Layer 5c: Filigree curls (weight ΓëÑ 2) ΓòÉΓòÉΓòÉ */}
++        {showFiligree && (
++          <g
++            stroke="color-mix(in srgb, #fff 20%, transparent)"
++            strokeWidth={0.7}
++            fill="none"
++            strokeLinecap="round"
++          >
++            {/* Top-left scroll */}
++            <path d="M22 27 C18 32 18 38 22 42" />
++            <path d="M20 29 C16 33 16 37 20 40" opacity={0.5} />
++            {/* Top-right scroll */}
++            <path d="M78 27 C82 32 82 38 78 42" />
++            <path d="M80 29 C84 33 84 37 80 40" opacity={0.5} />
++            {/* Lower scrolls */}
++            <path
++              d="M26 82 C22 78 24 72 28 70"
++              opacity={w >= 3 ? 0.5 : 0.25}
++            />
++            <path
++              d="M74 82 C78 78 76 72 72 70"
++              opacity={w >= 3 ? 0.5 : 0.25}
++            />
++            {/* Bottom crest accent */}
++            <path d="M34 94 Q42 90 50 92 Q58 90 66 94" opacity={0.35} />
++          </g>
++        )}
++
++        {/* ΓòÉΓòÉΓòÉ Layer 6: Inner emblem glow ΓòÉΓòÉΓòÉ */}
++        {showInnerGlow && (
++          <circle
++            cx="50"
++            cy="57"
++            r="24"
++            fill={`url(#${innerGlowId})`}
++            clipPath={`url(#${uid}-clip)`}
++          />
++        )}
++
++        {/* ΓòÉΓòÉΓòÉ Layer 7: Center emblem ΓòÉΓòÉΓòÉ */}
+         <g clipPath={`url(#${uid}-clip)`}>
+           {design.emblem("color-mix(in srgb, #fff 92%, transparent)")}
+ 
+-          {/* Animated shine sweep (driven by the parent's flourish class). The
+-              static tilt lives on the group so the CSS translateX animation on
+-              the rect composes with it instead of overriding it. */}
++          {/* Shine sweep (driven by celebrate class). */}
+           <g transform="rotate(16 50 60)">
+             <rect
+               className="progress-shield-sheen"
+@@ -231,35 +655,185 @@ export function ProgressShield({
+           </g>
+         </g>
+ 
+-        {/* Prestige gem studs along the top edge for cycle ΓëÑ 2. */}
++        {/* ΓòÉΓòÉΓòÉ Layer 8: Floating sparkle particles (weight ΓëÑ 6) ΓòÉΓòÉΓòÉ */}
++        {showSparkles && (
++          <g className="progress-shield-sparkles">
++            <circle
++              cx="20"
++              cy="30"
++              r="1.2"
++              fill="#fff"
++              className="progress-sparkle progress-sparkle-1"
++            />
++            <circle
++              cx="80"
++              cy="25"
++              r="1"
++              fill="#fff"
++              className="progress-sparkle progress-sparkle-2"
++            />
++            <circle
++              cx="14"
++              cy="55"
++              r="0.9"
++              fill="#fff"
++              className="progress-sparkle progress-sparkle-3"
++            />
++            <circle
++              cx="86"
++              cy="60"
++              r="1.1"
++              fill="#fff"
++              className="progress-sparkle progress-sparkle-4"
++            />
++            <circle
++              cx="30"
++              cy="16"
++              r="0.8"
++              fill="#fff"
++              className="progress-sparkle progress-sparkle-5"
++            />
++            <circle
++              cx="70"
++              cy="14"
++              r="0.8"
++              fill="#fff"
++              className="progress-sparkle progress-sparkle-6"
++            />
++          </g>
++        )}
++
++        {/* ΓòÉΓòÉΓòÉ Layer 9: Prestige gems (cycle ΓëÑ 2) ΓòÉΓòÉΓòÉ */}
+         {cycle >= 2 && (
+-          <g fill="color-mix(in srgb, #fff 85%, transparent)">
+-            <circle cx="26" cy="22" r={1.6 + prestige} />
+-            <circle cx="50" cy="16" r={1.8 + prestige} />
+-            <circle cx="74" cy="22" r={1.6 + prestige} />
++          <g>
++            {/* Center crown gem glow */}
++            <circle
++              cx="50"
++              cy="8"
++              r={5 + prestige * 3}
++              fill={design.accent}
++              opacity={0.15}
++            />
++            {/* Gem trio with faceted look */}
++            {[
++              { cx: 28, cy: 20, r: 2.2 },
++              { cx: 50, cy: 12, r: 2.8 },
++              { cx: 72, cy: 20, r: 2.2 },
++            ].map((g, i) => (
++              <g key={i}>
++                <circle
++                  cx={g.cx}
++                  cy={g.cy}
++                  r={g.r + prestige * 0.6}
++                  fill="color-mix(in srgb, #fff 88%, transparent)"
++                />
++                <circle
++                  cx={g.cx}
++                  cy={g.cy}
++                  r={(g.r + prestige * 0.6) * 0.5}
++                  fill={design.accent}
++                  opacity={0.65}
++                />
++                {/* Gleam dot */}
++                <circle
++                  cx={g.cx - 0.6}
++                  cy={g.cy - 0.6}
++                  r={0.6}
++                  fill="#fff"
++                  opacity={0.8}
++                />
++              </g>
++            ))}
++            {/* Extra gems at cycle ΓëÑ 3 */}
++            {cycle >= 3 && (
++              <>
++                {[
++                  { cx: 16, cy: 30, r: 1.6 },
++                  { cx: 84, cy: 30, r: 1.6 },
++                ].map((g, i) => (
++                  <g key={`ext-${i}`}>
++                    <circle
++                      cx={g.cx}
++                      cy={g.cy}
++                      r={g.r + prestige * 0.3}
++                      fill="color-mix(in srgb, #fff 82%, transparent)"
++                    />
++                    <circle
++                      cx={g.cx}
++                      cy={g.cy}
++                      r={g.r * 0.45}
++                      fill={design.accent}
++                      opacity={0.5}
++                    />
++                  </g>
++                ))}
++              </>
++            )}
++            {/* Even more gems at cycle ΓëÑ 4 */}
++            {cycle >= 4 && (
++              <>
++                <circle
++                  cx="10"
++                  cy="42"
++                  r={1.3}
++                  fill="color-mix(in srgb, #fff 75%, transparent)"
++                />
++                <circle
++                  cx="90"
++                  cy="42"
++                  r={1.3}
++                  fill="color-mix(in srgb, #fff 75%, transparent)"
++                />
++              </>
++            )}
+           </g>
+         )}
+ 
+-        {/* Cycle banner ΓÇö roman numeral, always shown. */}
++        {/* ΓòÉΓòÉΓòÉ Layer 10: Ribbon banner ΓòÉΓòÉΓòÉ */}
+         <g>
++          {/* Ribbon fold shadows */}
++          <path
++            d={RIBBON_FOLD_L}
++            fill="color-mix(in srgb, #000 50%, transparent)"
++            stroke="none"
++          />
++          <path
++            d={RIBBON_FOLD_R}
++            fill="color-mix(in srgb, #000 50%, transparent)"
++            stroke="none"
++          />
++          {/* Ribbon body shadow */}
++          <path
++            d={RIBBON_BODY}
++            fill="color-mix(in srgb, #000 20%, transparent)"
++            transform="translate(0 1)"
++          />
++          {/* Ribbon body */}
++          <path
++            d={RIBBON_BODY}
++            fill="color-mix(in srgb, #000 45%, transparent)"
++            stroke="color-mix(in srgb, #fff 22%, transparent)"
++            strokeWidth="0.6"
++          />
++          {/* Ribbon top highlight */}
+           <rect
+-            x="34"
+-            y="92"
+-            width="32"
+-            height="16"
+-            rx="8"
+-            fill="color-mix(in srgb, #000 35%, transparent)"
+-            stroke="color-mix(in srgb, #fff 30%, transparent)"
+-            strokeWidth="1"
++            x="30"
++            y="95.5"
++            width="40"
++            height="4"
++            rx="1"
++            fill="color-mix(in srgb, #fff 8%, transparent)"
+           />
++          {/* Cycle numeral */}
+           <text
+             x="50"
+-            y="104"
++            y="106"
+             textAnchor="middle"
+             fontSize="10"
+-            fontWeight="700"
++            fontWeight="800"
+             fill="#fff"
+-            letterSpacing="0.5"
++            letterSpacing="1"
++            style={{ textShadow: "0 1px 3px rgba(0,0,0,0.5)" }}
+           >
+             {toRoman(cycle)}
+           </text>
+diff --git a/src/components/dashboard/ProgressShieldCard.tsx b/src/components/dashboard/ProgressShieldCard.tsx
+index d16ac36..0231a77 100644
+--- a/src/components/dashboard/ProgressShieldCard.tsx
++++ b/src/components/dashboard/ProgressShieldCard.tsx
+@@ -6,6 +6,7 @@ import {
+   ArrowRight,
+   ArrowUp,
+   BookOpen,
++  Check,
+   Code2,
+   HelpCircle,
+   MessagesSquare,
+@@ -19,7 +20,13 @@ import {
+   type ProgressScore,
+   type ProgressSource,
+ } from "@/lib/progress-types";
+-import { toRoman, type TierInfo } from "@/lib/progress-tiers";
++import {
++  RANKS,
++  RANKS_PER_CYCLE,
++  thresholdForTier,
++  toRoman,
++  type TierInfo,
++} from "@/lib/progress-tiers";
+ 
+ const STORAGE_KEY = "intervium:progress-tier";
+ const MEDALLION = 188; // ring outer box
+@@ -128,7 +135,7 @@ export function ProgressShieldCard({
+     // Only celebrate a genuine increase for a returning user ΓÇö never on the
+     // very first load (no stored value yet).
+     if (stored !== null && tier.tierIndex > stored) {
+-      const prestiged = Math.floor(tier.tierIndex / 5) > Math.floor(stored / 5);
++      const prestiged = Math.floor(tier.tierIndex / RANKS_PER_CYCLE) > Math.floor(stored / RANKS_PER_CYCLE);
+       // Defer the state update out of the effect body (rAF), then auto-dismiss.
+       const raf = requestAnimationFrame(() =>
+         setCelebration(prestiged ? "prestige" : "tier"),
+@@ -156,18 +163,18 @@ export function ProgressShieldCard({
+     }
+   }, [tier.tierIndex]);
+ 
+-  // Legend popover (click/tap toggled ΓÇö no hover dependency).
+-  const [legendOpen, setLegendOpen] = useState(false);
+-  const legendRef = useRef<HTMLDivElement>(null);
++  // Info popover with tabs.
++  const [infoOpen, setInfoOpen] = useState(false);
++  const infoRef = useRef<HTMLDivElement>(null);
+   useEffect(() => {
+-    if (!legendOpen) return;
++    if (!infoOpen) return;
+     const onDown = (e: MouseEvent) => {
+-      if (legendRef.current && !legendRef.current.contains(e.target as Node)) {
+-        setLegendOpen(false);
++      if (infoRef.current && !infoRef.current.contains(e.target as Node)) {
++        setInfoOpen(false);
+       }
+     };
+     const onKey = (e: KeyboardEvent) => {
+-      if (e.key === "Escape") setLegendOpen(false);
++      if (e.key === "Escape") setInfoOpen(false);
+     };
+     document.addEventListener("mousedown", onDown);
+     document.addEventListener("keydown", onKey);
+@@ -175,7 +182,8 @@ export function ProgressShieldCard({
+       document.removeEventListener("mousedown", onDown);
+       document.removeEventListener("keydown", onKey);
+     };
+-  }, [legendOpen]);
++  }, [infoOpen]);
++  const [infoTab, setInfoTab] = useState<"journey" | "earn">("journey");
+ 
+   // Most-neglected source (lowest points, then lowest count) ΓÇö a gentle nudge.
+   const neglected = isEmpty
+@@ -198,70 +206,180 @@ export function ProgressShieldCard({
+     lastEarned && SOURCES.find((s) => s.key === lastEarned.source);
+ 
+   const nextHref = "/interview/new";
++  const posInCycle = tier.tierIndex % RANKS_PER_CYCLE;
++
++  // Percentage string for the ring.
++  const pct = Math.round(tier.progressToNext * 100);
+ 
+   return (
+-    <Card className="relative flex h-full flex-col overflow-hidden">
+-      {/* Header row: title + how-to-earn legend */}
+-      <div className="flex items-center justify-between p-6 pb-0">
+-        <h3 className="flex items-center gap-2 text-base font-semibold tracking-tight">
+-          <Sparkles className="h-4 w-4 text-[var(--primary)]" />
+-          Progress
++    <Card className="progress-card relative flex h-full flex-col overflow-hidden">
++      {/* Accent top edge glow ΓÇö wider spread for a more premium look */}
++      <div
++        className="pointer-events-none absolute inset-x-0 top-0 h-[2px]"
++        style={{ background: "linear-gradient(90deg, transparent, var(--primary), color-mix(in srgb, var(--primary) 60%, var(--chart-2)), transparent)" }}
++      />
++
++      {/* Ambient glow behind the card top ΓÇö scaled by tier weight */}
++      <div
++        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2"
++        style={{
++          width: 300,
++          height: 200,
++          borderRadius: "50%",
++          background: `radial-gradient(closest-side, color-mix(in srgb, var(--primary) ${10 + tier.tierIndex * 2}%, transparent), transparent)`,
++          filter: "blur(40px)",
++        }}
++      />
++
++      {/* Header row */}
++      <div className="relative flex items-center justify-between px-6 pt-5 pb-0">
++        <h3 className="flex items-center gap-2 text-sm font-semibold tracking-wide uppercase text-[var(--muted-foreground)]">
++          <Sparkles className="h-3.5 w-3.5 text-[var(--primary)]" />
++          Milestone
+         </h3>
+-        <div ref={legendRef} className="relative">
++        <div ref={infoRef} className="relative">
+           <button
+             type="button"
+-            onClick={() => setLegendOpen((v) => !v)}
+-            aria-expanded={legendOpen}
+-            aria-label="How points are earned"
++            onClick={() => setInfoOpen((v) => !v)}
++            aria-expanded={infoOpen}
++            aria-label="Progress info"
+             className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[var(--muted-foreground)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
+           >
+             <HelpCircle className="h-4 w-4" />
+           </button>
+-          {legendOpen && (
++          {infoOpen && (
+             <div
+               role="dialog"
+-              aria-label="How to earn points"
+-              className="animate-fade-up absolute right-0 top-9 z-20 w-56 rounded-xl border border-[var(--border)] bg-[var(--popover)] p-3 text-sm text-[var(--popover-foreground)] elev-3"
++              aria-label="Progress info"
++              className="animate-fade-up absolute right-0 top-9 z-20 w-64 rounded-xl border border-[var(--border)] bg-[var(--popover)] text-sm text-[var(--popover-foreground)] elev-3"
+             >
+-              <p className="mb-2 font-medium">How to earn points</p>
+-              <ul className="space-y-1.5 text-[var(--muted-foreground)]">
+-                <li className="flex items-center justify-between gap-2">
+-                  <span className="flex items-center gap-2">
+-                    <MessagesSquare className="h-3.5 w-3.5" /> Scored answer
+-                  </span>
+-                  <span className="font-semibold text-[var(--foreground)]">
+-                    +{POINTS.interviews}
+-                  </span>
+-                </li>
+-                <li className="flex items-center justify-between gap-2">
+-                  <span className="flex items-center gap-2">
+-                    <Code2 className="h-3.5 w-3.5" /> Dojo solve
+-                  </span>
+-                  <span className="font-semibold text-[var(--foreground)]">
+-                    +{POINTS.dojo}
+-                  </span>
+-                </li>
+-                <li className="flex items-center justify-between gap-2">
+-                  <span className="flex items-center gap-2">
+-                    <BookOpen className="h-3.5 w-3.5" /> Study note
+-                  </span>
+-                  <span className="font-semibold text-[var(--foreground)]">
+-                    +{POINTS.notes}
+-                  </span>
+-                </li>
+-              </ul>
++              {/* Tab bar */}
++              <div className="flex border-b border-[var(--border)]">
++                <button
++                  type="button"
++                  onClick={() => setInfoTab("journey")}
++                  className={cn(
++                    "flex-1 rounded-tl-xl px-3 py-2 text-xs font-semibold transition-colors",
++                    infoTab === "journey"
++                      ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
++                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
++                  )}
++                >
++                  Your Journey
++                </button>
++                <button
++                  type="button"
++                  onClick={() => setInfoTab("earn")}
++                  className={cn(
++                    "flex-1 rounded-tr-xl px-3 py-2 text-xs font-semibold transition-colors",
++                    infoTab === "earn"
++                      ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
++                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
++                  )}
++                >
++                  How to Earn
++                </button>
++              </div>
++
++              {infoTab === "journey" && (
++                <div className="space-y-2 p-3">
++                  {RANKS.map((name, i) => {
++                    const isCompleted = i < posInCycle;
++                    const isCurrent = i === posInCycle;
++                    const ptsNeeded = thresholdForTier(
++                      tier.tierIndex - posInCycle + i,
++                    );
++                    return (
++                      <div
++                        key={name}
++                        className={cn(
++                          "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs",
++                          isCurrent &&
++                            "border border-[var(--primary)]/30 bg-[var(--accent)]",
++                          isCompleted && "text-[var(--muted-foreground)]",
++                          !isCompleted &&
++                            !isCurrent &&
++                            "text-[var(--muted-foreground)] opacity-50",
++                        )}
++                      >
++                        <span
++                          className={cn(
++                            "flex h-5 w-5 items-center justify-center rounded-full",
++                            isCompleted &&
++                              "bg-[var(--primary)] text-[var(--primary-foreground)]",
++                            isCurrent &&
++                              "border-2 border-[var(--primary)] text-[var(--primary)]",
++                            !isCompleted &&
++                              !isCurrent &&
++                              "border border-[var(--border)]",
++                          )}
++                        >
++                          {isCompleted ? (
++                            <Check className="h-3 w-3" />
++                          ) : isCurrent ? (
++                            <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
++                          ) : null}
++                        </span>
++                        <span className="flex-1">{name}</span>
++                        <span className="tabular-nums opacity-60">
++                          {ptsNeeded.toLocaleString()} pts
++                        </span>
++                      </div>
++                    );
++                  })}
++                  <p className="pt-1 text-[11px] text-[var(--muted-foreground)]">
++                    Next: {RANKS[Math.min(posInCycle + 1, RANKS.length - 1)]}{" "}
++                    ┬╖ {tier.ptsToNext.toLocaleString()} pts away
++                  </p>
++                </div>
++              )}
++
++              {infoTab === "earn" && (
++                <div className="p-3">
++                  <p className="mb-2 text-xs font-medium text-[var(--muted-foreground)]">
++                    How to earn points
++                  </p>
++                  <ul className="space-y-1.5 text-[var(--muted-foreground)]">
++                    <li className="flex items-center justify-between gap-2">
++                      <span className="flex items-center gap-2">
++                        <MessagesSquare className="h-3.5 w-3.5" /> Scored
++                        answer
++                      </span>
++                      <span className="font-semibold text-[var(--foreground)]">
++                        +{POINTS.interviews}
++                      </span>
++                    </li>
++                    <li className="flex items-center justify-between gap-2">
++                      <span className="flex items-center gap-2">
++                        <Code2 className="h-3.5 w-3.5" /> Dojo solve
++                      </span>
++                      <span className="font-semibold text-[var(--foreground)]">
++                        +{POINTS.dojo}
++                      </span>
++                    </li>
++                    <li className="flex items-center justify-between gap-2">
++                      <span className="flex items-center gap-2">
++                        <BookOpen className="h-3.5 w-3.5" /> Study note
++                      </span>
++                      <span className="font-semibold text-[var(--foreground)]">
++                        +{POINTS.notes}
++                      </span>
++                    </li>
++                  </ul>
++                </div>
++              )}
+             </div>
+           )}
+         </div>
+       </div>
+ 
+-      <CardContent className="flex flex-1 flex-col items-center gap-4 p-6 pt-4 text-center">
++      <CardContent className="relative flex flex-1 flex-col items-center gap-5 p-6 pt-4 text-center">
+         {/* Medallion: progress ring wrapping the shield */}
+         <div
+           className="relative"
+           style={{ width: MEDALLION, height: MEDALLION }}
+         >
+-          <ProgressRing fraction={ringFrac} size={MEDALLION} />
++          <ProgressRing fraction={ringFrac} size={MEDALLION} tierIndex={tier.tierIndex} />
+           <div className="absolute inset-0 flex items-center justify-center">
+             <ProgressShield
+               tier={tier}
+@@ -270,50 +388,49 @@ export function ProgressShieldCard({
+               className={shieldClasses}
+             />
+           </div>
++          {/* Ring percentage label */}
++          {!isEmpty && (
++            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
++              <span
++                className="inline-block rounded-full border border-[var(--border)] bg-[var(--card)] px-2.5 py-0.5 text-[11px] font-bold tabular-nums text-[var(--muted-foreground)] elev-1"
++              >
++                {pct}%
++              </span>
++            </div>
++          )}
+         </div>
+ 
+-        {/* Rank label */}
++        {/* Rank label ΓÇö gradient text for higher tiers */}
+         <div className="space-y-1">
+-          <p className="text-lg font-semibold tracking-tight">
+-            {tier.rankName}
+-            <span className="text-[var(--muted-foreground)]">
+-              {" "}
+-              ┬╖ Cycle {toRoman(tier.cycle)}
++          <p className="text-2xl font-extrabold tracking-tight leading-none">
++            <span className="bg-gradient-to-br from-[var(--foreground)] to-[var(--muted-foreground)] bg-clip-text text-transparent">
++              {tier.rankName}
++            </span>
++            <span className="ml-1.5 text-sm font-semibold text-[var(--muted-foreground)]">
++              ┬╖ {toRoman(tier.cycle)}
+             </span>
+           </p>
+-          <p className="text-sm text-[var(--muted-foreground)]">
+-            <span className="text-2xl font-bold text-[var(--foreground)]">
++          <div className="flex items-baseline justify-center gap-1.5">
++            <span className="text-3xl font-extrabold tabular-nums tracking-tight text-[var(--foreground)]">
+               {displayTotal.toLocaleString()}
+-            </span>{" "}
+-            pts
+-          </p>
++            </span>
++            <span className="text-sm font-medium text-[var(--muted-foreground)]">
++              XP
++            </span>
++          </div>
+         </div>
+ 
+         {isEmpty ? (
+-          <p className="max-w-xs text-sm text-[var(--muted-foreground)]">
++          <p className="max-w-xs text-sm leading-relaxed text-[var(--muted-foreground)]">
+             Answer your first question, solve a Dojo problem, or add a study
+-            note to start earning points and level up your shield.
++            note to start earning XP and level up your shield.
+           </p>
+         ) : (
+           <>
+-            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm">
+-              <span className="text-[var(--muted-foreground)]">
+-                <span className="font-semibold text-[var(--foreground)]">
+-                  {tier.ptsToNext.toLocaleString()}
+-                </span>{" "}
+-                pts to {nextRankName(tier)}
+-              </span>
+-              {score.last7days > 0 && (
+-                <span className="inline-flex items-center gap-1 font-medium text-[var(--success)]">
+-                  <ArrowUp className="h-3.5 w-3.5" />+{score.last7days} this
+-                  week
+-                </span>
+-              )}
+-            </div>
+-
+-            {/* 3-source breakdown ΓÇö segmented bar */}
++            {/* 3-source breakdown */}
+             <div className="w-full space-y-3">
+-              <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-[var(--secondary)]">
++              {/* Segmented bar */}
++              <div className="flex h-2 w-full overflow-hidden rounded-full bg-[var(--secondary)]">
+                 {SOURCES.map((s) => {
+                   const pts = score.bySource[s.key].points;
+                   const share = score.total > 0 ? (pts / score.total) * 100 : 0;
+@@ -322,12 +439,13 @@ export function ProgressShieldCard({
+                     <div
+                       key={s.key}
+                       style={{ width: `${share}%`, backgroundColor: s.color }}
+-                      className="h-full first:rounded-l-full last:rounded-r-full"
++                      className="h-full transition-all duration-500 first:rounded-l-full last:rounded-r-full"
+                     />
+                   );
+                 })}
+               </div>
+ 
++              {/* Source cards with colored accent border */}
+               <div className="grid grid-cols-3 gap-2">
+                 {SOURCES.map((s) => {
+                   const { count, points } = score.bySource[s.key];
+@@ -341,24 +459,29 @@ export function ProgressShieldCard({
+                     <div
+                       key={s.key}
+                       className={cn(
+-                        "rounded-xl border p-2.5 text-left transition-colors",
++                        "group relative overflow-hidden rounded-xl border p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5",
+                         isNeglected
+                           ? "border-dashed border-[var(--border-strong)] bg-[var(--surface-hover)]"
+-                          : "border-[var(--border)] bg-[var(--surface-2)]",
++                          : "border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-1)]",
+                       )}
+                     >
+-                      <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
++                      {/* Colored left accent bar */}
++                      <div
++                        className="absolute inset-y-0 left-0 w-[3px] rounded-l-xl"
++                        style={{ backgroundColor: s.color }}
++                      />
++                      <span className="flex items-center gap-1.5 pl-1 text-xs font-medium text-[var(--muted-foreground)]">
+                         <Icon
+                           className="h-3.5 w-3.5"
+                           style={{ color: s.color }}
+                         />
+                         {s.label}
+                       </span>
+-                      <span className="mt-1 block text-base font-semibold leading-none">
++                      <span className="mt-1 block pl-1 text-lg font-extrabold leading-none tracking-tight text-[var(--foreground)]">
+                         {count}
+                       </span>
+-                      <span className="text-[11px] text-[var(--muted-foreground)]">
+-                        {isNeglected ? "grow this ΓåÆ" : `${share}% of pts`}
++                      <span className="pl-1 text-[11px] text-[var(--muted-foreground)]">
++                        {isNeglected ? "grow this ΓåÆ" : `${share}% ┬╖ ${points} XP`}
+                       </span>
+                     </div>
+                   );
+@@ -366,41 +489,25 @@ export function ProgressShieldCard({
+               </div>
+             </div>
+ 
+-            {/* Folded-in latest signal */}
+-            {lastEarned && lastEarnedMeta && (
+-              <p className="text-xs text-[var(--muted-foreground)]">
+-                Last: +{lastEarned.points} from {lastEarnedMeta.earn}
+-              </p>
+-            )}
+           </>
+         )}
+ 
+-        {/* Next action ΓÇö pinned to the bottom */}
+-        <Link
+-          href={nextHref}
+-          className="mt-auto inline-flex items-center gap-1 pt-1 text-sm font-medium text-[var(--primary)] transition-opacity hover:opacity-80"
+-        >
+-          {isEmpty
+-            ? "Start your first interview"
+-            : weakestArea
+-              ? `Practice your weakest area: ${weakestArea}`
+-              : "Start an interview"}
+-          <ArrowRight className="h-3.5 w-3.5" />
+-        </Link>
+       </CardContent>
+ 
+-      {/* Tier-up celebration ΓÇö announced politely, auto-dismisses */}
++      {/* Tier-up celebration ΓÇö with shimmer effect */}
+       {celebration && (
+         <div
+           role="status"
+           aria-live="polite"
+           className="animate-fade-up pointer-events-none absolute inset-x-0 top-0 z-30 flex justify-center p-3"
+         >
+-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--primary)]/30 bg-[var(--success-subtle)] px-3 py-1 text-sm font-semibold text-[var(--success)] elev-2">
+-            <Sparkles className="h-4 w-4" />
+-            {celebration === "prestige"
+-              ? `Prestige! ${tier.rankName} ┬╖ Cycle ${toRoman(tier.cycle)}`
+-              : `Leveled up to ${tier.rankName}!`}
++          <span className="progress-celebrate-badge inline-flex items-center gap-2 rounded-full border border-[var(--primary)]/40 bg-[var(--card)] px-4 py-1.5 text-sm font-bold elev-3">
++            <Sparkles className="h-4 w-4 text-[var(--primary)]" />
++            <span className="bg-gradient-to-r from-[var(--primary)] to-[var(--chart-2)] bg-clip-text text-transparent">
++              {celebration === "prestige"
++                ? `Prestige! ${tier.rankName} ┬╖ Cycle ${toRoman(tier.cycle)}`
++                : `Ranked up to ${tier.rankName}!`}
++            </span>
+           </span>
+         </div>
+       )}
+@@ -411,11 +518,14 @@ export function ProgressShieldCard({
+ /** Name of the tier the user is climbing toward (handles prestige rollover). */
+ function nextRankName(tier: TierInfo): string {
+   const RANK_ORDER = [
+-    "Apprentice",
+-    "Candidate",
+-    "Specialist",
+-    "Expert",
+-    "Master",
++    "Initiate",
++    "Aspirant",
++    "Contender",
++    "Strategist",
++    "Sentinel",
++    "Architect",
++    "Virtuoso",
++    "Sovereign",
+   ];
+   const nextIndex = (tier.tierIndex + 1) % RANK_ORDER.length;
+   const nextCycle = Math.floor((tier.tierIndex + 1) / RANK_ORDER.length) + 1;
+@@ -425,16 +535,69 @@ function nextRankName(tier: TierInfo): string {
+     : name;
+ }
+ 
+-/** Circular progress ring rendered behind the shield. */
+-function ProgressRing({ fraction, size }: { fraction: number; size: number }) {
+-  const stroke = 7;
+-  const r = size / 2 - stroke / 2 - 1;
++/** Circular progress ring with gradient stroke, glow, and tick marks. */
++function ProgressRing({
++  fraction,
++  size,
++  tierIndex,
++}: {
++  fraction: number;
++  size: number;
++  tierIndex: number;
++}) {
++  const stroke = 8;
++  const r = size / 2 - stroke / 2 - 2;
+   const c = size / 2;
+   const circumference = 2 * Math.PI * r;
+   const frac = Math.max(0, Math.min(1, fraction));
+   const offset = circumference * (1 - frac);
++  const uid = `ring-${tierIndex}`;
++  const tickCount = 24;
++  const tickR = r + stroke / 2 + 3;
++
+   return (
+     <svg width={size} height={size} className="-rotate-90" aria-hidden>
++      <defs>
++        {/* Gradient stroke for the progress arc. */}
++        <linearGradient id={`${uid}-grad`} x1="0" y1="0" x2="1" y2="1">
++          <stop offset="0%" stopColor="var(--primary)" />
++          <stop offset="100%" stopColor="var(--chart-2)" />
++        </linearGradient>
++        {/* Glow filter for the arc. */}
++        <filter id={`${uid}-glow`} x="-20%" y="-20%" width="140%" height="140%">
++          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
++          <feMerge>
++            <feMergeNode in="blur" />
++            <feMergeNode in="SourceGraphic" />
++          </feMerge>
++        </filter>
++      </defs>
++
++      {/* Tick marks around the ring ΓÇö rounded to 3 decimals to prevent
++          server/client floating-point hydration mismatches. */}
++      {Array.from({ length: tickCount }).map((_, i) => {
++        const angle = (i / tickCount) * 2 * Math.PI;
++        const x1 = +(c + Math.cos(angle) * (tickR - 2)).toFixed(3);
++        const y1 = +(c + Math.sin(angle) * (tickR - 2)).toFixed(3);
++        const x2 = +(c + Math.cos(angle) * (tickR + 1)).toFixed(3);
++        const y2 = +(c + Math.sin(angle) * (tickR + 1)).toFixed(3);
++        const isFilled = i / tickCount <= frac;
++        return (
++          <line
++            key={i}
++            x1={x1}
++            y1={y1}
++            x2={x2}
++            y2={y2}
++            stroke={isFilled ? "var(--primary)" : "var(--border)"}
++            strokeWidth={1.2}
++            strokeLinecap="round"
++            opacity={isFilled ? 0.7 : 0.3}
++          />
++        );
++      })}
++
++      {/* Background track */}
+       <circle
+         cx={c}
+         cy={c}
+@@ -443,21 +606,56 @@ function ProgressRing({ fraction, size }: { fraction: number; size: number }) {
+         stroke="var(--secondary)"
+         strokeWidth={stroke}
+       />
++
++      {/* Progress arc with glow */}
+       {frac > 0 && (
+-        <circle
+-          cx={c}
+-          cy={c}
+-          r={r}
+-          fill="none"
+-          stroke="var(--primary)"
+-          strokeWidth={stroke}
+-          strokeLinecap="round"
+-          strokeDasharray={circumference}
+-          strokeDashoffset={offset}
+-          style={{
+-            transition: "stroke-dashoffset 800ms cubic-bezier(0.16,1,0.3,1)",
+-          }}
+-        />
++        <>
++          {/* Glow layer */}
++          <circle
++            cx={c}
++            cy={c}
++            r={r}
++            fill="none"
++            stroke="var(--primary)"
++            strokeWidth={stroke + 6}
++            strokeLinecap="round"
++            strokeDasharray={circumference}
++            strokeDashoffset={offset}
++            opacity={0.15}
++            filter={`url(#${uid}-glow)`}
++            style={{
++              transition: "stroke-dashoffset 800ms cubic-bezier(0.16,1,0.3,1)",
++            }}
++          />
++          {/* Main arc */}
++          <circle
++            cx={c}
++            cy={c}
++            r={r}
++            fill="none"
++            stroke={`url(#${uid}-grad)`}
++            strokeWidth={stroke}
++            strokeLinecap="round"
++            strokeDasharray={circumference}
++            strokeDashoffset={offset}
++            style={{
++              transition: "stroke-dashoffset 800ms cubic-bezier(0.16,1,0.3,1)",
++            }}
++          />
++          {/* Leading dot at the arc tip */}
++          {frac < 1 && (() => {
++            const angle = frac * 2 * Math.PI;
++            const dotX = c + Math.cos(angle - Math.PI / 2) * r;
++            const dotY = c + Math.sin(angle - Math.PI / 2) * r;
++            return (
++              <>
++                <circle cx={dotX} cy={dotY} r={stroke / 2 + 3} fill="var(--primary)" opacity={0.2} />
++                <circle cx={dotX} cy={dotY} r={stroke / 2} fill="var(--card)" />
++                <circle cx={dotX} cy={dotY} r={stroke / 2 - 1.5} fill="var(--primary)" />
++              </>
++            );
++          })()}
++        </>
+       )}
+     </svg>
+   );
+diff --git a/src/lib/progress-tiers.test.ts b/src/lib/progress-tiers.test.ts
+index 7289b8b..db7e561 100644
+--- a/src/lib/progress-tiers.test.ts
++++ b/src/lib/progress-tiers.test.ts
+@@ -13,10 +13,10 @@ import {
+   toRoman,
+ } from "./progress-tiers";
+ 
+-test("zero points ΓåÆ first tier (Apprentice ┬╖ cycle 1)", () => {
++test("zero points ΓåÆ first tier (Initiate ┬╖ cycle 1)", () => {
+   const t = tierFromPoints(0);
+   assert.equal(t.tierIndex, 0);
+-  assert.equal(t.rankName, "Apprentice");
++  assert.equal(t.rankName, "Initiate");
+   assert.equal(t.cycle, 1);
+   assert.equal(t.currentThreshold, 0);
+   assert.equal(t.nextThreshold, thresholdForTier(1));
+@@ -28,7 +28,7 @@ test("non-finite / negative totals are treated as zero", () => {
+   for (const bad of [-100, -1, Number.NaN, Number.NEGATIVE_INFINITY]) {
+     const t = tierFromPoints(bad);
+     assert.equal(t.tierIndex, 0, `${bad} should clamp to tier 0`);
+-    assert.equal(t.rankName, "Apprentice");
++    assert.equal(t.rankName, "Initiate");
+   }
+ });
+ 
+@@ -57,17 +57,25 @@ test("one point below a threshold stays in the lower tier", () => {
+   }
+ });
+ 
+-test("rank names cycle and cycle counter advances every 5 tiers", () => {
++test("RANKS has 8 entries and RANKS_PER_CYCLE matches", () => {
++  assert.equal(RANKS.length, 8);
++  assert.equal(RANKS_PER_CYCLE, 8);
++});
++
++test("rank names cycle and cycle counter advances every 8 tiers", () => {
+   const expected: [number, string, number][] = [
+-    [0, "Apprentice", 1],
+-    [1, "Candidate", 1],
+-    [2, "Specialist", 1],
+-    [3, "Expert", 1],
+-    [4, "Master", 1],
+-    [5, "Apprentice", 2],
+-    [9, "Master", 2],
+-    [10, "Apprentice", 3],
+-    [14, "Master", 3],
++    [0, "Initiate", 1],
++    [1, "Aspirant", 1],
++    [2, "Contender", 1],
++    [3, "Strategist", 1],
++    [4, "Sentinel", 1],
++    [5, "Architect", 1],
++    [6, "Virtuoso", 1],
++    [7, "Sovereign", 1],
++    [8, "Initiate", 2],
++    [15, "Sovereign", 2],
++    [16, "Initiate", 3],
++    [23, "Sovereign", 3],
+   ];
+   for (const [idx, rank, cycle] of expected) {
+     const t = tierFromPoints(thresholdForTier(idx));
+@@ -77,20 +85,20 @@ test("rank names cycle and cycle counter advances every 5 tiers", () => {
+   }
+ });
+ 
+-test("prestige rollover: Master┬╖I ΓåÆ Apprentice┬╖II as points cross the boundary", () => {
+-  const master1 = tierFromPoints(thresholdForTier(4));
+-  assert.equal(master1.rankName, "Master");
+-  assert.equal(master1.cycle, 1);
++test("prestige rollover: Sovereign┬╖I ΓåÆ Initiate┬╖II as points cross the boundary", () => {
++  const sov1 = tierFromPoints(thresholdForTier(7));
++  assert.equal(sov1.rankName, "Sovereign");
++  assert.equal(sov1.cycle, 1);
+ 
+-  const prestige = tierFromPoints(thresholdForTier(5));
+-  assert.equal(prestige.rankName, "Apprentice");
++  const prestige = tierFromPoints(thresholdForTier(8));
++  assert.equal(prestige.rankName, "Initiate");
+   assert.equal(prestige.cycle, 2);
+-  assert.equal(prestige.tierIndex, 5);
++  assert.equal(prestige.tierIndex, 8);
+ 
+-  // One point shy of prestige is still Master┬╖I.
+-  const stillMaster = tierFromPoints(thresholdForTier(5) - 1);
+-  assert.equal(stillMaster.rankName, "Master");
+-  assert.equal(stillMaster.cycle, 1);
++  // One point shy of prestige is still Sovereign┬╖I.
++  const stillSov = tierFromPoints(thresholdForTier(8) - 1);
++  assert.equal(stillSov.rankName, "Sovereign");
++  assert.equal(stillSov.cycle, 1);
+ });
+ 
+ test("thresholds are strictly increasing and the gap widens (super-linear)", () => {
+diff --git a/src/lib/progress-tiers.ts b/src/lib/progress-tiers.ts
+index fec3d89..89dfbeb 100644
+--- a/src/lib/progress-tiers.ts
++++ b/src/lib/progress-tiers.ts
+@@ -7,35 +7,41 @@
+  * persisted.
+  *
+  * The system never ends:
+- *   - Five rank names cycle forever: Apprentice ΓåÆ Candidate ΓåÆ Specialist ΓåÆ
+- *     Expert ΓåÆ Master, then prestige into the next cycle (Apprentice II ΓåÆ ΓÇª ΓåÆ
+- *     Master II ΓåÆ Apprentice III ΓåÆ ΓÇª).
++ *   - Eight rank names cycle forever: Initiate ΓåÆ Aspirant ΓåÆ Contender ΓåÆ
++ *     Strategist ΓåÆ Sentinel ΓåÆ Architect ΓåÆ Virtuoso ΓåÆ Sovereign, then prestige
++ *     into the next cycle (Initiate II ΓåÆ ΓÇª ΓåÆ Sovereign II ΓåÆ Initiate III ΓåÆ ΓÇª).
+  *   - `tierIndex` is the absolute, always-increasing tier number (0, 1, 2, ΓÇª).
+- *     `rankName = RANKS[tierIndex % 5]`, `cycle = floor(tierIndex / 5) + 1`.
++ *     `rankName = RANKS[tierIndex % 8]`, `cycle = floor(tierIndex / 8) + 1`.
+  *
+  * Thresholds grow on a super-linear power curve so early tiers come fast and
+  * later ones are earned, with no cap:
+  *
+  *     threshold(t) = round(BASE * t^EXP)      (threshold(0) = 0)
+  *
+- * With BASE = 50 and EXP = 1.6 the ladder begins:
+- *     t0 Apprentice┬╖I    0
+- *     t1 Candidate┬╖I     50      (Γëê one 5-question scored interview)
+- *     t2 Specialist┬╖I    152
+- *     t3 Expert┬╖I        290
+- *     t4 Master┬╖I        459
+- *     t5 Apprentice┬╖II   657     (first prestige)
+- *     t10 Apprentice┬╖III 1991
+- *     t20 Apprentice┬╖V   6030
++ * With BASE = 80 and EXP = 2.0 the ladder begins:
++ *     t0 Initiate┬╖I      0
++ *     t1 Aspirant┬╖I      80
++ *     t2 Contender┬╖I     320
++ *     t3 Strategist┬╖I    720
++ *     t4 Sentinel┬╖I      1,280
++ *     t5 Architect┬╖I     2,000
++ *     t6 Virtuoso┬╖I      2,880
++ *     t7 Sovereign┬╖I     3,920
++ *     t8 Initiate┬╖II     5,120   (first prestige)
++ *     t16 Initiate┬╖III   20,480
++ *     t24 Initiate┬╖IV    46,080
+  * and keeps widening forever.
+  */
+ 
+ export const RANKS = [
+-  "Apprentice",
+-  "Candidate",
+-  "Specialist",
+-  "Expert",
+-  "Master",
++  "Initiate",
++  "Aspirant",
++  "Contender",
++  "Strategist",
++  "Sentinel",
++  "Architect",
++  "Virtuoso",
++  "Sovereign",
+ ] as const;
+ 
+ export type RankName = (typeof RANKS)[number];
+@@ -44,8 +50,8 @@ export type RankName = (typeof RANKS)[number];
+ export const RANKS_PER_CYCLE = RANKS.length;
+ 
+ /** Curve constants ΓÇö documented in the module comment above. */
+-const BASE = 50;
+-const EXP = 1.6;
++const BASE = 80;
++const EXP = 2.0;
+ 
+ /**
+  * Cumulative points required to *reach* an absolute tier. Strictly increasing
+@@ -58,7 +64,7 @@ export function thresholdForTier(tierIndex: number): number {
+ }
+ 
+ export interface TierInfo {
+-  /** One of the five cycling rank names. */
++  /** One of the eight cycling rank names. */
+   rankName: RankName;
+   /** 1-based prestige cycle (1, 2, 3, ΓÇª). */
+   cycle: number;
+diff --git a/src/lib/progress-types.ts b/src/lib/progress-types.ts
+index d0f3693..3758fec 100644
+--- a/src/lib/progress-types.ts
++++ b/src/lib/progress-types.ts
+@@ -8,17 +8,17 @@ import { z } from "zod";
+  * without dragging the database driver into the browser bundle.
+  *
+  * Weights ΓÇö also surfaced to the user as the "how to earn" legend:
+- *   - scored interview answer ΓåÆ 10 pts
+- *   - solved Dojo problem     ΓåÆ 15 pts
+- *   - study note added        ΓåÆ  3 pts
++ *   - scored interview answer ΓåÆ  5 pts
++ *   - solved Dojo problem     ΓåÆ  8 pts
++ *   - study note added        ΓåÆ  1 pt
+  */
+ export const POINTS = {
+   /** Per scored, answered interview question. */
+-  interviews: 10,
++  interviews: 5,
+   /** Per distinct solved Dojo problem. */
+-  dojo: 15,
++  dojo: 8,
+   /** Per study note added. */
+-  notes: 3,
++  notes: 1,
+ } as const;
+ 
+ export const progressSourceSchema = z.enum(["interviews", "dojo", "notes"]);
+diff --git a/src/lib/progress.ts b/src/lib/progress.ts
+index 2fb1380..1612714 100644
+--- a/src/lib/progress.ts
++++ b/src/lib/progress.ts
+@@ -35,9 +35,9 @@ export {
+  * (page + any nested components) computes it at most once.
+  *
+  * Weights (also surfaced to the user as the "how to earn" legend):
+- *   - scored interview answer  ΓåÆ 10 pts
+- *   - solved Dojo problem      ΓåÆ 15 pts
+- *   - study note added         ΓåÆ  3 pts
++ *   - scored interview answer  ΓåÆ  5 pts
++ *   - solved Dojo problem      ΓåÆ  8 pts
++ *   - study note added         ΓåÆ  1 pt
+  *
+  * "Completed work only":
+  *   - interviews: a `session_questions` row whose parent session is scored

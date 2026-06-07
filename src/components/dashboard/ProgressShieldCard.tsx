@@ -6,6 +6,7 @@ import {
   ArrowRight,
   ArrowUp,
   BookOpen,
+  Check,
   Code2,
   HelpCircle,
   MessagesSquare,
@@ -19,7 +20,13 @@ import {
   type ProgressScore,
   type ProgressSource,
 } from "@/lib/progress-types";
-import { toRoman, type TierInfo } from "@/lib/progress-tiers";
+import {
+  RANKS,
+  RANKS_PER_CYCLE,
+  thresholdForTier,
+  toRoman,
+  type TierInfo,
+} from "@/lib/progress-tiers";
 
 const STORAGE_KEY = "intervium:progress-tier";
 const MEDALLION = 188; // ring outer box
@@ -128,7 +135,7 @@ export function ProgressShieldCard({
     // Only celebrate a genuine increase for a returning user — never on the
     // very first load (no stored value yet).
     if (stored !== null && tier.tierIndex > stored) {
-      const prestiged = Math.floor(tier.tierIndex / 5) > Math.floor(stored / 5);
+      const prestiged = Math.floor(tier.tierIndex / RANKS_PER_CYCLE) > Math.floor(stored / RANKS_PER_CYCLE);
       // Defer the state update out of the effect body (rAF), then auto-dismiss.
       const raf = requestAnimationFrame(() =>
         setCelebration(prestiged ? "prestige" : "tier"),
@@ -156,18 +163,18 @@ export function ProgressShieldCard({
     }
   }, [tier.tierIndex]);
 
-  // Legend popover (click/tap toggled — no hover dependency).
-  const [legendOpen, setLegendOpen] = useState(false);
-  const legendRef = useRef<HTMLDivElement>(null);
+  // Info popover with tabs.
+  const [infoOpen, setInfoOpen] = useState(false);
+  const infoRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (!legendOpen) return;
+    if (!infoOpen) return;
     const onDown = (e: MouseEvent) => {
-      if (legendRef.current && !legendRef.current.contains(e.target as Node)) {
-        setLegendOpen(false);
+      if (infoRef.current && !infoRef.current.contains(e.target as Node)) {
+        setInfoOpen(false);
       }
     };
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setLegendOpen(false);
+      if (e.key === "Escape") setInfoOpen(false);
     };
     document.addEventListener("mousedown", onDown);
     document.addEventListener("keydown", onKey);
@@ -175,7 +182,8 @@ export function ProgressShieldCard({
       document.removeEventListener("mousedown", onDown);
       document.removeEventListener("keydown", onKey);
     };
-  }, [legendOpen]);
+  }, [infoOpen]);
+  const [infoTab, setInfoTab] = useState<"journey" | "earn">("journey");
 
   // Most-neglected source (lowest points, then lowest count) — a gentle nudge.
   const neglected = isEmpty
@@ -198,70 +206,180 @@ export function ProgressShieldCard({
     lastEarned && SOURCES.find((s) => s.key === lastEarned.source);
 
   const nextHref = "/interview/new";
+  const posInCycle = tier.tierIndex % RANKS_PER_CYCLE;
+
+  // Percentage string for the ring.
+  const pct = Math.round(tier.progressToNext * 100);
 
   return (
-    <Card className="relative flex h-full flex-col overflow-hidden">
-      {/* Header row: title + how-to-earn legend */}
-      <div className="flex items-center justify-between p-6 pb-0">
-        <h3 className="flex items-center gap-2 text-base font-semibold tracking-tight">
-          <Sparkles className="h-4 w-4 text-[var(--primary)]" />
-          Progress
+    <Card className="progress-card relative flex h-full flex-col overflow-hidden">
+      {/* Accent top edge glow — wider spread for a more premium look */}
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-[2px]"
+        style={{ background: "linear-gradient(90deg, transparent, var(--primary), color-mix(in srgb, var(--primary) 60%, var(--chart-2)), transparent)" }}
+      />
+
+      {/* Ambient glow behind the card top — scaled by tier weight */}
+      <div
+        className="pointer-events-none absolute -top-24 left-1/2 -translate-x-1/2"
+        style={{
+          width: 300,
+          height: 200,
+          borderRadius: "50%",
+          background: `radial-gradient(closest-side, color-mix(in srgb, var(--primary) ${10 + tier.tierIndex * 2}%, transparent), transparent)`,
+          filter: "blur(40px)",
+        }}
+      />
+
+      {/* Header row */}
+      <div className="relative flex items-center justify-between px-6 pt-5 pb-0">
+        <h3 className="flex items-center gap-2 text-sm font-semibold tracking-wide uppercase text-[var(--muted-foreground)]">
+          <Sparkles className="h-3.5 w-3.5 text-[var(--primary)]" />
+          Milestone
         </h3>
-        <div ref={legendRef} className="relative">
+        <div ref={infoRef} className="relative">
           <button
             type="button"
-            onClick={() => setLegendOpen((v) => !v)}
-            aria-expanded={legendOpen}
-            aria-label="How points are earned"
+            onClick={() => setInfoOpen((v) => !v)}
+            aria-expanded={infoOpen}
+            aria-label="Progress info"
             className="inline-flex h-7 w-7 items-center justify-center rounded-full text-[var(--muted-foreground)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--foreground)]"
           >
             <HelpCircle className="h-4 w-4" />
           </button>
-          {legendOpen && (
+          {infoOpen && (
             <div
               role="dialog"
-              aria-label="How to earn points"
-              className="animate-fade-up absolute right-0 top-9 z-20 w-56 rounded-xl border border-[var(--border)] bg-[var(--popover)] p-3 text-sm text-[var(--popover-foreground)] elev-3"
+              aria-label="Progress info"
+              className="animate-fade-up absolute right-0 top-9 z-20 w-64 rounded-xl border border-[var(--border)] bg-[var(--popover)] text-sm text-[var(--popover-foreground)] elev-3"
             >
-              <p className="mb-2 font-medium">How to earn points</p>
-              <ul className="space-y-1.5 text-[var(--muted-foreground)]">
-                <li className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2">
-                    <MessagesSquare className="h-3.5 w-3.5" /> Scored answer
-                  </span>
-                  <span className="font-semibold text-[var(--foreground)]">
-                    +{POINTS.interviews}
-                  </span>
-                </li>
-                <li className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2">
-                    <Code2 className="h-3.5 w-3.5" /> Dojo solve
-                  </span>
-                  <span className="font-semibold text-[var(--foreground)]">
-                    +{POINTS.dojo}
-                  </span>
-                </li>
-                <li className="flex items-center justify-between gap-2">
-                  <span className="flex items-center gap-2">
-                    <BookOpen className="h-3.5 w-3.5" /> Study note
-                  </span>
-                  <span className="font-semibold text-[var(--foreground)]">
-                    +{POINTS.notes}
-                  </span>
-                </li>
-              </ul>
+              {/* Tab bar */}
+              <div className="flex border-b border-[var(--border)]">
+                <button
+                  type="button"
+                  onClick={() => setInfoTab("journey")}
+                  className={cn(
+                    "flex-1 rounded-tl-xl px-3 py-2 text-xs font-semibold transition-colors",
+                    infoTab === "journey"
+                      ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
+                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
+                  )}
+                >
+                  Your Journey
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setInfoTab("earn")}
+                  className={cn(
+                    "flex-1 rounded-tr-xl px-3 py-2 text-xs font-semibold transition-colors",
+                    infoTab === "earn"
+                      ? "bg-[var(--accent)] text-[var(--accent-foreground)]"
+                      : "text-[var(--muted-foreground)] hover:text-[var(--foreground)]",
+                  )}
+                >
+                  How to Earn
+                </button>
+              </div>
+
+              {infoTab === "journey" && (
+                <div className="space-y-2 p-3">
+                  {RANKS.map((name, i) => {
+                    const isCompleted = i < posInCycle;
+                    const isCurrent = i === posInCycle;
+                    const ptsNeeded = thresholdForTier(
+                      tier.tierIndex - posInCycle + i,
+                    );
+                    return (
+                      <div
+                        key={name}
+                        className={cn(
+                          "flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs",
+                          isCurrent &&
+                            "border border-[var(--primary)]/30 bg-[var(--accent)]",
+                          isCompleted && "text-[var(--muted-foreground)]",
+                          !isCompleted &&
+                            !isCurrent &&
+                            "text-[var(--muted-foreground)] opacity-50",
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            "flex h-5 w-5 items-center justify-center rounded-full",
+                            isCompleted &&
+                              "bg-[var(--primary)] text-[var(--primary-foreground)]",
+                            isCurrent &&
+                              "border-2 border-[var(--primary)] text-[var(--primary)]",
+                            !isCompleted &&
+                              !isCurrent &&
+                              "border border-[var(--border)]",
+                          )}
+                        >
+                          {isCompleted ? (
+                            <Check className="h-3 w-3" />
+                          ) : isCurrent ? (
+                            <span className="h-1.5 w-1.5 rounded-full bg-[var(--primary)]" />
+                          ) : null}
+                        </span>
+                        <span className="flex-1">{name}</span>
+                        <span className="tabular-nums opacity-60">
+                          {ptsNeeded.toLocaleString()} pts
+                        </span>
+                      </div>
+                    );
+                  })}
+                  <p className="pt-1 text-[11px] text-[var(--muted-foreground)]">
+                    Next: {RANKS[Math.min(posInCycle + 1, RANKS.length - 1)]}{" "}
+                    · {tier.ptsToNext.toLocaleString()} pts away
+                  </p>
+                </div>
+              )}
+
+              {infoTab === "earn" && (
+                <div className="p-3">
+                  <p className="mb-2 text-xs font-medium text-[var(--muted-foreground)]">
+                    How to earn points
+                  </p>
+                  <ul className="space-y-1.5 text-[var(--muted-foreground)]">
+                    <li className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2">
+                        <MessagesSquare className="h-3.5 w-3.5" /> Scored
+                        answer
+                      </span>
+                      <span className="font-semibold text-[var(--foreground)]">
+                        +{POINTS.interviews}
+                      </span>
+                    </li>
+                    <li className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2">
+                        <Code2 className="h-3.5 w-3.5" /> Dojo solve
+                      </span>
+                      <span className="font-semibold text-[var(--foreground)]">
+                        +{POINTS.dojo}
+                      </span>
+                    </li>
+                    <li className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-2">
+                        <BookOpen className="h-3.5 w-3.5" /> Study note
+                      </span>
+                      <span className="font-semibold text-[var(--foreground)]">
+                        +{POINTS.notes}
+                      </span>
+                    </li>
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>
       </div>
 
-      <CardContent className="flex flex-1 flex-col items-center gap-4 p-6 pt-4 text-center">
+      <CardContent className="relative flex flex-1 flex-col items-center gap-5 p-6 pt-4 text-center">
         {/* Medallion: progress ring wrapping the shield */}
         <div
           className="relative"
           style={{ width: MEDALLION, height: MEDALLION }}
         >
-          <ProgressRing fraction={ringFrac} size={MEDALLION} />
+          <ProgressRing fraction={ringFrac} size={MEDALLION} tierIndex={tier.tierIndex} />
           <div className="absolute inset-0 flex items-center justify-center">
             <ProgressShield
               tier={tier}
@@ -270,50 +388,49 @@ export function ProgressShieldCard({
               className={shieldClasses}
             />
           </div>
+          {/* Ring percentage label */}
+          {!isEmpty && (
+            <div className="absolute -bottom-1 left-1/2 -translate-x-1/2">
+              <span
+                className="inline-block rounded-full border border-[var(--border)] bg-[var(--card)] px-2.5 py-0.5 text-[11px] font-bold tabular-nums text-[var(--muted-foreground)] elev-1"
+              >
+                {pct}%
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Rank label */}
+        {/* Rank label — gradient text for higher tiers */}
         <div className="space-y-1">
-          <p className="text-lg font-semibold tracking-tight">
-            {tier.rankName}
-            <span className="text-[var(--muted-foreground)]">
-              {" "}
-              · Cycle {toRoman(tier.cycle)}
+          <p className="text-2xl font-extrabold tracking-tight leading-none">
+            <span className="bg-gradient-to-br from-[var(--foreground)] to-[var(--muted-foreground)] bg-clip-text text-transparent">
+              {tier.rankName}
+            </span>
+            <span className="ml-1.5 text-sm font-semibold text-[var(--muted-foreground)]">
+              · {toRoman(tier.cycle)}
             </span>
           </p>
-          <p className="text-sm text-[var(--muted-foreground)]">
-            <span className="text-2xl font-bold text-[var(--foreground)]">
+          <div className="flex items-baseline justify-center gap-1.5">
+            <span className="text-3xl font-extrabold tabular-nums tracking-tight text-[var(--foreground)]">
               {displayTotal.toLocaleString()}
-            </span>{" "}
-            pts
-          </p>
+            </span>
+            <span className="text-sm font-medium text-[var(--muted-foreground)]">
+              XP
+            </span>
+          </div>
         </div>
 
         {isEmpty ? (
-          <p className="max-w-xs text-sm text-[var(--muted-foreground)]">
+          <p className="max-w-xs text-sm leading-relaxed text-[var(--muted-foreground)]">
             Answer your first question, solve a Dojo problem, or add a study
-            note to start earning points and level up your shield.
+            note to start earning XP and level up your shield.
           </p>
         ) : (
           <>
-            <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-sm">
-              <span className="text-[var(--muted-foreground)]">
-                <span className="font-semibold text-[var(--foreground)]">
-                  {tier.ptsToNext.toLocaleString()}
-                </span>{" "}
-                pts to {nextRankName(tier)}
-              </span>
-              {score.last7days > 0 && (
-                <span className="inline-flex items-center gap-1 font-medium text-[var(--success)]">
-                  <ArrowUp className="h-3.5 w-3.5" />+{score.last7days} this
-                  week
-                </span>
-              )}
-            </div>
-
-            {/* 3-source breakdown — segmented bar */}
+            {/* 3-source breakdown */}
             <div className="w-full space-y-3">
-              <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-[var(--secondary)]">
+              {/* Segmented bar */}
+              <div className="flex h-2 w-full overflow-hidden rounded-full bg-[var(--secondary)]">
                 {SOURCES.map((s) => {
                   const pts = score.bySource[s.key].points;
                   const share = score.total > 0 ? (pts / score.total) * 100 : 0;
@@ -322,12 +439,13 @@ export function ProgressShieldCard({
                     <div
                       key={s.key}
                       style={{ width: `${share}%`, backgroundColor: s.color }}
-                      className="h-full first:rounded-l-full last:rounded-r-full"
+                      className="h-full transition-all duration-500 first:rounded-l-full last:rounded-r-full"
                     />
                   );
                 })}
               </div>
 
+              {/* Source cards with colored accent border */}
               <div className="grid grid-cols-3 gap-2">
                 {SOURCES.map((s) => {
                   const { count, points } = score.bySource[s.key];
@@ -341,24 +459,29 @@ export function ProgressShieldCard({
                     <div
                       key={s.key}
                       className={cn(
-                        "rounded-xl border p-2.5 text-left transition-colors",
+                        "group relative overflow-hidden rounded-xl border p-2.5 text-left transition-all duration-200 hover:-translate-y-0.5",
                         isNeglected
                           ? "border-dashed border-[var(--border-strong)] bg-[var(--surface-hover)]"
-                          : "border-[var(--border)] bg-[var(--surface-2)]",
+                          : "border-[var(--border)] bg-[var(--surface-2)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-1)]",
                       )}
                     >
-                      <span className="flex items-center gap-1.5 text-xs font-medium text-[var(--muted-foreground)]">
+                      {/* Colored left accent bar */}
+                      <div
+                        className="absolute inset-y-0 left-0 w-[3px] rounded-l-xl"
+                        style={{ backgroundColor: s.color }}
+                      />
+                      <span className="flex items-center gap-1.5 pl-1 text-xs font-medium text-[var(--muted-foreground)]">
                         <Icon
                           className="h-3.5 w-3.5"
                           style={{ color: s.color }}
                         />
                         {s.label}
                       </span>
-                      <span className="mt-1 block text-base font-semibold leading-none">
+                      <span className="mt-1 block pl-1 text-lg font-extrabold leading-none tracking-tight text-[var(--foreground)]">
                         {count}
                       </span>
-                      <span className="text-[11px] text-[var(--muted-foreground)]">
-                        {isNeglected ? "grow this →" : `${share}% of pts`}
+                      <span className="pl-1 text-[11px] text-[var(--muted-foreground)]">
+                        {isNeglected ? "grow this →" : `${share}% · ${points} XP`}
                       </span>
                     </div>
                   );
@@ -366,41 +489,25 @@ export function ProgressShieldCard({
               </div>
             </div>
 
-            {/* Folded-in latest signal */}
-            {lastEarned && lastEarnedMeta && (
-              <p className="text-xs text-[var(--muted-foreground)]">
-                Last: +{lastEarned.points} from {lastEarnedMeta.earn}
-              </p>
-            )}
           </>
         )}
 
-        {/* Next action — pinned to the bottom */}
-        <Link
-          href={nextHref}
-          className="mt-auto inline-flex items-center gap-1 pt-1 text-sm font-medium text-[var(--primary)] transition-opacity hover:opacity-80"
-        >
-          {isEmpty
-            ? "Start your first interview"
-            : weakestArea
-              ? `Practice your weakest area: ${weakestArea}`
-              : "Start an interview"}
-          <ArrowRight className="h-3.5 w-3.5" />
-        </Link>
       </CardContent>
 
-      {/* Tier-up celebration — announced politely, auto-dismisses */}
+      {/* Tier-up celebration — with shimmer effect */}
       {celebration && (
         <div
           role="status"
           aria-live="polite"
           className="animate-fade-up pointer-events-none absolute inset-x-0 top-0 z-30 flex justify-center p-3"
         >
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-[var(--primary)]/30 bg-[var(--success-subtle)] px-3 py-1 text-sm font-semibold text-[var(--success)] elev-2">
-            <Sparkles className="h-4 w-4" />
-            {celebration === "prestige"
-              ? `Prestige! ${tier.rankName} · Cycle ${toRoman(tier.cycle)}`
-              : `Leveled up to ${tier.rankName}!`}
+          <span className="progress-celebrate-badge inline-flex items-center gap-2 rounded-full border border-[var(--primary)]/40 bg-[var(--card)] px-4 py-1.5 text-sm font-bold elev-3">
+            <Sparkles className="h-4 w-4 text-[var(--primary)]" />
+            <span className="bg-gradient-to-r from-[var(--primary)] to-[var(--chart-2)] bg-clip-text text-transparent">
+              {celebration === "prestige"
+                ? `Prestige! ${tier.rankName} · Cycle ${toRoman(tier.cycle)}`
+                : `Ranked up to ${tier.rankName}!`}
+            </span>
           </span>
         </div>
       )}
@@ -411,11 +518,14 @@ export function ProgressShieldCard({
 /** Name of the tier the user is climbing toward (handles prestige rollover). */
 function nextRankName(tier: TierInfo): string {
   const RANK_ORDER = [
-    "Apprentice",
-    "Candidate",
-    "Specialist",
-    "Expert",
-    "Master",
+    "Initiate",
+    "Aspirant",
+    "Contender",
+    "Strategist",
+    "Sentinel",
+    "Architect",
+    "Virtuoso",
+    "Sovereign",
   ];
   const nextIndex = (tier.tierIndex + 1) % RANK_ORDER.length;
   const nextCycle = Math.floor((tier.tierIndex + 1) / RANK_ORDER.length) + 1;
@@ -425,16 +535,69 @@ function nextRankName(tier: TierInfo): string {
     : name;
 }
 
-/** Circular progress ring rendered behind the shield. */
-function ProgressRing({ fraction, size }: { fraction: number; size: number }) {
-  const stroke = 7;
-  const r = size / 2 - stroke / 2 - 1;
+/** Circular progress ring with gradient stroke, glow, and tick marks. */
+function ProgressRing({
+  fraction,
+  size,
+  tierIndex,
+}: {
+  fraction: number;
+  size: number;
+  tierIndex: number;
+}) {
+  const stroke = 8;
+  const r = size / 2 - stroke / 2 - 2;
   const c = size / 2;
   const circumference = 2 * Math.PI * r;
   const frac = Math.max(0, Math.min(1, fraction));
   const offset = circumference * (1 - frac);
+  const uid = `ring-${tierIndex}`;
+  const tickCount = 24;
+  const tickR = r + stroke / 2 + 3;
+
   return (
     <svg width={size} height={size} className="-rotate-90" aria-hidden>
+      <defs>
+        {/* Gradient stroke for the progress arc. */}
+        <linearGradient id={`${uid}-grad`} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stopColor="var(--primary)" />
+          <stop offset="100%" stopColor="var(--chart-2)" />
+        </linearGradient>
+        {/* Glow filter for the arc. */}
+        <filter id={`${uid}-glow`} x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur" />
+          <feMerge>
+            <feMergeNode in="blur" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      {/* Tick marks around the ring — rounded to 3 decimals to prevent
+          server/client floating-point hydration mismatches. */}
+      {Array.from({ length: tickCount }).map((_, i) => {
+        const angle = (i / tickCount) * 2 * Math.PI;
+        const x1 = +(c + Math.cos(angle) * (tickR - 2)).toFixed(3);
+        const y1 = +(c + Math.sin(angle) * (tickR - 2)).toFixed(3);
+        const x2 = +(c + Math.cos(angle) * (tickR + 1)).toFixed(3);
+        const y2 = +(c + Math.sin(angle) * (tickR + 1)).toFixed(3);
+        const isFilled = i / tickCount <= frac;
+        return (
+          <line
+            key={i}
+            x1={x1}
+            y1={y1}
+            x2={x2}
+            y2={y2}
+            stroke={isFilled ? "var(--primary)" : "var(--border)"}
+            strokeWidth={1.2}
+            strokeLinecap="round"
+            opacity={isFilled ? 0.7 : 0.3}
+          />
+        );
+      })}
+
+      {/* Background track */}
       <circle
         cx={c}
         cy={c}
@@ -443,21 +606,56 @@ function ProgressRing({ fraction, size }: { fraction: number; size: number }) {
         stroke="var(--secondary)"
         strokeWidth={stroke}
       />
+
+      {/* Progress arc with glow */}
       {frac > 0 && (
-        <circle
-          cx={c}
-          cy={c}
-          r={r}
-          fill="none"
-          stroke="var(--primary)"
-          strokeWidth={stroke}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          style={{
-            transition: "stroke-dashoffset 800ms cubic-bezier(0.16,1,0.3,1)",
-          }}
-        />
+        <>
+          {/* Glow layer */}
+          <circle
+            cx={c}
+            cy={c}
+            r={r}
+            fill="none"
+            stroke="var(--primary)"
+            strokeWidth={stroke + 6}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            opacity={0.15}
+            filter={`url(#${uid}-glow)`}
+            style={{
+              transition: "stroke-dashoffset 800ms cubic-bezier(0.16,1,0.3,1)",
+            }}
+          />
+          {/* Main arc */}
+          <circle
+            cx={c}
+            cy={c}
+            r={r}
+            fill="none"
+            stroke={`url(#${uid}-grad)`}
+            strokeWidth={stroke}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            style={{
+              transition: "stroke-dashoffset 800ms cubic-bezier(0.16,1,0.3,1)",
+            }}
+          />
+          {/* Leading dot at the arc tip */}
+          {frac < 1 && (() => {
+            const angle = frac * 2 * Math.PI;
+            const dotX = c + Math.cos(angle - Math.PI / 2) * r;
+            const dotY = c + Math.sin(angle - Math.PI / 2) * r;
+            return (
+              <>
+                <circle cx={dotX} cy={dotY} r={stroke / 2 + 3} fill="var(--primary)" opacity={0.2} />
+                <circle cx={dotX} cy={dotY} r={stroke / 2} fill="var(--card)" />
+                <circle cx={dotX} cy={dotY} r={stroke / 2 - 1.5} fill="var(--primary)" />
+              </>
+            );
+          })()}
+        </>
       )}
     </svg>
   );

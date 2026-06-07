@@ -35,9 +35,9 @@ export {
  * (page + any nested components) computes it at most once.
  *
  * Weights (also surfaced to the user as the "how to earn" legend):
- *   - scored interview answer  → 10 pts
- *   - solved Dojo problem      → 15 pts
- *   - study note added         →  3 pts
+ *   - scored interview answer  →  5 pts
+ *   - solved Dojo problem      →  8 pts
+ *   - study note added         →  1 pt
  *
  * "Completed work only":
  *   - interviews: a `session_questions` row whose parent session is scored
