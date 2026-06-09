@@ -11,9 +11,9 @@ import type {
  * than running recursive SQL. Kept standalone like `spaced-repetition.ts`.
  */
 
-/** Sort siblings by sortOrder then name (stable, locale-aware). */
-function bySortThenName(a: FolderInput, b: FolderInput): number {
-  return a.sortOrder - b.sortOrder || a.name.localeCompare(b.name);
+/** Sort siblings by sortOrder then creation date (oldest first). */
+function bySortThenCreated(a: FolderInput, b: FolderInput): number {
+  return a.sortOrder - b.sortOrder || a.createdAt.getTime() - b.createdAt.getTime();
 }
 
 /** Flat rows → nested `FolderNode[]`. Orphans (missing parent) surface at root. */
@@ -29,7 +29,7 @@ export function buildTree(folders: FolderInput[]): FolderNode[] {
   }
 
   const roots: FolderNode[] = [];
-  const order = [...folders].sort(bySortThenName);
+  const order = [...folders].sort(bySortThenCreated);
   for (const f of order) {
     const node = byId.get(f.id)!;
     const parent = f.parentId ? byId.get(f.parentId) : undefined;
@@ -89,7 +89,12 @@ export function flattenForSelect(folders: FolderInput[]): FolderOption[] {
   const tree = buildTree(folders);
   const out: FolderOption[] = [];
   const walk = (nodes: FolderNode[], depth: number) => {
-    const sorted = [...nodes].sort((a, b) => a.name.localeCompare(b.name));
+    const sorted = [...nodes].sort((a, b) => {
+      const fa = folders.find((f) => f.id === a.id);
+      const fb = folders.find((f) => f.id === b.id);
+      if (fa && fb) return fa.createdAt.getTime() - fb.createdAt.getTime();
+      return 0;
+    });
     for (const n of sorted) {
       out.push({ id: n.id, name: n.name, depth });
       walk(n.children, depth + 1);

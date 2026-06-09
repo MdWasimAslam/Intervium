@@ -25,10 +25,11 @@ export async function listFolders(userId: string): Promise<FolderInput[]> {
       name: studyFolders.name,
       parentId: studyFolders.parentId,
       sortOrder: studyFolders.sortOrder,
+      createdAt: studyFolders.createdAt,
     })
     .from(studyFolders)
     .where(eq(studyFolders.userId, userId))
-    .orderBy(studyFolders.sortOrder, studyFolders.name);
+    .orderBy(studyFolders.sortOrder, studyFolders.createdAt);
 }
 
 /** One note in full, scoped to the owner. Null if missing or not theirs. */

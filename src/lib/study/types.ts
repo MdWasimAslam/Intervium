@@ -14,6 +14,7 @@ export interface FolderInput {
   name: string;
   parentId: string | null;
   sortOrder: number;
+  createdAt: Date;
 }
 
 /** A folder with its nested children, for the sidebar tree. */
